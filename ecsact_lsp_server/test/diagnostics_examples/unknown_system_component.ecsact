@@ -1,0 +1,6 @@
+package diag.system_component;
+
+system MySystem {
+	readwrite MyComponent;
+}
+

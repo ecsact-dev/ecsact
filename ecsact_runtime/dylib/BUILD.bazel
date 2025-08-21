@@ -1,0 +1,27 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+load("//ecsact_runtime:index.bzl", "ecsact_runtime_modules")
+load(":index.bzl", "cc_ecsact_dylib")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["dylib.cc"])
+
+cc_library(
+    name = "util",
+    hdrs = ["dylib-util.hh"],
+    copts = copts,
+)
+
+# Convenient targets
+[cc_ecsact_dylib(
+    name = m,
+    copts = copts,
+    ecsact_modules = [m],
+) for m in ecsact_runtime_modules]
+
+cc_ecsact_dylib(
+    name = "full",
+    copts = copts,
+    ecsact_modules = ecsact_runtime_modules,
+)

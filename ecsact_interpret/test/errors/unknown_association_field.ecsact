@@ -1,0 +1,12 @@
+package unknown_association_field;
+
+component ComponentWithAssoc {
+	entity foo;
+}
+
+system MySystem {
+	readwrite ComponentWithAssoc with bar {
+		readwrite ComponentWithAssoc;
+	}
+}
+

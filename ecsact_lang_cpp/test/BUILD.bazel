@@ -1,0 +1,78 @@
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("//bazel/rules:defs.bzl", "ecsact_codegen")
+load("//bazel/rules:toolchain.bzl", "ecsact_toolchain")
+
+ecsact_srcs = [
+    "example.ecsact",
+    "example_a.ecsact",
+    "example_b.ecsact",
+]
+
+filegroup(
+    name = "ecsact_srcs",
+    visibility = [":__subpackages__"],
+    srcs = ecsact_srcs,
+)
+
+ecsact_codegen(
+    name = "ecsact_cc_system_impl_srcs",
+    output_directory = "_ecsact_cc_system_impl_srcs",
+    srcs = ecsact_srcs,
+    plugins = [
+        "//ecsact_lang_cpp/cpp_systems_source_codegen",
+    ],
+)
+
+ecsact_codegen(
+    name = "ecsact_cc_hdrs",
+    output_directory = "_ecsact_cc_hdrs",
+    srcs = ecsact_srcs,
+    plugins = [
+        "//ecsact_lang_cpp/cpp_header_codegen",
+        "//ecsact_lang_cpp/cpp_systems_header_codegen",
+        "//ecsact_lang_cpp/systems_header_codegen",
+    ],
+)
+
+cc_library(
+    name = "ecsact_cc",
+    hdrs = [":ecsact_cc_hdrs"],
+    copts = copts,
+    strip_include_prefix = "_ecsact_cc_hdrs",
+    deps = [
+        "//ecsact_lang_cpp:execution_context",
+    ],
+)
+
+cc_binary(
+    name = "example_system_impls",
+    copts = copts,
+    srcs = [
+        "system_impls.cc",
+        ":ecsact_cc_system_impl_srcs",
+        # NOTE: added because //ecsact_runtime/dylib:dynamic stopped working
+        "//ecsact_runtime/dylib:dylib.cc",
+    ],
+    defines = [
+        # NOTE: added because //ecsact_runtime/dylib:dynamic stopped working
+        "ECSACT_DYNAMIC_API_LOAD_AT_RUNTIME",
+    ],
+    linkshared = True,
+    deps = [
+        ":ecsact_cc",
+
+        # NOTE: this stopped working so we added //ecsact_runtime/dylib:dylib.cc
+        # "//ecsact_runtime/dylib:dynamic",
+        "//ecsact_runtime:dylib",
+        "//ecsact_runtime/dylib:util",
+    ],
+)
+
+build_test(
+    name = "build_test",
+    targets = [
+        ":example_system_impls",
+    ],
+)

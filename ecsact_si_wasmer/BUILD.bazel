@@ -1,0 +1,126 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel/rules:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "headers",
+    srcs = glob([
+        "ecsact/si/wasmer/**/*.hh",
+        "ecsact/si/wasmer/**/*.h",
+    ]),
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob([
+        "ecsact/si/wasmer/**/*.cc",
+        "ecsact/si/wasmer/**/*.hh",
+        "ecsact/si/wasmer/**/*.h",
+    ]),
+)
+
+"""
+It is expected that users of this target are to set ECSACT_SI_WASM_API* and ECSACT_DYNAMIC_API* macros for their configuration
+Example 1:
+```
+cc_library(
+    name = "my_si_wasm_impl",
+    deps = ["//ecsact_si_wasmer:implementation"],
+    defines = [
+        # Statically link the si_wasm api
+        "ECSACT_SI_WASM_API=",
+        # Load the dynamic module at runtime
+        "ECSACT_DYNAMIC_API_LOAD_AT_RUNTIME",
+    ],
+)
+```
+
+```
+Example 2:
+cc_library(
+    name = "my_si_wasm_impl",
+    deps = ["//ecsact_si_wasmer:implementation"],
+    defines = [
+        # Statically link the si_wasm api
+        "ECSACT_SI_WASM_API=",
+        # Statically link dynamic module
+        "ECSACT_DYNAMIC_API=",
+    ],
+)
+```
+"""
+
+cc_library(
+    name = "implementation",
+    srcs = [":sources"],
+    hdrs = [":headers"],
+    copts = copts,
+    deps = [
+        "//ecsact_runtime:dynamic",
+        "//ecsact_runtime:si_wasm",
+        "@wasmer",
+    ],
+)
+
+cc_library(
+    name = "minst",
+    srcs = [
+        "ecsact/si/wasmer/detail/minst/minst.cc",
+    ],
+    hdrs = [
+        "ecsact/si/wasmer/detail/minst/minst.hh",
+    ],
+    copts = copts,
+    deps = [
+        ":cpp_util",
+        "//ecsact_runtime:common",
+        "@wasmer",
+    ],
+)
+
+cc_library(
+    name = "cpp_util",
+    hdrs = ["ecsact/si/wasmer/detail/cpp_util.hh"],
+    copts = copts,
+)
+
+ecsact_build_recipe(
+    name = "ecsact_si_wasmer_build_recipe",
+    srcs = [
+        ":sources",
+    ],
+    imports = [
+        "ecsact_set_system_execution_impl",
+        "ecsact_system_execution_context_action",
+        "ecsact_system_execution_context_add",
+        "ecsact_system_execution_context_entity",
+        "ecsact_system_execution_context_generate",
+        "ecsact_system_execution_context_get",
+        "ecsact_system_execution_context_has",
+        "ecsact_system_execution_context_other",
+        "ecsact_system_execution_context_parent",
+        "ecsact_system_execution_context_remove",
+        "ecsact_system_execution_context_same",
+        "ecsact_system_execution_context_stream_toggle",
+        "ecsact_system_execution_context_update",
+    ],
+    system_libs = ["wasmer"],
+    exports = [
+        "ecsact_si_wasm_allow_file_read_access",
+        "ecsact_si_wasm_consume_logs",
+        "ecsact_si_wasm_last_error_message",
+        "ecsact_si_wasm_last_error_message_length",
+        "ecsact_si_wasm_load",
+        "ecsact_si_wasm_load_file",
+        "ecsact_si_wasm_reset",
+        "ecsact_si_wasm_set_trap_handler",
+        "ecsact_si_wasm_unload",
+    ],
+)
+
+ecsact_build_recipe_bundle(
+    name = "ecsact_si_wasmer",
+    recipes = [":ecsact_si_wasmer_build_recipe"],
+)

@@ -1,0 +1,30 @@
+package eval.field_indexing;
+
+component Example { i32 num; }
+component SingleFieldIndex { Example.num hello; }
+
+action FieldIndexAction {
+  Example.num cool_field_name;
+
+  readonly Example;
+}
+
+component MultiField { i32 x; i32 y; }
+component IndexedMultiField {
+  MultiField.x indexed_x;
+  MultiField.y indexed_y;
+  i32 other_field;
+}
+
+system MultiFieldIndexSystem {
+  readwrite IndexedMultiField with indexed_x,indexed_y {
+    readwrite Example;
+  }
+}
+
+system MultiFieldSeparateWithSystem {
+  readwrite IndexedMultiField {
+    with indexed_x { readwrite Example; }
+    with indexed_y { readwrite Example; }
+  }
+}

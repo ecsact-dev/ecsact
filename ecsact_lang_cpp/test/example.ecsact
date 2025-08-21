@@ -1,0 +1,69 @@
+main package example;
+
+import pkg.a;
+import pkg.b;
+
+component ExampleContainer {
+  i32 num_index;
+  i32 other_field;
+}
+
+component ExampleIndexedComponent {
+    ExampleContainer.num_index some_indexed_field;
+}
+
+action ExampleIndexedAction {
+    ExampleContainer.num_index some_indexed_field;
+
+    readwrite pkg.a.ExampleA;
+}
+
+system ExampleSystemFromImports {
+	readwrite pkg.a.ExampleA;
+	readwrite pkg.b.ExampleB;
+}
+
+system ExampleLazy(lazy) {
+	readwrite pkg.a.ExampleA;
+}
+
+system LazyLeap(lazy: 24) {
+	readwrite pkg.b.ExampleB;
+}
+
+system ExplicitlyNoLazy(lazy: false) {
+	readwrite pkg.b.ExampleB;
+}
+
+system ExplicitlyNoLazyZero(lazy: 0) {
+	readwrite pkg.b.ExampleB;
+}
+
+system ParallelExample(parallel) {
+	readwrite pkg.a.ExampleA;
+}
+
+component AssocFieldsExample {
+  pkg.a.ExampleA.a f1;
+  pkg.b.ExampleB.b f2;
+}
+
+system AssocSystemExample {
+  readwrite pkg.b.ExampleB;
+  readwrite AssocFieldsExample with f1,f2 {
+    readwrite pkg.a.ExampleA;
+  }
+}
+
+system AssocSystemMultiExample {
+  readwrite pkg.a.ExampleA;
+  readwrite AssocFieldsExample {
+    with f1 {
+      readwrite pkg.a.ExampleA;
+    }
+    with f2 {
+      readwrite pkg.b.ExampleB;
+    }
+  }
+}
+

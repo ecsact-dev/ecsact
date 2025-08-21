@@ -1,0 +1,3 @@
+package multi.pkg.b;
+
+component FromB;

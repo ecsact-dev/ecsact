@@ -1,0 +1,19 @@
+load("//bazel:copts.bzl", "copts")
+load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_ecsact_codegen_plugin(
+    name = "ecsact_csharp_codegen",
+    srcs = ["csharp_codegen.cc"],
+    copts = copts,
+    output_extension = "cs",
+    deps = ["//:support"],
+)
+
+filegroup(
+    name = "csharp_codegen",
+    srcs = [
+        ":ecsact_csharp_codegen",
+    ],
+)

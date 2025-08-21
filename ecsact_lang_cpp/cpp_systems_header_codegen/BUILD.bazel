@@ -1,0 +1,21 @@
+load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_ecsact_codegen_plugin(
+    name = "ecsact_cpp_systems_header_codegen",
+    srcs = ["cpp_systems_header_codegen.cc"],
+    copts = copts,
+    no_validate_test = True,  # file name is too long on Windows
+    output_extension = "systems.hh",
+    deps = [
+        "//:cpp_codegen_plugin_util",
+        "//:support",
+    ],
+)
+
+alias(
+    name = "cpp_systems_header_codegen",
+    actual = ":ecsact_cpp_systems_header_codegen",
+)

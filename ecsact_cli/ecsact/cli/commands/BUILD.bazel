@@ -1,0 +1,117 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//:__subpackages__"])
+
+cc_library(
+    name = "command",
+    hdrs = ["command.hh"],
+    copts = copts,
+)
+
+# cc_library(
+#     name = "benchmark",
+#     srcs = ["benchmark.cc"],
+#     hdrs = ["benchmark.hh"],
+#     copts = copts,
+#     deps = [
+#         ":command",
+#         "//ecsact/cli/detail/executable_path",
+#         "@magic_enum",
+#         "@docopt.cpp//:docopt",
+#         "@boost.dll",
+#         "//ecsact_runtime:core",
+#         "//ecsact_runtime:async",
+#         "//ecsact_runtime:serialize",
+#         "@ecsact_si_wasm",
+#         "@nlohmann_json//:json",
+#     ],
+# )
+
+cc_library(
+    name = "common",
+    srcs = ["common.cc"],
+    hdrs = ["common.hh"],
+    copts = copts,
+    deps = [
+        "@docopt.cpp//:docopt",
+        "//ecsact/cli:report",
+        "//ecsact/cli:report_message",
+        "//ecsact/cli/detail:json_report",
+        "//ecsact/cli/detail:text_report",
+    ],
+)
+
+cc_library(
+    name = "codegen",
+    srcs = ["codegen.cc"],
+    hdrs = ["codegen.hh"],
+    copts = copts,
+    deps = [
+        ":command",
+        ":common",
+        "//ecsact/cli/commands/codegen:codegen",
+        "@magic_enum",
+        "@docopt.cpp//:docopt",
+        "@boost.dll",
+        "//ecsact_interpret",
+        "//ecsact_codegen:plugin",
+        "//ecsact_codegen:plugin_validate",
+        "//ecsact_runtime:dylib",
+        "//ecsact_runtime:meta",
+    ],
+)
+
+cc_library(
+    name = "config",
+    srcs = ["config.cc"],
+    hdrs = ["config.hh"],
+    copts = copts,
+    deps = [
+        ":command",
+        "//ecsact/cli/detail:argv0",
+        "@docopt.cpp//:docopt",
+        "@nlohmann_json//:json",
+    ],
+)
+
+cc_library(
+    name = "build",
+    srcs = ["build.cc"],
+    hdrs = ["build.hh"],
+    copts = copts,
+    deps = [
+        ":command",
+        ":common",
+        "//ecsact/cli:report",
+        "//ecsact/cli:report_message",
+        "//ecsact/cli/commands/build/recipe:taste",
+        "//ecsact/cli/commands/build/recipe:cook",
+        "//ecsact/cli/commands/build:cc_compiler",
+        "//ecsact/cli/commands/build:build_recipe",
+        "//ecsact/cli/commands/recipe-bundle:build_recipe_bundle",
+        "//ecsact_interpret",
+        "@docopt.cpp//:docopt",
+        "@magic_enum",
+        "@boost.regex",
+    ],
+)
+
+cc_library(
+    name = "recipe-bundle",
+    srcs = ["recipe-bundle.cc"],
+    hdrs = ["recipe-bundle.hh"],
+    copts = copts,
+    deps = [
+        ":command",
+        ":common",
+        "//ecsact/cli:report",
+        "//ecsact/cli:report_message",
+        "//ecsact/cli/commands/build:build_recipe",
+        "//ecsact/cli/commands/recipe-bundle:build_recipe_bundle",
+        "//ecsact/cli/detail:argv0",
+        "//ecsact_interpret",
+        "@docopt.cpp//:docopt",
+        "@magic_enum",
+    ],
+)

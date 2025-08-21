@@ -1,0 +1,13 @@
+package error.unknown_notify_settings;
+
+component ExampleComponent {
+  i32 num;
+}
+
+system UnknownComponentNotifySettings {
+  readwrite ExampleComponent;
+
+  notify {
+    always NonExistentComponent;
+  }
+}

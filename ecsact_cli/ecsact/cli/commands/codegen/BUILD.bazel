@@ -1,0 +1,35 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//:__subpackages__"])
+
+cc_library(
+    name = "codegen",
+    copts = copts,
+    hdrs = ["codegen.hh"],
+    srcs = ["codegen.cc"],
+    defines = [
+        "ECSACT_DYNAMIC_API=\"\"",
+        "ECSACT_META_API=\"\"",
+    ],
+    deps = [
+        ":codegen_util",
+        "//ecsact/cli:report",
+        "//ecsact/cli/detail/executable_path",
+        "//ecsact_runtime:meta",
+        "//ecsact_runtime:dylib",
+        "//ecsact_codegen:plugin",
+    ],
+)
+
+cc_library(
+    name = "codegen_util",
+    copts = copts,
+    hdrs = ["codegen_util.hh"],
+    srcs = ["codegen_util.cc"],
+    deps = [
+        "//ecsact/cli:report",
+        "//ecsact/cli/detail/executable_path",
+        "@boost.dll",
+    ],
+)

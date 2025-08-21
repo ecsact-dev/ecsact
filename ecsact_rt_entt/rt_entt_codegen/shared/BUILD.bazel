@@ -1,0 +1,93 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//rt_entt_codegen:__subpackages__"])
+
+cc_library(
+    name = "ecsact_entt_details",
+    srcs = ["ecsact_entt_details.cc"],
+    hdrs = ["ecsact_entt_details.hh"],
+    copts = copts,
+    defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    deps = [
+        "//ecsact_codegen:plugin",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:meta",
+    ],
+)
+
+cc_library(
+    name = "sorting",
+    srcs = ["sorting.cc"],
+    hdrs = ["sorting.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:meta",
+    ],
+)
+
+cc_library(
+    name = "util",
+    srcs = ["util.cc"],
+    hdrs = ["util.hh"],
+    copts = copts,
+    defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    deps = [
+        ":comps_with_caps",
+        "//ecsact_codegen:plugin",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:meta",
+    ],
+)
+
+cc_library(
+    name = "comps_with_caps",
+    hdrs = ["comps_with_caps.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:meta",
+    ],
+)
+
+cc_library(
+    name = "system_util",
+    srcs = ["system_util.cc"],
+    hdrs = ["system_util.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        ":util",
+        "//rt_entt_codegen/core/sys_exec",
+        "//ecsact_codegen:plugin",
+        "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_runtime:meta",
+    ],
+)
+
+cc_library(
+    name = "parallel",
+    srcs = ["parallel.cc"],
+    hdrs = ["parallel.hh"],
+    copts = copts,
+    deps = [
+        ":ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_variant",
+        "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+    ],
+)
+
+cc_library(
+    name = "system_variant",
+    hdrs = ["system_variant.hh"],
+    copts = copts,
+    deps = [
+        "//ecsact_runtime:common",
+    ],
+)

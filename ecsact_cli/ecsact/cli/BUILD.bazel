@@ -1,0 +1,53 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+load("//bazel/tools:cc_stamp_header.bzl", "cc_stamp_header")
+
+package(default_visibility = ["//:__subpackages__"])
+
+cc_library(
+    name = "report_message",
+    copts = copts,
+    hdrs = ["report_message.hh"],
+)
+
+cc_library(
+    name = "report",
+    copts = copts,
+    hdrs = ["report.hh"],
+    srcs = ["report.cc"],
+    deps = [
+        ":report_message",
+    ],
+)
+
+cc_stamp_header(
+    name = "bazel_stamp_header",
+    out = "bazel_stamp_header.hh",
+)
+
+cc_binary(
+    name = "ecsact",
+    visibility = ["//visibility:public"],
+    srcs = [
+        "ecsact_cli.cc",
+        "bazel_stamp_header.hh",
+    ],
+    defines = select({
+        "//ecsact_cli:use_sdk_version_enabled": ["ECSACT_CLI_USE_SDK_VERSION"],
+        "//ecsact_cli:use_sdk_version_disabled": [],
+    }),
+    copts = copts,
+    stamp = 1,
+    deps = [
+        # "//ecsact/cli/commands:benchmark",
+        "//ecsact/cli/commands:codegen",
+        "//ecsact/cli/commands:command",
+        "//ecsact/cli/commands:config",
+        "//ecsact/cli/commands:build",
+        "//ecsact/cli/commands:recipe-bundle",
+    ],
+    data = [
+        "@tracy//:tracy_srcs",
+    ],
+)
+

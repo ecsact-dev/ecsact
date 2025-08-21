@@ -1,0 +1,9 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("//bazel:copts.bzl", "copts")
+
+cc_binary(
+    name = "cc_stamp_header_generator",
+    copts = copts,
+    visibility = ["//:__subpackages__"],
+    srcs = ["cc_stamp_header_generator.cc"],
+)

@@ -1,0 +1,13 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel:copts.bzl", "copts")
+
+cc_test(
+    name = "merge_recipe_test",
+    copts = copts,
+    srcs = ["merge_recipe_test.cc"],
+    deps = [
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "//ecsact/cli/commands/build:build_recipe",
+    ],
+)

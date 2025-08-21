@@ -1,0 +1,25 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel:copts.bzl", "copts")
+
+plugins = [
+    "cpp_header",
+    "cpp_systems_header",
+    "cpp_systems_source",
+    "systems_header",
+]
+
+[cc_test(
+    name = plugin,
+    srcs = ["test_plugin.cc"],
+    copts = copts,
+    data = [
+        "//{}_codegen".format(plugin),
+        "//ecsact_cli",
+        "//test:ecsact_srcs",
+    ],
+    env = {
+        "ECSACT_CLI": "$(rootpath //ecsact_cli)",
+        "ECSACT_SRCS": "$(rootpaths //test:ecsact_srcs)",
+        "ECSACT_CODEGEN_PLUGIN": "$(rootpath //{}_codegen)".format(plugin),
+    },
+) for plugin in plugins]

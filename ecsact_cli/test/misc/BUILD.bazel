@@ -1,0 +1,24 @@
+load("//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+filegroup(
+    name = "glob_test_files",
+    srcs = glob(["glob/**/*"]),
+)
+
+cc_test(
+    name = "glob_test",
+    srcs = ["glob_test.cc"],
+    copts = copts,
+    data = [":glob_test_files", "glob/README.md"],
+    tags = ["no-sandbox", "local"],
+    env = {
+        "GLOB_TEST_ROOT_FILE": "$(rootpath :glob/README.md)",
+    },
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+        "//ecsact_cli/ecsact/cli/detail:glob",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

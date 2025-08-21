@@ -1,0 +1,24 @@
+$schema: ../../schema/ecsact-build-recipe.schema.json
+
+name: Example Recipe
+
+defines:
+  EXAMPLE_DEFINE: ''
+  EXAMPLE_DEFINE_WITH_VALUE: '1'
+
+sources:
+  - ecsact_build_test.cc
+  - codegen: ./test_codegen_plugin
+    outdir: _test_codegen_outdir
+  - fetch: https://raw.githubusercontent.com/ecsact-dev/ecsact_cli/main/test/build_recipe/local_dep.cc
+    outdir: src
+  - fetch: https://raw.githubusercontent.com/ecsact-dev/ecsact_cli/main/test/build_recipe/local_dep.hh
+    outdir: include
+
+exports:
+  - ecsact_execute_systems
+  - ecsact_create_registry
+
+imports:
+  - ecsact_system_execution_context_get
+  - ecsact_system_execution_context_action

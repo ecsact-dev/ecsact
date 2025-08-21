@@ -1,0 +1,6 @@
+package example;
+
+component MyComponent;
+component MyOtherComponent {
+	i32 num;
+}

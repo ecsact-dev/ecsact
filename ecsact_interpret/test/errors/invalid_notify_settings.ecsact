@@ -1,0 +1,11 @@
+package error.invalid_notify_settings;
+
+component ExampleComponent {
+	i32 num;
+}
+
+system InvalidNotifySetting {
+  readwrite ExampleComponent;
+
+  notify blah;
+}

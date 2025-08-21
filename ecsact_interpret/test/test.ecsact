@@ -1,0 +1,21 @@
+package test;
+
+enum MyEnum {
+	First = 1;
+	Second = 2;
+}
+
+component TestComponent {
+	i32 num;
+	entity test_entity;
+}
+
+system TestSystem {
+	readwrite TestComponent with test_entity {
+		readwrite TestComponent;
+	}
+
+	system TestNestedSystem(parallel) {
+		readwrite TestComponent;
+	}
+}

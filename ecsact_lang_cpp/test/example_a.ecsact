@@ -1,0 +1,6 @@
+package pkg.a;
+
+component ExampleA {
+	i32 a;
+}
+

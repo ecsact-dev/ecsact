@@ -1,0 +1,59 @@
+main package example;
+
+component WillRemove {
+	i32 dummy;
+}
+
+component WillAdd {
+	i32 dummy;
+}
+
+component Spawner {
+
+}
+
+component ExampleComponent {
+	i32 num;
+}
+
+system Generator {
+	include Spawner;
+	readwrite ExampleComponent;
+	generates {
+		required WillAdd;
+	}
+}
+
+system AddsSystem {
+	include WillAdd;
+	adds ExampleComponent;
+}
+
+system CheckShouldRemove {
+	readwrite ExampleComponent;
+	adds WillRemove;
+}
+
+system RemovesSystem {
+	readwrite WillRemove;
+	removes ExampleComponent;
+}
+
+system ExampleSystem {
+	readwrite ExampleComponent;
+}
+
+component ExampleParallelComponent {
+	i32 num_para;
+}
+
+system ExampleParallelSystem(parallel) {
+	readwrite ExampleParallelComponent;
+}
+
+system ExampleParallelSystemParent {
+	readwrite ExampleParallelComponent;
+	system ExampleParallelSystemNested(parallel) {
+		readwrite ExampleParallelComponent;
+	}
+}

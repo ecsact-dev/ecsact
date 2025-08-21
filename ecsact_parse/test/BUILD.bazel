@@ -1,0 +1,43 @@
+load("//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+# keep sorted
+_TESTS = [
+    "action_statement",
+    "component_statement",
+    "entity_constraint_statement",
+    "field_statement",
+    "import_statement",
+    "none_statement",
+    "package_statement",
+    "parameter",
+    "sequential_statements",
+    "system_component_statement",
+    "system_generates_statement",
+    "system_notify_statement",
+    "system_statement",
+    "system_with_statement",
+    "unknown_statement",
+]
+
+cc_library(
+    name = "parse_test_util",
+    hdrs = ["parse_test_util.hh"],
+    copts = copts,
+    deps = [
+        "@googletest//:gtest",
+    ],
+)
+
+[cc_test(
+    name = test,
+    srcs = ["parse_test_{}.cc".format(test)],
+    copts = copts,
+    deps = [
+        ":parse_test_util",
+        "//ecsact_parse",
+        "@magic_enum",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+) for test in _TESTS]

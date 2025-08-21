@@ -1,0 +1,78 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+cc_library(
+    name = "core_internal",
+    hdrs = ["core.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen:__pkg__"],
+    deps = ["//rt_entt_codegen/shared:ecsact_entt_details"],
+)
+
+# keep sorted
+_CORE_CODEGEN_METHODS = {
+    "execute_systems": [
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
+    "entity_matches": [
+        "//rt_entt_codegen/shared:sorting",
+    ],
+    "init_registry_storage": [],
+    "events": [],
+    "print_sys_exec": [
+        "//rt_entt_codegen/shared:comps_with_caps",
+        "//rt_entt_codegen/shared:sorting",
+        "//rt_entt_codegen/shared:system_util",
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/core/system_provider:lazy",
+        "//rt_entt_codegen/core/system_provider:association",
+        "//rt_entt_codegen/core/system_provider:notify",
+        "//rt_entt_codegen/core/system_provider:basic",
+        "//rt_entt_codegen/core/system_provider:parallel",
+        "//rt_entt_codegen/core/system_provider",
+        "@entt//:entt",
+        "//ecsact_rt_entt:lib",
+        "@tracy",
+    ],
+    "check_error": [],
+    "execution_options": [],
+    "apply_streaming_data": [
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
+    "sorting_components": [
+        "//rt_entt_codegen/shared:sorting",
+    ],
+    "system_markers": [
+        "//rt_entt_codegen/shared:sorting",
+        "//rt_entt_codegen/shared:system_util",
+    ],
+    "system_notify": ["//rt_entt_codegen/shared:system_util"],
+    "update_beforechange": [],
+    "copy_components": [],
+    "hash_registry": [],
+}
+
+[cc_library(
+    name = method,
+    srcs = ["{}.cc".format(method)],
+    copts = copts,
+    defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    deps = _CORE_CODEGEN_METHODS[method] + [
+        ":core_internal",
+        "//rt_entt_codegen/shared:util",
+        "//ecsact_codegen:plugin",
+        "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_runtime:meta",
+    ],
+) for method in _CORE_CODEGEN_METHODS]
+
+cc_library(
+    name = "core",
+    copts = copts,
+    visibility = ["//rt_entt_codegen:__pkg__"],
+    deps = [":core_internal"] + [":{}".format(method) for method in _CORE_CODEGEN_METHODS],
+)

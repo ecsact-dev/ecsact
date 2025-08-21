@@ -1,0 +1,13 @@
+main package eval.stream_component;
+
+component MyStreamComponent(stream) {
+	f32 a;
+}
+
+component MyLazyStreamComponent(stream: lazy) {
+	f32 a;
+}
+
+component MyNormieComponent(stream: false) {
+	f32 a;
+}

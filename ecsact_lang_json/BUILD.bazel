@@ -1,0 +1,22 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "execution_context",
+    hdrs = ["ecsact/cpp/execution_context.hh"],
+    copts = copts,
+    deps = [
+        "//ecsact_runtime:dynamic",
+    ],
+)
+
+cc_library(
+    name = "support",
+    hdrs = ["ecsact/lang-support/lang-cc.hh"],
+    copts = copts,
+    deps = [
+        "//ecsact_runtime:definitions",
+    ],
+)

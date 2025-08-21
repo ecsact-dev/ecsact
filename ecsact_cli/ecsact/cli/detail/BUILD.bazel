@@ -1,0 +1,83 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//:__subpackages__"])
+
+cc_library(
+    name = "argv0",
+    srcs = ["argv0.cc"],
+    hdrs = ["argv0.hh"],
+    copts = copts,
+    deps = [
+        "//ecsact/cli/detail/executable_path",
+    ],
+)
+
+cc_library(
+    name = "archive",
+    srcs = ["archive.cc"],
+    hdrs = ["archive.hh"],
+    copts = copts,
+    deps = [
+        "@libarchive//libarchive",
+    ],
+)
+
+cc_library(
+    name = "download",
+    srcs = ["download.cc"],
+    hdrs = ["download.hh"],
+    copts = copts,
+    deps = [
+        ":proc_exec",
+        "@curl",
+        "@boost.url",
+        "@magic_enum",
+    ],
+)
+
+cc_library(
+    name = "glob",
+    srcs = ["glob.cc"],
+    hdrs = ["glob.hh"],
+    copts = copts,
+)
+
+cc_library(
+    name = "json_report",
+    copts = copts,
+    hdrs = ["json_report.hh"],
+    srcs = ["json_report.cc"],
+    deps = [
+        "//ecsact/cli:report_message",
+        "@nlohmann_json//:json",
+    ],
+)
+
+cc_library(
+    name = "text_report",
+    copts = copts,
+    hdrs = ["text_report.hh"],
+    srcs = ["text_report.cc"],
+    deps = [
+        "//ecsact/cli:report_message",
+    ],
+)
+
+cc_library(
+    name = "proc_exec",
+    copts = copts,
+    hdrs = ["proc_exec.hh"],
+    srcs = ["proc_exec.cc"],
+    deps = [
+        "//ecsact/cli:report",
+        "@boost.process",
+    ],
+)
+
+cc_library(
+    name = "long_path_workaround",
+    copts = copts,
+    hdrs = ["long_path_workaround.hh"],
+    srcs = ["long_path_workaround.cc"],
+)

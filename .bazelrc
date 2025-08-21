@@ -1,0 +1,30 @@
+startup --windows_enable_symlinks
+common --enable_bzlmod
+common --registry=https://raw.githubusercontent.com/ecsact-dev/bazel_registry/main
+common --registry=https://raw.githubusercontent.com/zaucy/bazel-central-registry/add-curl-config2 # temporary
+common --registry=https://raw.githubusercontent.com/bazelboost/registry/main
+common --registry=https://bcr.bazel.build
+build --enable_platform_specific_config
+build --incompatible_enable_cc_toolchain_resolution
+build --incompatible_strict_action_env
+build --enable_runfiles
+
+# some of the bazelboost globs have empty globs
+common --noincompatible_disallow_empty_glob
+
+common:ci --announce_rc
+common:ci --verbose_failures
+common:ci --keep_going
+common:ci --disk_cache=~/.cache/bazel-disk-cache
+
+build --@boost.dll//:use_std_fs
+query --@boost.dll//:use_std_fs
+build --@boost.process//:use_std_fs
+query --@boost.process//:use_std_fs
+build --//ecsact_cli:use_sdk_version
+query --//ecsact_cli:use_sdk_version
+
+build:windows --workspace_status_command=bazel/tools/wsc.cmd
+build:linux --workspace_status_command=bazel/tools/wsc.sh
+
+try-import %workspace%/user.bazelrc

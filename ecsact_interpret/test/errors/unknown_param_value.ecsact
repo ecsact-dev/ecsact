@@ -1,0 +1,7 @@
+package unknown_param_value;
+
+component A { i32 a; };
+
+system UnknownParamValue(parallel: what) {
+  readwrite A;
+}

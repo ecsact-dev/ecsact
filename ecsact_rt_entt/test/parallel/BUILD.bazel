@@ -1,0 +1,42 @@
+load("//bazel:copts.bzl", "copts")
+load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel/rules:defs.bzl", "ecsact_codegen")
+
+ecsact_codegen(
+    name = "ecsact_cc_system_impl_srcs",
+    srcs = [
+        "parallel_test.ecsact",
+    ],
+    output_directory = "_ecsact_cc_system_impl_srcs",
+    plugins = [
+        "//ecsact_lang_cpp/cpp_systems_source_codegen",
+    ],
+)
+
+ecsact_entt_runtime(
+    name = "runtime",
+    srcs = [
+        "parallel_test.ecsact",
+    ],
+    ECSACT_ENTT_RUNTIME_PACKAGE = "::parallel_test::package",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "parallel_test.ecsact.meta.hh",
+    system_impls = [
+        "dynamic",
+    ],
+)
+
+cc_test(
+    name = "test",
+    srcs = [
+        "parallel_test.cc",
+        ":ecsact_cc_system_impl_srcs",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    deps = [
+        ":runtime",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

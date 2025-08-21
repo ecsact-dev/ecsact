@@ -1,0 +1,16 @@
+package error.ambiguous_field_type;
+
+import Amby;
+
+component Amby {
+  i32 amby;
+}
+
+component ExampleComponent {
+  Amby.amby cool_field;
+  i32 num;
+}
+
+system DuplicateNoticeComponents {
+  readwrite ExampleComponent;
+}

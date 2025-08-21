@@ -1,0 +1,46 @@
+load("//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+# buildifier: keep sorted
+_TESTS = [
+    "duplicate_notice_components",
+    "invalid_assoc_field",
+    "invalid_notify_settings",
+    "invalid_stream_component_param_value",
+    "no_capabilities",
+    "no_package_statement_first",
+    "unknown_association_field",
+    "unknown_component_notify_settings",
+    "unknown_param_value",
+]
+
+[cc_test(
+    name = test,
+    srcs = ["{}.cc".format(test)],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    data = ["{}.ecsact".format(test)],
+    deps = [
+        "//:test_lib",
+        "//ecsact_interpret",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+) for test in _TESTS]
+
+cc_test(
+    name = "ambiguous_field_type",
+    srcs = ["ambiguous_field_type.cc"],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    data = [
+        "ambiguous_field_type.ecsact",
+        "ambiguous_field_type_import.ecsact",
+    ],
+    deps = [
+        "//:test_lib",
+        "//ecsact_interpret",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

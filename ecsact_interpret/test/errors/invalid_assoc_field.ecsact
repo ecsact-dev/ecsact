@@ -1,0 +1,9 @@
+main package invalid_assoc_field;
+
+component A { i32 num; }
+
+system S {
+	readwrite A with num {
+		readwrite A;
+	}
+}

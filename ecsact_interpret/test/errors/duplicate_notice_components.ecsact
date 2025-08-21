@@ -1,0 +1,14 @@
+package error.duplicate_notice_components;
+
+component ExampleComponent {
+  i32 num;
+}
+
+system DuplicateNoticeComponents {
+  readwrite ExampleComponent;
+
+  notify {
+    always ExampleComponent;
+    oninit ExampleComponent;
+  }
+}

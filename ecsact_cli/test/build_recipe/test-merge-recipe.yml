@@ -1,0 +1,11 @@
+$schema: ../../schema/ecsact-build-recipe.schema.json
+
+name: Example Recipe 2
+
+sources:
+  - ecsact_build_test_merge.cc
+
+exports:
+  - ecsact_system_execution_context_get
+  - ecsact_system_execution_context_action
+

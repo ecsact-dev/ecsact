@@ -1,0 +1,6 @@
+package imported.test_pkg;
+
+component ImportedComponent {
+	i32 num;
+}
+

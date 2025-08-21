@@ -1,0 +1,22 @@
+load("//bazel:copts.bzl", "copts")
+load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_ecsact_codegen_plugin(
+    name = "ecsact_json_codegen",
+    srcs = ["json_codegen.cc"],
+    copts = copts,
+    output_extension = "json",
+    deps = [
+        "@magic_enum",
+        "@nlohmann_json//:json",
+    ],
+)
+
+filegroup(
+    name = "json_codegen",
+    srcs = [
+        ":ecsact_json_codegen",
+    ],
+)

@@ -1,0 +1,21 @@
+main package example.multipkg;
+
+import multi.pkg.a;
+import multi.pkg.b;
+import multi.pkg.c;
+
+component FromMain {
+	i32 m;
+}
+
+system OnlyOne {
+	readwrite multi.pkg.a.FromA;
+}
+
+system FullyQualifiedFromMain {
+	include FromMain;
+	include multi.pkg.a.FromA;
+	include multi.pkg.b.FromB;
+	include multi.pkg.c.FromC;
+}
+

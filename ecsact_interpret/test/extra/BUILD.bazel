@@ -1,0 +1,19 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel:copts.bzl", "copts")
+
+cc_test(
+    name = "extra",
+    srcs = ["extra.cc"],
+    copts = copts,
+    data = [
+        "runtime_test.ecsact",
+        "imported_pkg.ecsact",
+    ],
+    deps = [
+        "//:test_lib",
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

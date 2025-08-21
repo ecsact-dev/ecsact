@@ -1,0 +1,127 @@
+load("//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+
+cc_test(
+    name = "test_build_recipe",
+    srcs = ["test_build_recipe.cc"],
+    copts = copts,
+    data = [
+        "ecsact_build_test.cc",
+        "ecsact_build_test_merge.cc",
+        "test-merge-recipe.yml",
+        "test-recipe.yml",
+        "//:test.ecsact",
+        "//:test_codegen_plugin",
+        "//ecsact_cli",
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "@llvm_toolchain_llvm//:bin/clang",
+        ],
+    }),
+    env = select({
+        "@platforms//os:windows": {
+            "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
+            "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
+            "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+        },
+        "//conditions:default": {
+            "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
+            "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
+            "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+            "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
+        },
+    }),
+    env_inherit = select({
+        "@platforms//os:windows": [
+            "PATH",
+            "PATHEXT",
+            "PWD",
+            "APPDATA",
+            "ProgramData",
+            "ProgramFiles",
+            "ProgramFiles(x86)",
+            "PROGRAMDATA",
+            "PROGRAMFILES",
+            "PROGRAMFILES(X86)",
+            "TEMP",
+            "OS",
+            "WINDIR",
+        ],
+        "//conditions:default": [],
+    }),
+    tags = ["no-sandbox"],
+    deps = [
+        "//ecsact_cli/ecsact/cli/commands:build",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+)
+
+cc_test(
+    name = "test_build_recipe_bundle",
+    srcs = ["test_build_recipe_bundle.cc"],
+    copts = copts,
+    data = [
+        "ecsact_build_test.cc",
+        "ecsact_build_test_merge.cc",
+        "test-merge-recipe.yml",
+        "test-recipe.yml",
+        "//:test.ecsact",
+        "//:test_codegen_plugin",
+        "//ecsact_cli",
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "@llvm_toolchain_llvm//:bin/clang",
+        ],
+    }),
+    env = select({
+        "@platforms//os:windows": {
+            "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
+            "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
+            "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+        },
+        "//conditions:default": {
+            "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
+            "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
+            "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+            "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
+        },
+    }),
+    env_inherit = select({
+        "@platforms//os:windows": [
+            "PATH",
+            "PATHEXT",
+            "PWD",
+            "APPDATA",
+            "ProgramData",
+            "ProgramFiles",
+            "ProgramFiles(x86)",
+            "PROGRAMDATA",
+            "PROGRAMFILES",
+            "PROGRAMFILES(X86)",
+            "TEMP",
+            "OS",
+            "WINDIR",
+        ],
+        "//conditions:default": [],
+    }),
+    tags = ["no-sandbox"],
+    deps = [
+        "//ecsact_cli/ecsact/cli/commands:build",
+        "//ecsact_cli/ecsact/cli/commands:recipe-bundle",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+)

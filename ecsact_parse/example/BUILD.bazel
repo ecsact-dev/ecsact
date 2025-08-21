@@ -1,0 +1,6 @@
+package(default_visibility = ["//:__subpackages__"])
+
+exports_files([
+    "example.ecsact",
+    "extras.ecsact",
+])

@@ -1,0 +1,4 @@
+package diag.unknown_import;
+
+// This should cause an unknown import error
+import diag.non_existent;

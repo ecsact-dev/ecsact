@@ -1,0 +1,5 @@
+package unknown_comp_param_value;
+
+component UnknownParamValue(stream: huh) {
+  f32 a;
+}

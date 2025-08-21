@@ -1,0 +1,7 @@
+component ExampleComponent {
+	f32 num;
+}
+
+// Package statement must be first
+package errors.no_pkg_statement_first;
+

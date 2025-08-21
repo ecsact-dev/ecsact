@@ -1,0 +1,5 @@
+package error.no_capabilities;
+
+action NoCapabilitiesAction {
+	i32 num;
+}

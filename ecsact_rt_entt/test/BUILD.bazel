@@ -1,0 +1,157 @@
+load("//bazel:copts.bzl", "copts")
+load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel/rules:defs.bzl", "ecsact_codegen")
+
+cc_test(
+    name = "test_build_recipe",
+    srcs = ["test_build_recipe.cc"],
+    copts = copts,
+    data = select({
+        "@platforms//os:windows": [
+            "//:imported_pkg.ecsact",
+            "//:runtime_test.ecsact",
+            "//ecsact_cli",
+            "//ecsact_lang_cpp/cpp_header_codegen:ecsact_cpp_header_codegen",
+            "//ecsact_rt_entt",
+            "//ecsact_rt_entt:headers",
+            "//ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen",
+            "//ecsact_rt_entt/runtime:sources",
+        ],
+        "//conditions:default": [
+            "//:imported_pkg.ecsact",
+            "//:runtime_test.ecsact",
+            "//ecsact_cli",
+            "//ecsact_lang_cpp/cpp_header_codegen:ecsact_cpp_header_codegen",
+            "//ecsact_rt_entt",
+            "//ecsact_rt_entt:headers",
+            "//ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen",
+            "//ecsact_rt_entt/runtime:sources",
+            "@llvm_toolchain_llvm//:bin/clang",
+        ],
+    }),
+    env = select({
+        "@platforms//os:windows": {
+            "ECSACT_CLI": "$(rootpath //ecsact_cli)",
+            "ECSACT_RECIPE_PATH": "$(rootpath //ecsact_rt_entt)",
+            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
+            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //:imported_pkg.ecsact)",
+            "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen)",
+        },
+        "//conditions:default": {
+            "ECSACT_CLI": "$(rootpath //ecsact_cli)",
+            "ECSACT_RECIPE_PATH": "$(rootpath //ecsact_rt_entt)",
+            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
+            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //:imported_pkg.ecsact)",
+            "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen)",
+            "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
+        },
+    }),
+    env_inherit = select({
+        "@platforms//os:windows": [
+            "PATH",
+            "PATHEXT",
+            "PWD",
+            "APPDATA",
+            "ProgramData",
+            "ProgramFiles",
+            "ProgramFiles(x86)",
+            "PROGRAMDATA",
+            "PROGRAMFILES",
+            "PROGRAMFILES(X86)",
+            "TEMP",
+            "OS",
+            "WINDIR",
+        ],
+        "//conditions:default": [],
+    }),
+    deps = [
+        ":spawn",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "spawn",
+    srcs = ["spawn.cc"],
+    hdrs = ["spawn.hh"],
+    copts = copts,
+    deps = [
+        "@boost.process",
+    ],
+)
+
+ecsact_codegen(
+    name = "ecsact_cc_system_impl_srcs",
+    srcs = [
+        "imported_pkg.ecsact",
+        "runtime_test.ecsact",
+    ],
+    output_directory = "_ecsact_cc_system_impl_srcs",
+    plugins = [
+        "//ecsact_lang_cpp/cpp_systems_source_codegen",
+    ],
+)
+
+ecsact_entt_runtime(
+    name = "runtime",
+    srcs = [
+        "imported_pkg.ecsact",
+        "runtime_test.ecsact",
+    ],
+    ECSACT_ENTT_RUNTIME_PACKAGE = "::runtime_test::package",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "runtime_test.ecsact.meta.hh",
+    system_impls = [
+        # "static",
+        "dynamic",
+    ],
+)
+
+cc_test(
+    name = "test",
+    srcs = [
+        "runtime_test.cc",
+        "system_impls.cc",
+        ":ecsact_cc_system_impl_srcs",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    deps = [
+        ":runtime",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "clone_test",
+    srcs = [
+        "clone_test.cc",
+        "system_impls.cc",
+        ":ecsact_cc_system_impl_srcs",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    deps = [
+        ":runtime",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "hash_test",
+    srcs = [
+        "hash_test.cc",
+        "system_impls.cc",
+        ":ecsact_cc_system_impl_srcs",
+    ],
+    args = ["--gtest_catch_exceptions=0"],
+    copts = copts,
+    deps = [
+        ":runtime",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

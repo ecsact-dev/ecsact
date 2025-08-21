@@ -1,0 +1,90 @@
+load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("//bazel:copts.bzl", "copts", "linkopts")
+load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
+
+package(default_visibility = ["//:__subpackages__"])
+
+ecsact_entt_runtime(
+    name = "runtime",
+    srcs = ["example.ecsact"],
+    ECSACT_ENTT_RUNTIME_PACKAGE = "::example::package",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "example.ecsact.meta.hh",
+    system_impls = ["dynamic"],
+)
+
+cc_binary(
+    name = "system_impls",
+    srcs = [
+        "system_impls.cc",
+    ],
+    copts = copts,
+    features = [
+        "-exceptions",
+    ],
+    linkopts = [
+        "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+        "--no-entry",
+    ],
+    linkshared = True,
+    tags = ["manual"],
+    deps = [
+        ":runtime__public_cc",
+        "//ecsact_lang_cpp:execution_context",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:dynamic",
+    ],
+)
+
+_system_names = [
+    "ExampleSystem",
+    "Generator",
+    "AddsSystem",
+    "CheckShouldRemove",
+    "RemovesSystem",
+]
+
+wasm_cc_binary(
+    name = "system_impls_wasm",
+    backend = "llvm",
+    cc_target = ":system_impls",
+    # exported_functions = [
+    #     "_example__%s" % system_name
+    #     for system_name in _system_names
+    # ],
+    outputs = [
+        "system_impls.wasm",
+    ],
+    standalone = True,
+)
+
+cc_test(
+    name = "wasmer_example",
+    srcs = [
+        "example.cc",
+        "//ecsact_si_wasmer:sources",
+    ],
+    args = [
+        "$(location :system_impls.wasm)",
+    ],
+    copts = copts,
+    data = [
+        ":system_impls.wasm",
+    ],
+    defines = [
+        "ECSACT_SI_WASM_API=",
+        "ECSACT_CORE_API=",
+    ],
+    linkopts = linkopts,
+    deps = [
+        ":runtime",
+        "//ecsact_runtime:core",
+        "//ecsact_runtime:dynamic",
+        "//ecsact_runtime:meta",
+        "//ecsact_runtime:si_wasm",
+        "//ecsact_si_wasmer:minst",
+        "@magic_enum",
+        "@wasmer",
+    ],
+)

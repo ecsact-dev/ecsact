@@ -1,0 +1,4 @@
+package multi.pkg.c;
+
+component FromC;
+

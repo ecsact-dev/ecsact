@@ -1,0 +1,18 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+package(default_visibility = ["//ecsact:__subpackages__"])
+
+bzl_library(
+    name = "ecsact_codegen",
+    srcs = [
+        "ecsact_codegen.bzl",
+        ":ecsact_codegen_plguin",
+    ],
+)
+
+bzl_library(
+    name = "ecsact_codegen_plguin",
+    srcs = [
+        "ecsact_codegen_plugin.bzl",
+    ],
+)

@@ -1,0 +1,111 @@
+main package runtime_test;
+
+import imported.test_pkg;
+
+component ComponentA {
+	i32 a;
+}
+
+component OtherEntityComponent {
+	i32 num;
+	entity target;
+}
+
+component Health {
+	f32 value;
+}
+
+component Weakened {
+	f32 value;
+}
+
+component Attacking {
+	entity target;
+}
+
+component EmptyComponent;
+
+component AlwaysRemoveMe;
+
+system SimpleSystem {
+	readwrite ComponentA;
+}
+
+component WillRemoveTrivial;
+component TrivialRemoveComponent { i32 example; }
+system TrivialRemove {
+	include WillRemoveTrivial;
+	removes TrivialRemoveComponent;
+}
+
+system OtherEntitySystem {
+	readwrite OtherEntityComponent with target {
+		readwrite ComponentA;
+	}
+}
+
+system AlwaysRemove {
+	removes AlwaysRemoveMe;
+}
+
+action MakeAnother {
+	readwrite ComponentA;
+	generates {
+		required ComponentA;
+	}
+}
+
+action AssocTestAction {
+	entity assoc_entity;
+	readwrite ComponentA;
+	adds OtherEntityComponent;
+}
+
+component AddAssocTestComponent {
+	i32 num;
+}
+
+component AddAssocTestTag;
+
+system AddAssocTest {
+	readwrite ComponentA;
+	readwrite OtherEntityComponent with target {
+		include AddAssocTestTag;
+		adds AddAssocTestComponent;
+	}
+}
+
+component RemoveAssocTestComponent {
+	i32 num;
+}
+
+component RemoveAssocTestTag;
+
+system RemoveAssocTest {
+	readwrite OtherEntityComponent with target {
+		include RemoveAssocTestTag;
+		removes RemoveAssocTestComponent;
+	}
+}
+
+system AttackDamage {
+	readwrite Attacking with target {
+		readwrite Health;
+	}
+}
+
+system AttackDamageWeakened {
+	readwrite Attacking with target {
+		readwrite Health;
+		readonly Weakened;
+	}
+}
+
+component EntityTesting {
+	i32 a;
+}
+
+system SimpleIncrementImportedComp {
+	readwrite imported.test_pkg.ImportedComponent;
+}
+

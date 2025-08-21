@@ -1,0 +1,19 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("//bazel:copts.bzl", "copts")
+
+cc_binary(
+    name = "check_module_header",
+    srcs = ["check_module_header.cc"],
+    copts = copts,
+    defines = ["BOOST_ASIO_HAS_STD_INVOKE_RESULT"],  # https://github.com/chriskohlhoff/asio/issues/912
+    target_compatible_with = ["@platforms//os:linux"],  # abseil has a linker error on windows
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@bazel_tools//tools/cpp/runfiles",
+        "@boost.dll",
+        "@boost.process",
+    ],
+    data = [
+        "@llvm_toolchain//:clang-format",
+    ],
+)

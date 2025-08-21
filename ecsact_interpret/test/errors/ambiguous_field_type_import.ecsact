@@ -1,0 +1,5 @@
+package Amby;
+
+enum amby {
+  SOME_VAL = 10;
+}

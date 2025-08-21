@@ -1,0 +1,19 @@
+package eval.assoc_capabilities;
+
+component MyTag;
+component Example { i32 num; }
+component AssocComp { Example.num hello; }
+
+system ReadwriteSystem {
+  readwrite AssocComp with hello {
+    readwrite Example;
+  }
+}
+
+system RemovesSystem {
+  readwrite AssocComp with hello {
+    include MyTag;
+    removes Example;
+  }
+}
+

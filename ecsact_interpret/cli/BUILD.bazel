@@ -1,0 +1,20 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_binary(
+    name = "ecsact_interpreter",
+    copts = copts,
+    srcs = ["ecsact_interpreter_cli.cc"],
+    deps = [
+        "//:ecsact_interpret",
+        "//:ecsact_interpret_detail",
+        "@magic_enum",
+    ],
+)
+
+filegroup(
+    name = "cli",
+    srcs = [":ecsact_interpreter"],
+)

@@ -1,0 +1,25 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+
+package(default_visibility = ["//:__subpackages__"])
+
+bool_flag(
+    name = "use_sdk_version",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "use_sdk_version_enabled",
+    flag_values = {":use_sdk_version": "true"},
+)
+
+config_setting(
+    name = "use_sdk_version_disabled",
+    flag_values = {":use_sdk_version": "false"},
+)
+
+alias(
+    name = "ecsact_cli",
+    actual = "//ecsact_cli/ecsact/cli:ecsact",
+    visibility = ["//visibility:public"],
+)

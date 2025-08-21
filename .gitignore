@@ -1,0 +1,13 @@
+# bazel
+bazel-*
+*.bazel.lock
+user.bazelrc
+compile_commands.json
+external
+.cache/
+
+# ecsact codegen
+*.ecsact.*
+
+# test tmp dirs
+/test/build_recipe/tmp/

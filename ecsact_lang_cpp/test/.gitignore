@@ -1,0 +1,6 @@
+/bazel-*
+/user.bazelrc
+/external
+/compile_commands.json
+/plugins/_test_out
+

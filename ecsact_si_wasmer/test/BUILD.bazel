@@ -1,0 +1,167 @@
+load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("//bazel:copts.bzl", "copts", "linkopts")
+load("//bazel/rules:defs.bzl", "ecsact_binary")
+load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
+
+package(default_visibility = [":__subpackages__"])
+
+exports_files(["test.cc"])
+
+ecsact_binary(
+    name = "bundle_runtime",
+    srcs = ["wasi_test.ecsact"],
+    recipes = [
+        "//ecsact_si_wasmer",
+        "//ecsact_rt_entt",
+    ],
+)
+
+cc_library(
+    name = "impl",
+    srcs = [
+        "//ecsact_si_wasmer:sources",
+    ],
+    copts = copts,
+    defines = [
+        # Statically link the si_wasm api
+        "ECSACT_SI_WASM_API=",
+        # Statically link dynamic module
+        "ECSACT_DYNAMIC_API=",
+    ],
+    deps = [
+        "//ecsact_runtime:dynamic",
+        "//ecsact_runtime:si_wasm",
+        "//ecsact_si_wasmer:minst",
+    ],
+)
+
+cc_test(
+    name = "minst_test",
+    srcs = ["minst_test.cc"],
+    args = ["ecsact_si_wasmer_test/minst_test.wasm"],
+    copts = copts,
+    data = [":minst_test_wasm"],
+    linkopts = linkopts,
+    deps = [
+        "//ecsact_si_wasmer:minst",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+)
+
+cc_binary(
+    name = "minst_test_wasm_cc",
+    srcs = ["minst_test_wasm.cc"],
+    copts = copts,
+    features = [
+        "-exceptions",
+    ],
+    linkopts = [
+        "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+        "--no-entry",
+    ],
+    linkshared = True,
+    tags = ["manual"],
+    deps = [
+        "//ecsact_runtime:common",
+    ],
+)
+
+wasm_cc_binary(
+    name = "minst_test_wasm",
+    backend = "llvm",
+    cc_target = ":minst_test_wasm_cc",
+    outputs = ["minst_test.wasm"],
+    standalone = True,
+)
+
+# keep sorted
+_WASI_TESTS = [
+    "iostream",
+    "printf",
+    "puts",
+    # Reading files not supported (yet)
+    # https://github.com/ecsact-dev/ecsact_si_wasm/issues/30
+    # "read_file",
+]
+
+ecsact_entt_runtime(
+    name = "wasi_test_runtime",
+    srcs = ["wasi_test.ecsact"],
+    ECSACT_ENTT_RUNTIME_PACKAGE = "::wasi_test::package",
+    ECSACT_ENTT_RUNTIME_USER_HEADER = "wasi_test.ecsact.meta.hh",
+    system_impls = ["dynamic"],
+)
+
+[cc_binary(
+    name = "{}__system_impl".format(wasi_test),
+    srcs = ["wasi_test_{}.cc".format(wasi_test)],
+    copts = copts,
+    features = [
+        "wasm_no_entry",
+        "-wasm_warnings_as_errors",
+        "-wasm_error_on_undefined_symbols",
+        "-exceptions",
+    ],
+    linkopts = [
+        "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+        "--no-entry",
+    ],
+    linkshared = True,
+    tags = ["manual"],
+    deps = [
+        ":wasi_test_runtime__public_cc",
+        "//ecsact_lang_cpp:execution_context",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:dynamic",
+    ],
+) for wasi_test in _WASI_TESTS]
+
+[wasm_cc_binary(
+    name = "{}__system_impl_wasm".format(wasi_test),
+    backend = "llvm",
+    cc_target = ":{}__system_impl".format(wasi_test),
+    # exported_functions = ["_wasi_test__WasiTestSystem"],
+    outputs = ["{}__system_impl.wasm".format(wasi_test)],
+    standalone = True,
+) for wasi_test in _WASI_TESTS]
+
+[cc_binary(
+    name = "{}__wasi".format(wasi_test),
+    srcs = [
+        "wasi_test.cc",
+    ],
+    copts = copts,
+    data = [
+        ":{}__system_impl.wasm".format(wasi_test),
+        "wasi_test_file.txt",
+    ],
+    defines = ["ECSACT_SI_WASM_API="],
+    linkopts = linkopts,
+    deps = [
+        ":impl",
+        ":wasi_test_runtime",
+        "//ecsact_runtime:core",
+        "//ecsact_runtime:dynamic",
+        "//ecsact_runtime:meta",
+        "@magic_enum",
+        "@wasmer",
+    ],
+) for wasi_test in _WASI_TESTS]
+
+[cc_test(
+    name = "{}__wasi_test".format(wasi_test),
+    srcs = ["test.cc"],
+    args = [
+        "--exe=$(location :{}__wasi)".format(wasi_test),
+        "$(location :{}__system_impl.wasm)".format(wasi_test),
+    ],
+    copts = copts,
+    data = [
+        ":{}__system_impl.wasm".format(wasi_test),
+        ":{}__wasi".format(wasi_test),
+        "wasi_test_file.txt",
+    ],
+    linkopts = linkopts,
+) for wasi_test in _WASI_TESTS]

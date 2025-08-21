@@ -1,0 +1,100 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+cc_library(
+    name = "system_provider",
+    srcs = ["system_provider.cc"],
+    hdrs = ["system_provider.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
+)
+
+cc_library(
+    name = "association",
+    srcs = ["association/association.cc"],
+    hdrs = ["association/association.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_ctx_functions",
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_util",
+    ],
+)
+
+cc_library(
+    name = "basic",
+    srcs = ["basic/basic.cc"],
+    hdrs = ["basic/basic.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_ctx_functions",
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:util",
+    ],
+)
+
+cc_library(
+    name = "notify",
+    srcs = ["notify/notify.cc"],
+    hdrs = ["notify/notify.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:system_util",
+    ],
+)
+
+cc_library(
+    name = "lazy",
+    srcs = ["lazy/lazy.cc"],
+    hdrs = ["lazy/lazy.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:sorting",
+    ],
+)
+
+cc_library(
+    name = "system_ctx_functions",
+    srcs = ["system_ctx_functions.cc"],
+    hdrs = ["system_ctx_functions.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
+)
+
+cc_library(
+    name = "parallel",
+    srcs = ["parallel/parallel.cc"],
+    hdrs = ["parallel/parallel.hh"],
+    copts = copts,
+    visibility = ["//rt_entt_codegen/core:__pkg__"],
+    deps = [
+        ":system_provider",
+        "//rt_entt_codegen/core/sys_exec",
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
+    ],
+)

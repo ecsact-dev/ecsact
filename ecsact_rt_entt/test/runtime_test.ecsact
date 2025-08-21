@@ -1,0 +1,235 @@
+main package runtime_test;
+
+import imported.test_pkg;
+
+component ComponentA {
+	i32 a;
+}
+
+component ComponentB {
+	i32 b;
+}
+
+component Health {
+	f32 value;
+}
+
+component EmptyComponent;
+
+component AlwaysRemoveMe;
+
+transient AutoRemovedTag;
+
+system SimpleSystem {
+	readwrite ComponentA;
+}
+
+component WillRemoveTrivial;
+component TrivialRemoveComponent { i32 example; }
+system TrivialRemove {
+	include WillRemoveTrivial;
+	removes TrivialRemoveComponent;
+}
+
+system AlwaysRemove {
+	removes AlwaysRemoveMe;
+}
+
+action MakeAnother {
+	readwrite ComponentA;
+	readwrite ComponentB;
+	generates {
+		required ComponentA;
+		required ComponentB;
+	}
+}
+
+action TestAction {
+	readwrite ComponentA;
+}
+
+component EntityTesting {
+	i32 a;
+}
+
+system SimpleIncrementImportedComp {
+	readwrite imported.test_pkg.ImportedComponent;
+	readonly imported.test_pkg.Incrementer;
+}
+
+system AddsAutoRemovedTag {
+	readwrite ComponentA;
+	adds AutoRemovedTag;
+}
+
+component AddA;
+component AddB;
+
+system TestTwoAdds {
+	readonly Health;
+	adds AddA;
+	adds AddB;
+}
+
+system TestOneAdd {
+	readonly Health;
+	adds AddA;
+}
+
+component RemoveA;
+component RemoveB;
+
+system TestTwoRemoves {
+	removes RemoveA;
+	removes RemoveB;
+}
+
+component ParentComponent {
+	i32 a;
+}
+
+component NestedComponent {
+	f32 b;
+};
+
+system ParentSystem {
+	readwrite ParentComponent;
+	system NestedSystem {
+		readwrite NestedComponent;
+	}
+}
+
+component TestLazySystemComponentA {
+    i8 ai8;
+    u8 au8;
+    i16 ai16;
+    u16 au16;
+    i32 ai32;
+    u32 au32;
+    f32 af32;
+}
+
+component TestLazySystemComponentB {
+    i32 num;
+}
+
+component TestLazySystemTag;
+
+system TestLazySystem(lazy) {
+    include TestLazySystemTag;
+    readwrite TestLazySystemComponentA;
+    readwrite TestLazySystemComponentB;
+}
+
+component TestLazySystemComponentC {
+    i32 num_c;
+}
+
+system LazyParentSystem(lazy) {
+    readwrite TestLazySystemComponentC;
+
+    system LazyParentNestedSystem {
+        readwrite TestLazySystemComponentB;
+    }
+}
+
+system LazyUpdateGeneratedEntity(lazy) {
+  readwrite ComponentA;
+}
+
+// Notify systems
+
+component NotifyComponentA {
+	i8 val;
+}
+component NotifyComponentB {
+	i8 val;
+}
+component NotifyComponentC {
+	i8 val;
+}
+
+system InitNotify {
+	readwrite NotifyComponentA;
+	readonly NotifyComponentB;
+	readonly NotifyComponentC;
+	notify oninit;
+}
+
+system InitNotifySelective {
+	readwrite NotifyComponentA;
+	readonly NotifyComponentB;
+	readonly NotifyComponentC;
+	notify oninit;
+}
+
+component TriggerTag;
+component UpdateNotifyAdd;
+
+system TriggerUpdateNotify{
+	readwrite NotifyComponentA; 
+	removes TriggerTag;
+}
+
+system UpdateNotify {
+	readwrite NotifyComponentA;
+	adds UpdateNotifyAdd;
+	notify onupdate;
+}
+
+system RemoveNotify {
+	readwrite NotifyComponentA;
+	readonly NotifyComponentC;
+	notify {
+		onremove NotifyComponentB;
+	}
+}
+
+system ChangeNotify {
+	readwrite NotifyComponentA;
+
+	notify onchange;
+}
+
+component Counter {
+	i32 val;
+}
+
+system MixedNotify {
+	readwrite Counter;
+	readwrite NotifyComponentA;
+	readonly NotifyComponentC;
+	notify {
+		onchange NotifyComponentA;
+		oninit NotifyComponentC;
+		onremove NotifyComponentB;
+	}
+}
+
+component StreamTest(stream) {
+  i32 val;
+}
+
+
+component StreamTestToggle(stream) {
+    i32 val;
+}
+
+component StreamTestCounter {
+    i32 val;
+}
+
+system StreamTestSystem {
+  stream_toggle StreamTestToggle;
+  readonly StreamTestCounter;
+}
+
+system StreamTestSystemTwo {
+  stream_toggle StreamTestToggle;
+  stream_toggle StreamTest;
+  readonly StreamTestCounter;
+}
+
+system StreamTestSystemCounter {
+  readwrite StreamTestToggle;
+}

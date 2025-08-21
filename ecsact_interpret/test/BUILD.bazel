@@ -1,0 +1,108 @@
+load("//bazel:copts.bzl", "copts")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+    name = "test_lib",
+    hdrs = ["test_lib.hh"],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_test(
+    name = "test",
+    srcs = ["test.cc"],
+    copts = copts,
+    args = ["--gtest_catch_exceptions=0"],
+    data = ["test.ecsact"],
+    deps = [
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "comment_before_package",
+    srcs = ["comment_before_package.cc"],
+    copts = copts,
+    data = ["comment_before_package.ecsact"],
+    deps = [
+        ":test_lib",
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "multi_pkg",
+    srcs = ["multi_pkg.cc"],
+    copts = copts,
+    data = [
+        "multi_pkg_a.ecsact",
+        "multi_pkg_b.ecsact",
+        "multi_pkg_c.ecsact",
+        "multi_pkg_main.ecsact",
+    ],
+    deps = [
+        ":test_lib",
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "assoc_capabilities",
+    srcs = ["assoc_capabilities.cc"],
+    copts = copts,
+    data = [
+        "assoc_capabilities.ecsact",
+    ],
+    deps = [
+        ":test_lib",
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "field_indexing",
+    srcs = ["field_indexing.cc"],
+    copts = copts,
+    data = [
+        "field_indexing.ecsact",
+    ],
+    deps = [
+        ":test_lib",
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "stream_component",
+    srcs = ["stream_component.cc"],
+    copts = copts,
+    data = [
+        "stream_component.ecsact",
+    ],
+    deps = [
+        ":test_lib",
+        "//ecsact_interpret",
+        "@bazel_sundry//bazel_sundry:runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecsact.dev/ecsact-build-recipe.schema.json",
+  "title": "Ecsact Build Recipe",
+  "description": "Ecsact build recipe configuration used with the Ecsact CLI",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Display name for the build recipe. May be shown in some tools.",
+      "type": "string"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "Relative or absolute path to source file. Relative paths are relative to the build recipe file."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Relative or absolute path to source file. Relative paths are relative to the build recipe file."
+              },
+              "outdir": {
+                "type": "string",
+                "description": "Directory the source file is copied to"
+              }
+            },
+            "required": [
+              "path"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "codegen": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Name or path to an Ecsact codegen plugin"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "List of names or paths to Ecsact codegen plugins"
+                    }
+                  }
+                ]
+              },
+              "outdir": {
+                "type": "string",
+                "description": "Directory the generated files from the codegen plugin(s) are written to. If not set the generated files are written next to the source files."
+              }
+            },
+            "required": [
+              "codegen"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fetch": {
+                "type": "string",
+                "description": "URL to source file that will be downloaded"
+              },
+              "integrity": {
+                "type": "string"
+              },
+              "strip_prefix": {
+                "type": "sting"
+              },
+              "outdir": {
+                "type": "string",
+                "description": "Directory the fetched file(s) are downloaded to"
+              }
+            },
+            "required": [
+              "fetch"
+            ]
+          }
+        ]
+      }
+    },
+    "exports": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "List of ecsact methods the Ecsact runtime will export. If the Ecsact runtime does not export these methods it will fail validation."
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "List of ecsact methods the Ecsact runtime will import. If the Ecsact runtime does not import these methods it will fail validation."
+      }
+    }
+  },
+  "required": [
+    "name",
+    "sources",
+    "exports",
+    "imports"
+  ]
+}

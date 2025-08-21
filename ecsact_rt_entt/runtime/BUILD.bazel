@@ -1,0 +1,16 @@
+package(default_visibility = ["//visibility:public"])
+
+# keep sorted
+_srcs = [
+    "ecsact_rt_entt_core.cc",
+    "ecsact_rt_entt_dynamic.cc",
+    "stream_registries.cc",
+    "hash.cc",
+]
+
+exports_files(_srcs)
+
+filegroup(
+    name = "sources",
+    srcs = _srcs,
+)

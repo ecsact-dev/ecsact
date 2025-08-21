@@ -1,0 +1,9 @@
+main package wasi_test;
+
+component DummyComponent {
+	i32 n;
+}
+
+system WasiTestSystem {
+	readwrite DummyComponent;
+}

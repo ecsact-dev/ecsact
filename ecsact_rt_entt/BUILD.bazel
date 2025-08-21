@@ -1,0 +1,202 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//bazel/rules:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+raw_url = "https://raw.githubusercontent.com"
+
+filegroup(
+    name = "headers",
+    srcs = glob(["ecsact/**/*.hh"]),
+)
+
+cc_library(
+    name = "lib",
+    hdrs = glob(["ecsact/**/*.hh"]),
+    copts = copts,
+)
+
+cc_test(
+    name = "test",
+    srcs = [
+        "build_test.cc",
+        "//runtime:sources",
+    ],
+    copts = copts,
+    defines = [
+        "ECSACT_CORE_API=",
+        "ECSACT_DYNAMIC_API=",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":lib",
+        "//ecsact_runtime:common",
+        "//ecsact_runtime:core",
+        "//ecsact_runtime:dynamic",
+        "@entt",
+        "@xxhash",
+    ],
+)
+
+ecsact_build_recipe(
+    name = "ecsact_rt_entt_recipe",
+    srcs = [
+        ":headers",
+        "//runtime:sources",
+    ],
+    codegen_plugins = {
+        "//ecsact_lang_cpp/cpp_header_codegen": "src",
+        "//rt_entt_codegen": "src",
+    },
+    fetch_srcs = {
+        "include/entt": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entt.hpp",
+        ],
+        "include/entt/graph": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/graph/adjacency_matrix.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/graph/flow.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/graph/dot.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/graph/fwd.hpp",
+        ],
+        "include/entt/locator": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/locator/locator.hpp",
+        ],
+        "include/entt/poly": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/poly/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/poly/poly.hpp",
+        ],
+        "include/entt/process": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/process/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/process/process.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/process/scheduler.hpp",
+        ],
+        "include/entt/resource": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/resource/cache.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/resource/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/resource/loader.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/resource/resource.hpp",
+        ],
+        "include/entt/entity": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/registry.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/storage.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/entity.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/group.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/sparse_set.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/component.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/mixin.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/view.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/handle.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/helper.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/observer.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/organizer.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/runtime_view.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/entity/snapshot.hpp",
+        ],
+        "include/entt/meta": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/adl_pointer.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/container.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/context.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/factory.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/meta.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/node.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/pointer.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/policy.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/range.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/resolve.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/template.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/type_traits.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/meta/utility.hpp",
+        ],
+        "include/entt/platform": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/platform/android-ndk-r17.hpp",
+        ],
+        "include/entt/signal": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/signal/sigh.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/signal/delegate.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/signal/dispatcher.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/signal/emitter.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/signal/fwd.hpp",
+        ],
+        "include/entt/config": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/config/version.h",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/config/macro.h",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/config/config.h",
+        ],
+        "include/entt/container": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/container/dense_map.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/container/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/container/dense_set.hpp",
+        ],
+        "include/entt/core": [
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/compressed_pair.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/type_traits.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/fwd.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/iterator.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/memory.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/algorithm.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/utility.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/any.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/type_info.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/attribute.h",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/hashed_string.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/enum.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/family.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/ident.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/monostate.hpp",
+            raw_url + "/skypjack/entt/v3.12.2/src/entt/core/tuple.hpp",
+        ],
+        "include": [
+            raw_url + "/Cyan4973/xxHash/v0.8.2/xxhash.h",
+            raw_url + "/Cyan4973/xxHash/v0.8.2/xxhash.c",
+        ],
+    },
+    exports = [
+        # core
+        "ecsact_execute_systems",
+        "ecsact_create_registry",
+        "ecsact_clone_registry",
+        "ecsact_hash_registry",
+        "ecsact_destroy_registry",
+        "ecsact_clear_registry",
+        "ecsact_create_entity",
+        "ecsact_ensure_entity",
+        "ecsact_entity_exists",
+        "ecsact_destroy_entity",
+        "ecsact_count_entities",
+        "ecsact_get_entities",
+        "ecsact_add_component",
+        "ecsact_has_component",
+        "ecsact_get_component",
+        "ecsact_count_components",
+        "ecsact_each_component",
+        "ecsact_get_components",
+        "ecsact_update_component",
+        "ecsact_remove_component",
+        "ecsact_stream",
+        # dynamic
+        "ecsact_set_system_execution_impl",
+        "ecsact_system_execution_context_same",
+        "ecsact_system_execution_context_parent",
+        "ecsact_system_execution_context_stream_toggle",
+        "ecsact_system_execution_context_entity",
+        "ecsact_system_execution_context_generate",
+        "ecsact_system_execution_context_id",
+        "ecsact_system_execution_context_other",
+        "ecsact_system_execution_context_add",
+        "ecsact_system_execution_context_remove",
+        "ecsact_system_execution_context_get",
+        "ecsact_system_execution_context_update",
+        "ecsact_system_execution_context_has",
+        "ecsact_system_execution_context_action",
+    ],
+)
+
+exports_files(["build_recipe.yml"])
+
+ecsact_build_recipe_bundle(
+    name = "ecsact_rt_entt",
+    recipes = [":ecsact_rt_entt_recipe"],
+)

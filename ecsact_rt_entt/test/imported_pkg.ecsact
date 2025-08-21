@@ -1,0 +1,19 @@
+package imported.test_pkg;
+
+component ImportedComponent {
+	i32 num;
+}
+
+component SomeLocalComponent {
+	i32 local_num;
+}
+
+component Incrementer {
+  i32 increment_value;
+}
+
+system ImportedSystem {
+	readwrite SomeLocalComponent;
+  readonly Incrementer;
+}
+

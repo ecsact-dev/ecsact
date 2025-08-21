@@ -1,0 +1,64 @@
+main package parallel_test;
+
+component ParallelA {
+    i32 val;
+}
+component ParallelB {
+    i32 val;
+}
+
+action ActionParallelA {
+    readonly ParallelA;
+}
+
+system ParentSystemConflictA {
+    readonly ParallelA;
+    system NestedSystemConflictA {
+        readwrite ParallelA;
+    }
+    system NestedSystemConflictB {
+        readwrite ParallelA;
+    }
+}
+
+system NestedSystemNoConflict {
+    readonly ParallelA;
+    system NestedSystemNoConflictA {
+        readonly ParallelB;
+    }
+    system NestedSystemNoConflictB {
+        readonly ParallelB;
+    }
+}
+
+system ReadParallelA {
+    readonly ParallelB;
+    system ReadParallelAChildSystem {
+        readwrite ParallelA;
+    }
+}
+
+system ReadWriteParallelA {
+    readwrite ParallelA;
+}
+
+system ReadWriteParallelB {
+    readwrite ParallelB;
+}
+
+system ReadParallelB {
+    readonly ParallelB;
+}
+
+system ReadParallelBB {
+    readonly ParallelB;
+}
+
+system ParentWithSharedComponentA {
+    readwrite ParallelA;
+    system ChildWithSharedComponentA {
+        readwrite ParallelA;
+    }
+}
+
+

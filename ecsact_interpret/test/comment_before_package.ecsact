@@ -1,0 +1,4 @@
+// Comments are allowed before the package statement
+
+package test.comment_before_package;
+

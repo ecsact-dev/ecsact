@@ -1,0 +1,17 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+cc_library(
+    name = "sys_exec",
+    srcs = ["sys_exec.cc"],
+    hdrs = ["sys_exec.hh"],
+    copts = copts,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//rt_entt_codegen/shared:ecsact_entt_details",
+        "//rt_entt_codegen/shared:parallel",
+        "//rt_entt_codegen/shared:system_variant",
+        "//rt_entt_codegen/shared:util",
+        "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+    ],
+)

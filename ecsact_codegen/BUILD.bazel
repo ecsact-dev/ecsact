@@ -1,0 +1,34 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "headers",
+    srcs = glob([
+        "ecsact/codegen/*.hh",
+        "ecsact/codegen/*.h",
+    ]),
+)
+
+cc_library(
+    name = "plugin_validate_headers",
+    hdrs = [
+        "ecsact/codegen/plugin_validate.hh",
+    ],
+)
+
+cc_library(
+    name = "plugin",
+    hdrs = [
+        "ecsact/codegen/plugin.h",
+        "ecsact/codegen/plugin.hh",
+    ],
+    deps = [
+        "//ecsact_runtime:common",
+    ],
+)
+
+alias(
+    name = "plugin_validate",
+    actual = "//ecsact_codegen/ecsact_codegen_plugin_validate:lib",
+)
