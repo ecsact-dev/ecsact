@@ -1,6 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
-load("//bazel/rules:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
 load("//bazel:copts.bzl", "copts")
+load("//bazel/rules:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -15,13 +15,14 @@ cc_library(
     name = "lib",
     hdrs = glob(["ecsact/**/*.hh"]),
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
 )
 
 cc_test(
     name = "test",
     srcs = [
         "build_test.cc",
-        "//runtime:sources",
+        "//ecsact_rt_entt/runtime:sources",
     ],
     copts = copts,
     defines = [
@@ -43,11 +44,11 @@ ecsact_build_recipe(
     name = "ecsact_rt_entt_recipe",
     srcs = [
         ":headers",
-        "//runtime:sources",
+        "//ecsact_rt_entt/runtime:sources",
     ],
     codegen_plugins = {
         "//ecsact_lang_cpp/cpp_header_codegen": "src",
-        "//rt_entt_codegen": "src",
+        "//ecsact_rt_entt/rt_entt_codegen": "src",
     },
     fetch_srcs = {
         "include/entt": [

@@ -4,7 +4,7 @@
 load(":ecsact_codegen_plugin.bzl", "EcsactCodegenPluginInfo")
 
 def _ecsact_codegen(ctx):
-    info = ctx.toolchains["//ecsact:toolchain_type"].ecsact_info
+    info = ctx.toolchains["@ecsact//bazel/rules:toolchain_type"].ecsact_info
 
     outputs = []
     tools = [] + info.tool_files
@@ -66,5 +66,5 @@ ecsact_codegen = rule(
             doc = "List of plugin to use for code generation. Default ones are available at `@ecsact//codegen_plugins:*`",
         ),
     },
-    toolchains = ["//ecsact:toolchain_type"],
+    toolchains = ["@ecsact//bazel/rules:toolchain_type"],
 )

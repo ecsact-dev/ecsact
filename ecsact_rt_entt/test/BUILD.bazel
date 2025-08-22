@@ -1,7 +1,7 @@
-load("//bazel:copts.bzl", "copts")
-load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel:copts.bzl", "copts")
 load("//bazel/rules:defs.bzl", "ecsact_codegen")
+load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
 
 cc_test(
     name = "test_build_recipe",
@@ -9,42 +9,42 @@ cc_test(
     copts = copts,
     data = select({
         "@platforms//os:windows": [
-            "//:imported_pkg.ecsact",
-            "//:runtime_test.ecsact",
             "//ecsact_cli",
             "//ecsact_lang_cpp/cpp_header_codegen:ecsact_cpp_header_codegen",
             "//ecsact_rt_entt",
             "//ecsact_rt_entt:headers",
             "//ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen",
             "//ecsact_rt_entt/runtime:sources",
+            "//ecsact_rt_entt/test:imported_pkg.ecsact",
+            "//ecsact_rt_entt/test:runtime_test.ecsact",
         ],
         "//conditions:default": [
-            "//:imported_pkg.ecsact",
-            "//:runtime_test.ecsact",
             "//ecsact_cli",
             "//ecsact_lang_cpp/cpp_header_codegen:ecsact_cpp_header_codegen",
             "//ecsact_rt_entt",
             "//ecsact_rt_entt:headers",
             "//ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen",
             "//ecsact_rt_entt/runtime:sources",
-            "@llvm_toolchain_llvm//:bin/clang",
+            "//ecsact_rt_entt/test:imported_pkg.ecsact",
+            "//ecsact_rt_entt/test:runtime_test.ecsact",
+            "@llvm_toolchain_llvm//ecsact_rt_entt/test:bin/clang",
         ],
     }),
     env = select({
         "@platforms//os:windows": {
             "ECSACT_CLI": "$(rootpath //ecsact_cli)",
             "ECSACT_RECIPE_PATH": "$(rootpath //ecsact_rt_entt)",
-            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
-            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //:imported_pkg.ecsact)",
+            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //ecsact_rt_entt/test:runtime_test.ecsact)",
+            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //ecsact_rt_entt/test:imported_pkg.ecsact)",
             "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen)",
         },
         "//conditions:default": {
             "ECSACT_CLI": "$(rootpath //ecsact_cli)",
             "ECSACT_RECIPE_PATH": "$(rootpath //ecsact_rt_entt)",
-            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //:runtime_test.ecsact)",
-            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //:imported_pkg.ecsact)",
+            "ECSACT_RUNTIME_FILE_PATH": "$(rootpath //ecsact_rt_entt/test:runtime_test.ecsact)",
+            "ECSACT_IMPORTED_FILE_PATH": "$(rootpath //ecsact_rt_entt/test:imported_pkg.ecsact)",
             "ECSACT_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_rt_entt/rt_entt_codegen:ecsact_rt_entt_codegen)",
-            "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
+            "CC": "$(rootpath @llvm_toolchain_llvm//ecsact_rt_entt/test:bin/clang)",
         },
     }),
     env_inherit = select({

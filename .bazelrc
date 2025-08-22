@@ -17,12 +17,10 @@ common:ci --verbose_failures
 common:ci --keep_going
 common:ci --disk_cache=~/.cache/bazel-disk-cache
 
-build --@boost.dll//:use_std_fs
-query --@boost.dll//:use_std_fs
-build --@boost.process//:use_std_fs
-query --@boost.process//:use_std_fs
-build --//ecsact_cli:use_sdk_version
-query --//ecsact_cli:use_sdk_version
+common --@boost.dll//:use_std_fs
+common --@boost.process//:use_std_fs
+common --@docopt.cpp//:use_boost_regex
+common --//ecsact_cli:use_sdk_version
 
 build:windows --workspace_status_command=bazel/tools/wsc.cmd
 build:linux --workspace_status_command=bazel/tools/wsc.sh

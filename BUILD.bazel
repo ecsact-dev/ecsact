@@ -1,0 +1,12 @@
+load("//bazel/rules:toolchain.bzl", "ecsact_toolchain")
+
+ecsact_toolchain(
+    name = "ecsact_cli",
+    target_tool = "//ecsact_cli",
+)
+
+toolchain(
+    name = "ecsact_cli_toolchain",
+    toolchain = ":ecsact_cli",
+    toolchain_type = "//bazel/rules:toolchain_type",
+)

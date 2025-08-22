@@ -1,5 +1,5 @@
-load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
 load("//bazel:copts.bzl", "copts")
+load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -9,11 +9,11 @@ cc_ecsact_codegen_plugin(
     copts = copts,
     output_extension = "rt_entt.cc",
     deps = [
-        "//rt_entt_codegen/core",
-        "//rt_entt_codegen/shared:ecsact_entt_details",
-        "//rt_entt_codegen/shared:util",
         "//ecsact_lang_cpp:cpp_codegen_plugin_util",
         "//ecsact_lang_cpp:support",
+        "//ecsact_rt_entt/rt_entt_codegen/core",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:ecsact_entt_details",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:util",
     ],
 )
 

@@ -7,6 +7,7 @@ cc_library(
     name = "execution_context",
     hdrs = ["ecsact/cpp/execution_context.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_lang_cpp",
     deps = [
         "//ecsact_runtime:dynamic",
     ],
@@ -16,6 +17,7 @@ cc_library(
     name = "support",
     hdrs = ["ecsact/lang-support/lang-cc.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_lang_cpp",
     deps = [
         "//ecsact_runtime:definitions",
     ],
@@ -25,11 +27,12 @@ cc_library(
     name = "cpp_codegen_plugin_util",
     hdrs = ["ecsact/cpp_codegen_plugin_util.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_lang_cpp",
     deps = [
+        "//ecsact_codegen:plugin",
+        "//ecsact_lang_cpp:support",
         "//ecsact_runtime:common",
         "//ecsact_runtime:meta",
-        "//ecsact_lang_cpp:support",
-        "//ecsact_codegen:plugin",
     ],
 )
 

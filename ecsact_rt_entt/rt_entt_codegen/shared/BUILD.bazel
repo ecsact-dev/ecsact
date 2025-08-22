@@ -1,7 +1,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel:copts.bzl", "copts")
 
-package(default_visibility = ["//rt_entt_codegen:__subpackages__"])
+package(default_visibility = ["//ecsact_rt_entt/rt_entt_codegen:__subpackages__"])
 
 cc_library(
     name = "ecsact_entt_details",
@@ -9,6 +9,7 @@ cc_library(
     hdrs = ["ecsact_entt_details.hh"],
     copts = copts,
     defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         "//ecsact_codegen:plugin",
         "//ecsact_lang_cpp:support",
@@ -22,6 +23,7 @@ cc_library(
     srcs = ["sorting.cc"],
     hdrs = ["sorting.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         ":ecsact_entt_details",
         "//ecsact_runtime:common",
@@ -35,6 +37,7 @@ cc_library(
     hdrs = ["util.hh"],
     copts = copts,
     defines = ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         ":comps_with_caps",
         "//ecsact_codegen:plugin",
@@ -48,6 +51,7 @@ cc_library(
     name = "comps_with_caps",
     hdrs = ["comps_with_caps.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         ":ecsact_entt_details",
         "//ecsact_runtime:common",
@@ -60,14 +64,15 @@ cc_library(
     srcs = ["system_util.cc"],
     hdrs = ["system_util.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         ":ecsact_entt_details",
         ":util",
-        "//rt_entt_codegen/core/sys_exec",
         "//ecsact_codegen:plugin",
         "//ecsact_lang_cpp:cpp_codegen_plugin_util",
         "//ecsact_lang_cpp:support",
         "//ecsact_runtime:meta",
+        "//ecsact_rt_entt/rt_entt_codegen/core/sys_exec",
     ],
 )
 
@@ -76,10 +81,11 @@ cc_library(
     srcs = ["parallel.cc"],
     hdrs = ["parallel.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         ":ecsact_entt_details",
-        "//rt_entt_codegen/shared:system_variant",
         "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:system_variant",
     ],
 )
 
@@ -87,6 +93,7 @@ cc_library(
     name = "system_variant",
     hdrs = ["system_variant.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
     deps = [
         "//ecsact_runtime:common",
     ],

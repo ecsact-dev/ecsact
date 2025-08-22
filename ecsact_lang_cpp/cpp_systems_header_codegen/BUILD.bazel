@@ -1,5 +1,5 @@
-load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
 load("//bazel:copts.bzl", "copts")
+load("//ecsact_lang_cpp:codegen_plugin.bzl", "cc_ecsact_codegen_plugin")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -10,8 +10,8 @@ cc_ecsact_codegen_plugin(
     no_validate_test = True,  # file name is too long on Windows
     output_extension = "systems.hh",
     deps = [
-        "//:cpp_codegen_plugin_util",
-        "//:support",
+        "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+        "//ecsact_lang_cpp:support",
     ],
 )
 

@@ -10,7 +10,7 @@
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/runtime/meta.h"
 #include "ecsact/runtime/meta.hh"
-#include "ecsact_entt_details.hh"
+#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 
 namespace ecsact::rt_entt_codegen::util {
 
@@ -293,10 +293,12 @@ auto make_view( //
 	for(auto comp_id : details.writable_comps) {
 		auto comp_name = decl_cpp_ident(comp_id);
 
-		additional_components.push_back(std::format(
-			"ecsact::entt::detail::exec_beforechange_storage<{}>",
-			comp_name
-		));
+		additional_components.push_back(
+			std::format(
+				"ecsact::entt::detail::exec_beforechange_storage<{}>",
+				comp_name
+			)
+		);
 	}
 
 	if(!additional_components.empty()) {

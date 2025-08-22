@@ -6,12 +6,13 @@ cc_library(
     srcs = ["sys_exec.cc"],
     hdrs = ["sys_exec.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_rt_entt",
     visibility = ["//visibility:public"],
     deps = [
-        "//rt_entt_codegen/shared:ecsact_entt_details",
-        "//rt_entt_codegen/shared:parallel",
-        "//rt_entt_codegen/shared:system_variant",
-        "//rt_entt_codegen/shared:util",
         "//ecsact_lang_cpp:cpp_codegen_plugin_util",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:ecsact_entt_details",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:parallel",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:system_variant",
+        "//ecsact_rt_entt/rt_entt_codegen/shared:util",
     ],
 )

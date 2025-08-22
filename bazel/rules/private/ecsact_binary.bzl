@@ -31,7 +31,7 @@ def _ecsact_binary_impl(ctx):
         variables = variables,
     )
 
-    ecsact_toolchain = ctx.toolchains["//ecsact:toolchain_type"].ecsact_info
+    ecsact_toolchain = ctx.toolchains["@ecsact//bazel/rules:toolchain_type"].ecsact_info
 
     preferred_output_extension = ctx.attr.shared_library_extension
 
@@ -114,7 +114,7 @@ def _ecsact_binary_impl(ctx):
         tools = tools,
         arguments = [args],
         env = env,
-        toolchain = Label("//ecsact:toolchain_type"),
+        toolchain = Label("@ecsact//bazel/rules:toolchain_type"),
     )
 
     link_libraries = []
@@ -199,7 +199,7 @@ _ecsact_binary = rule(
             default = False,
         ),
     },
-    toolchains = ["//ecsact:toolchain_type"] + use_cc_toolchain(),
+    toolchains = ["@ecsact//bazel/rules:toolchain_type"] + use_cc_toolchain(),
     fragments = ["cpp"],
 )
 

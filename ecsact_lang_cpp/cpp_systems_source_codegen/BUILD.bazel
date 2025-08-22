@@ -9,7 +9,7 @@ cc_ecsact_codegen_plugin(
     copts = copts,
     no_validate_test = True,  # file name is too long on Windows
     output_extension = "systems.cc",
-    deps = ["//:support"],
+    deps = ["//ecsact_lang_cpp:support"],
 )
 
 alias(

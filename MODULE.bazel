@@ -6,6 +6,11 @@ module(
 bazel_dep(name = "emsdk", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "aspect_rules_lint", version = "1.5.3", dev_dependency = True)
+bazel_dep(name = "toolchains_llvm", version = "1.4.0", dev_dependency = True)
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(llvm_version = "19.1.0")
+use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
 
 git_override(
     module_name = "hedron_compile_commands",
@@ -47,3 +52,10 @@ bazel_dep(name = "xxhash", version = "0.8.3")
 bazel_dep(name = "boost.url", version = "1.83.0.bzl.2")
 bazel_dep(name = "googletest", version = "1.17.0")
 bazel_dep(name = "lexy", version = "2022.05.1.bcr.1")
+bazel_dep(name = "entt", version = "3.12.2")
+
+register_toolchains(
+    # "@llvm_toolchain//:all",
+    "//:all",
+    dev_dependency = True,
+)

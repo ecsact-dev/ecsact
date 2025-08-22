@@ -13,5 +13,5 @@ ecsact_library = rule(
         #     allow_rules = [EcsactLibraryInfo],
         # ),
     },
-    toolchains = ["//ecsact:toolchain_type"],
+    toolchains = ["@ecsact//bazel/rules:toolchain_type"],
 )

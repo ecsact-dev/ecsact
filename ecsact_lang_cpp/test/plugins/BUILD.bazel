@@ -13,13 +13,13 @@ plugins = [
     srcs = ["test_plugin.cc"],
     copts = copts,
     data = [
-        "//{}_codegen".format(plugin),
+        "//ecsact_lang_cpp/{}_codegen".format(plugin),
         "//ecsact_cli",
-        "//test:ecsact_srcs",
+        "//ecsact_lang_cpp/test:ecsact_srcs",
     ],
     env = {
         "ECSACT_CLI": "$(rootpath //ecsact_cli)",
-        "ECSACT_SRCS": "$(rootpaths //test:ecsact_srcs)",
-        "ECSACT_CODEGEN_PLUGIN": "$(rootpath //{}_codegen)".format(plugin),
+        "ECSACT_SRCS": "$(rootpaths //ecsact_lang_cpp/test:ecsact_srcs)",
+        "ECSACT_CODEGEN_PLUGIN": "$(rootpath //ecsact_lang_cpp/{}_codegen)".format(plugin),
     },
 ) for plugin in plugins]

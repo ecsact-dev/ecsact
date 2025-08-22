@@ -250,7 +250,7 @@ ecsact_build_recipe = rule(
 def _ecsact_build_recipe_bundle(ctx):
     # type: (ctx) -> None
 
-    ecsact_toolchain = ctx.toolchains["//ecsact:toolchain_type"].ecsact_info
+    ecsact_toolchain = ctx.toolchains["@ecsact//bazel/rules:toolchain_type"].ecsact_info
     bundle_output_file = ctx.actions.declare_file("{}.ecsact-recipe-bundle".format(ctx.attr.name))
 
     args = ctx.actions.args()
@@ -274,7 +274,7 @@ def _ecsact_build_recipe_bundle(ctx):
         inputs = ctx.files.recipes + recipes_data,
         executable = executable,
         arguments = [args],
-        toolchain = Label("//ecsact:toolchain_type"),
+        toolchain = Label("@ecsact//bazel/rules:toolchain_type"),
         # need curl in PATH due to https://github.com/ecsact-dev/ecsact_cli/issues/115
         use_default_shell_env = True,
     )
@@ -295,5 +295,5 @@ ecsact_build_recipe_bundle = rule(
             providers = [EcsactBuildRecipeInfo],
         ),
     },
-    toolchains = ["//ecsact:toolchain_type"] + use_cc_toolchain(),
+    toolchains = ["@ecsact//bazel/rules:toolchain_type"] + use_cc_toolchain(),
 )
