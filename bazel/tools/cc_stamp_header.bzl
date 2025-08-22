@@ -23,7 +23,7 @@ cc_stamp_header = rule(
             mandatory = True,
         ),
         "tool": attr.label(
-            default = Label("//ecsact_cli/bazel/tools:cc_stamp_header_generator"),
+            default = Label("//bazel/tools:cc_stamp_header_generator"),
             cfg = "exec",
             executable = True,
         ),

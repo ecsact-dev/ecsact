@@ -9,7 +9,7 @@ cc_library(
     hdrs = ["argv0.hh"],
     copts = copts,
     deps = [
-        "//ecsact/cli/detail/executable_path",
+        "//ecsact_cli/ecsact/cli/detail/executable_path",
     ],
 )
 
@@ -30,8 +30,8 @@ cc_library(
     copts = copts,
     deps = [
         ":proc_exec",
-        "@curl",
         "@boost.url",
+        "@curl",
         "@magic_enum",
     ],
 )
@@ -45,39 +45,39 @@ cc_library(
 
 cc_library(
     name = "json_report",
-    copts = copts,
-    hdrs = ["json_report.hh"],
     srcs = ["json_report.cc"],
+    hdrs = ["json_report.hh"],
+    copts = copts,
     deps = [
-        "//ecsact/cli:report_message",
+        "//ecsact_cli/ecsact/cli:report_message",
         "@nlohmann_json//:json",
     ],
 )
 
 cc_library(
     name = "text_report",
-    copts = copts,
-    hdrs = ["text_report.hh"],
     srcs = ["text_report.cc"],
+    hdrs = ["text_report.hh"],
+    copts = copts,
     deps = [
-        "//ecsact/cli:report_message",
+        "//ecsact_cli/ecsact/cli:report_message",
     ],
 )
 
 cc_library(
     name = "proc_exec",
-    copts = copts,
-    hdrs = ["proc_exec.hh"],
     srcs = ["proc_exec.cc"],
+    hdrs = ["proc_exec.hh"],
+    copts = copts,
     deps = [
-        "//ecsact/cli:report",
+        "//ecsact_cli/ecsact/cli:report",
         "@boost.process",
     ],
 )
 
 cc_library(
     name = "long_path_workaround",
-    copts = copts,
-    hdrs = ["long_path_workaround.hh"],
     srcs = ["long_path_workaround.cc"],
+    hdrs = ["long_path_workaround.hh"],
+    copts = copts,
 )

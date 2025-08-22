@@ -8,6 +8,6 @@ cc_test(
     deps = [
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-        "//ecsact/cli/commands/build:build_recipe",
+        "//ecsact_cli/ecsact/cli/commands/build:build_recipe",
     ],
 )

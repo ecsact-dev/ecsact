@@ -28,12 +28,14 @@ cc_library(
     name = "common",
     hdrs = ["ecsact/runtime/common.h"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
 )
 
 cc_library(
     name = "definitions",
     hdrs = ["ecsact/runtime/definitions.h"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [":common"],
 )
 
@@ -44,6 +46,7 @@ cc_library(
         "ecsact/runtime/async.hh",
     ],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [
         ":common",
         ":core",
@@ -57,6 +60,7 @@ cc_library(
         "ecsact/runtime/core.hh",
     ],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [":common"],
 )
 
@@ -64,12 +68,14 @@ cc_library(
     name = "lib",
     hdrs = ["ecsact/lib.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
 )
 
 cc_library(
     name = "dynamic",
     hdrs = ["ecsact/runtime/dynamic.h"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [
         ":common",
         ":definitions",
@@ -83,6 +89,7 @@ cc_library(
         "ecsact/runtime/meta.hh",
     ],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [
         ":common",
         ":definitions",
@@ -96,6 +103,7 @@ cc_library(
         "ecsact/runtime/serialize.hh",
     ],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [
         ":common",
         ":core",
@@ -106,6 +114,7 @@ cc_library(
     name = "static",
     hdrs = ["ecsact/runtime/static.h"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [":common"],
 )
 
@@ -116,6 +125,7 @@ cc_library(
         "ecsact/si/wasm.hh",
     ],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [":common"],
 )
 
@@ -123,6 +133,7 @@ cc_library(
     name = "dylib",
     hdrs = ["ecsact/runtime/dylib.h"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [":common"],
 )
 
@@ -130,6 +141,7 @@ cc_library(
     name = "ecsact_runtime",
     hdrs = ["ecsact/runtime.h"],
     copts = copts,
+    strip_include_prefix = "/ecsact_runtime",
     deps = [
         ":async",
         ":core",

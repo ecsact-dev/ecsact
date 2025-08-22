@@ -9,9 +9,9 @@ cc_library(
     hdrs = ["build_recipe.hh"],
     copts = copts,
     deps = [
-        "//ecsact/cli:report",
-        "//ecsact/cli/commands/build:get_modules",
-        "//ecsact/cli/commands/codegen:codegen_util",
+        "//ecsact_cli/ecsact/cli:report",
+        "//ecsact_cli/ecsact/cli/commands/build:get_modules",
+        "//ecsact_cli/ecsact/cli/commands/codegen:codegen_util",
         "@yaml-cpp",
     ],
 )
@@ -24,7 +24,7 @@ cc_library(
     deps = [
         ":cc_compiler_config",
         ":cc_compiler_util",
-        "//ecsact/cli:report",
+        "//ecsact_cli/ecsact/cli:report",
         "@boost.process",
         "@magic_enum",
         "@nlohmann_json//:json",
@@ -38,7 +38,7 @@ cc_library(
     copts = copts,
     deps = [
         ":cc_compiler_util",
-        "//ecsact/cli:report",
+        "//ecsact_cli/ecsact/cli:report",
         "@nlohmann_json//:json",
     ],
 )

@@ -31,5 +31,6 @@ cc_library(
     srcs = _srcs,
     hdrs = _hdrs,
     copts = copts,
+    strip_include_prefix = "/ecsact_parse",
     deps = _deps,
 )
