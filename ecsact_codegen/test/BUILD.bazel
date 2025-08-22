@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
-load("//ecsact_codegen:codegen_plugin.bzl", "ecsact_codegen_plugin")
 load("//bazel:copts.bzl", "copts")
+load("//ecsact_codegen:codegen_plugin.bzl", "ecsact_codegen_plugin")
 
 cc_binary(
     name = "mock_plugin_bin",

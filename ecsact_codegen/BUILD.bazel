@@ -15,6 +15,7 @@ cc_library(
     hdrs = [
         "ecsact/codegen/plugin_validate.hh",
     ],
+    strip_include_prefix = "/ecsact_codegen",
 )
 
 cc_library(
@@ -23,6 +24,7 @@ cc_library(
         "ecsact/codegen/plugin.h",
         "ecsact/codegen/plugin.hh",
     ],
+    strip_include_prefix = "/ecsact_codegen",
     deps = [
         "//ecsact_runtime:common",
     ],

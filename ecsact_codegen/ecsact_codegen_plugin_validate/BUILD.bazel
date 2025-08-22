@@ -5,22 +5,22 @@ package(default_visibility = ["//:__subpackages__"])
 
 cc_library(
     name = "lib",
-    copts = copts,
     srcs = [
         "plugin_validate.cc",
     ],
+    copts = copts,
     deps = [
-        "//:plugin_validate_headers",
-        "@boost.dll",
-        "//ecsact_runtime:meta",
+        "//ecsact_codegen:plugin_validate_headers",
         "//ecsact_runtime:dylib",
+        "//ecsact_runtime:meta",
+        "@boost.dll",
     ],
 )
 
 cc_binary(
     name = "ecsact_codegen_plugin_validate",
-    copts = copts,
     srcs = ["main.cc"],
+    copts = copts,
     deps = [
         ":lib",
         "@bazel_tools//tools/cpp/runfiles",
