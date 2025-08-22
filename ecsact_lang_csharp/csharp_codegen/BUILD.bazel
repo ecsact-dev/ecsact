@@ -8,7 +8,10 @@ cc_ecsact_codegen_plugin(
     srcs = ["csharp_codegen.cc"],
     copts = copts,
     output_extension = "cs",
-    deps = ["//ecsact_lang_cpp:support"],
+    deps = [
+        "//ecsact_lang_cpp:support",
+        "//ecsact_lang_csharp:support",
+    ],
 )
 
 filegroup(
