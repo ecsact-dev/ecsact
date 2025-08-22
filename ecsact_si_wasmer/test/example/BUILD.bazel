@@ -83,6 +83,7 @@ cc_test(
         "//ecsact_runtime:dynamic",
         "//ecsact_runtime:meta",
         "//ecsact_runtime:si_wasm",
+        "//ecsact_si_wasmer:implementation",
         "//ecsact_si_wasmer:minst",
         "@magic_enum",
         "@wasmer",

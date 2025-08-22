@@ -22,6 +22,9 @@ cc_library(
     srcs = [
         "//ecsact_si_wasmer:sources",
     ],
+    hdrs = [
+        "//ecsact_si_wasmer:headers",
+    ],
     copts = copts,
     defines = [
         # Statically link the si_wasm api
@@ -29,6 +32,7 @@ cc_library(
         # Statically link dynamic module
         "ECSACT_DYNAMIC_API=",
     ],
+    strip_include_prefix = "/ecsact_si_wasmer",
     deps = [
         "//ecsact_runtime:dynamic",
         "//ecsact_runtime:si_wasm",

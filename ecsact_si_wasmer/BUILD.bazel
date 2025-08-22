@@ -1,6 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("//bazel/rules:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
 load("//bazel:copts.bzl", "copts")
+load("//bazel/rules:defs.bzl", "ecsact_build_recipe", "ecsact_build_recipe_bundle")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -16,8 +16,8 @@ filegroup(
     name = "sources",
     srcs = glob([
         "ecsact/si/wasmer/**/*.cc",
-        "ecsact/si/wasmer/**/*.hh",
-        "ecsact/si/wasmer/**/*.h",
+        # "ecsact/si/wasmer/**/*.hh",
+        # "ecsact/si/wasmer/**/*.h",
     ]),
 )
 
@@ -57,6 +57,7 @@ cc_library(
     srcs = [":sources"],
     hdrs = [":headers"],
     copts = copts,
+    strip_include_prefix = "/ecsact_si_wasmer",
     deps = [
         "//ecsact_runtime:dynamic",
         "//ecsact_runtime:si_wasm",
@@ -73,6 +74,7 @@ cc_library(
         "ecsact/si/wasmer/detail/minst/minst.hh",
     ],
     copts = copts,
+    strip_include_prefix = "/ecsact_si_wasmer",
     deps = [
         ":cpp_util",
         "//ecsact_runtime:common",
@@ -84,6 +86,7 @@ cc_library(
     name = "cpp_util",
     hdrs = ["ecsact/si/wasmer/detail/cpp_util.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_si_wasmer",
 )
 
 ecsact_build_recipe(

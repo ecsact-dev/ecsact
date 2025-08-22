@@ -6,8 +6,14 @@ common --registry=https://raw.githubusercontent.com/bazelboost/registry/main
 common --registry=https://bcr.bazel.build
 build --enable_platform_specific_config
 build --incompatible_enable_cc_toolchain_resolution
-build --incompatible_strict_action_env
 build --enable_runfiles
+
+# for ecsact_si_wasmer tests
+# NOTE: we probably could use the wasmer from rules_wasmer for the tests instead
+build --action_env=WASMER_DIR
+
+# needed until https://github.com/emscripten-core/emsdk/pull/1333 or similar is merged
+build --noincompatible_strict_action_env
 
 # some of the bazelboost globs have empty globs
 common --noincompatible_disallow_empty_glob
