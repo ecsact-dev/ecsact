@@ -39,9 +39,9 @@ void example::AssocSystemExample::impl(context& ctx) {
 	ctx.update(b);
 
 	// we can read/write assoc fields since its readable
-	auto assoc_example = ctx.get<AssocFieldsExample>();
+	auto assoc_example = ctx.get<AssocFieldsExample>(0, 0);
 	assoc_example.f1 = 10; // NOTE: Generally you would not do this
-	ctx.update(assoc_example);
+	ctx.update(assoc_example, 0, 0);
 
 	// we can access the other context
 	auto other_ctx = ctx.other();
