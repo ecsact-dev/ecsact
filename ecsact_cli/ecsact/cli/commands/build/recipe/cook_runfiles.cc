@@ -31,23 +31,23 @@ auto ecsact::cli::cook::load_runfiles(
 	ecsact::cli::report_info("Using ecsact headers from runfiles");
 
 	auto ecsact_runtime_headers_from_runfiles = std::vector<std::string>{
-		"ecsact_runtime/ecsact/lib.hh",
-		"ecsact_runtime/ecsact/runtime.h",
-		"ecsact_runtime/ecsact/runtime/async.h",
-		"ecsact_runtime/ecsact/runtime/async.hh",
-		"ecsact_runtime/ecsact/runtime/common.h",
-		"ecsact_runtime/ecsact/runtime/core.h",
-		"ecsact_runtime/ecsact/runtime/core.hh",
-		"ecsact_runtime/ecsact/runtime/definitions.h",
-		"ecsact_runtime/ecsact/runtime/dylib.h",
-		"ecsact_runtime/ecsact/runtime/dynamic.h",
-		"ecsact_runtime/ecsact/runtime/meta.h",
-		"ecsact_runtime/ecsact/runtime/meta.hh",
-		"ecsact_runtime/ecsact/runtime/serialize.h",
-		"ecsact_runtime/ecsact/runtime/serialize.hh",
-		"ecsact_runtime/ecsact/runtime/static.h",
-		"ecsact_runtime/ecsact/si/wasm.h",
-		"ecsact_runtime/ecsact/si/wasm.hh",
+		"ecsact/ecsact_runtime/ecsact/lib.hh",
+		"ecsact/ecsact_runtime/ecsact/runtime.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/async.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/async.hh",
+		"ecsact/ecsact_runtime/ecsact/runtime/common.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/core.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/core.hh",
+		"ecsact/ecsact_runtime/ecsact/runtime/definitions.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/dylib.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/dynamic.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/meta.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/meta.hh",
+		"ecsact/ecsact_runtime/ecsact/runtime/serialize.h",
+		"ecsact/ecsact_runtime/ecsact/runtime/serialize.hh",
+		"ecsact/ecsact_runtime/ecsact/runtime/static.h",
+		"ecsact/ecsact_runtime/ecsact/si/wasm.h",
+		"ecsact/ecsact_runtime/ecsact/si/wasm.hh",
 	};
 
 	for(auto hdr : ecsact_runtime_headers_from_runfiles) {
@@ -61,7 +61,7 @@ auto ecsact::cli::cook::load_runfiles(
 			return false;
 		}
 
-		auto rel_hdr_path = hdr.substr("ecsact_runtime/"sv.size());
+		auto rel_hdr_path = hdr.substr("ecsact/ecsact_runtime/"sv.size());
 		fs::create_directories((inc_dir / rel_hdr_path).parent_path(), ec);
 		auto some_bullshit = inc_dir / rel_hdr_path;
 
