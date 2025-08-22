@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "common.h"
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/definitions.h"
 

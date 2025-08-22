@@ -5,20 +5,25 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "ecsact_interpret_detail",
-    visibility = ["//:__subpackages__"],
     hdrs = glob(["ecsact/interpret/detail/*.hh"]),
+    strip_include_prefix = "/ecsact_interpret",
+    visibility = ["//:__subpackages__"],
     deps = ["@magic_enum"],
 )
 
 cc_library(
     name = "ecsact_interpret",
     srcs = glob(["ecsact/interpret/**/*.cc"]),
-    hdrs = glob(["ecsact/interpret/*.h", "ecsact/interpret/*.hh"]),
+    hdrs = glob([
+        "ecsact/interpret/*.h",
+        "ecsact/interpret/*.hh",
+    ]),
     copts = copts,
+    strip_include_prefix = "/ecsact_interpret",
     deps = [
         ":ecsact_interpret_detail",
-        "//parse-resolver-runtime",
-        "//ecsact_runtime:common",
+        "//ecsact_interpret/parse-resolver-runtime",
         "//ecsact_parse",
+        "//ecsact_runtime:common",
     ],
 )

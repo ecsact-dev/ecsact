@@ -11,7 +11,7 @@
 #include <optional>
 #include <stdexcept>
 #include <unordered_map>
-#include "parse-resolver-runtime/lifecycle.hh"
+#include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
 using ecsact::interpret::details::trigger_on_destroy;
 
@@ -995,7 +995,8 @@ void ecsact_system_generates_unset_component(
 	gen_comps.erase(component_id);
 }
 
-int32_t ecsact_meta_count_system_generates_ids(ecsact_system_like_id system_id
+int32_t ecsact_meta_count_system_generates_ids(
+	ecsact_system_like_id system_id
 ) {
 	auto& sys_like_def = get_system_like(system_id);
 	return static_cast<int32_t>(sys_like_def.generates.size());

@@ -5,11 +5,11 @@ package(default_visibility = ["//visibility:public"])
 
 cc_binary(
     name = "ecsact_interpreter",
-    copts = copts,
     srcs = ["ecsact_interpreter_cli.cc"],
+    copts = copts,
     deps = [
-        "//:ecsact_interpret",
-        "//:ecsact_interpret_detail",
+        "//ecsact_interpret",
+        "//ecsact_interpret:ecsact_interpret_detail",
         "@magic_enum",
     ],
 )

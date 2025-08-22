@@ -1,5 +1,5 @@
-load("//bazel:copts.bzl", "copts")
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel:copts.bzl", "copts")
 
 # buildifier: keep sorted
 _TESTS = [
@@ -21,8 +21,8 @@ _TESTS = [
     copts = copts,
     data = ["{}.ecsact".format(test)],
     deps = [
-        "//:test_lib",
         "//ecsact_interpret",
+        "//ecsact_interpret/test:test_lib",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -38,8 +38,8 @@ cc_test(
         "ambiguous_field_type_import.ecsact",
     ],
     deps = [
-        "//:test_lib",
         "//ecsact_interpret",
+        "//ecsact_interpret/test:test_lib",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

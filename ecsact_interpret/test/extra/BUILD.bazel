@@ -6,12 +6,12 @@ cc_test(
     srcs = ["extra.cc"],
     copts = copts,
     data = [
-        "runtime_test.ecsact",
         "imported_pkg.ecsact",
+        "runtime_test.ecsact",
     ],
     deps = [
-        "//:test_lib",
         "//ecsact_interpret",
+        "//ecsact_interpret/test:test_lib",
         "@bazel_sundry//bazel_sundry:runfiles",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

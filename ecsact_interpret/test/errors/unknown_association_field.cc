@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "test_lib.hh"
+#include "ecsact_interpret/test/test_lib.hh"
 
 TEST(InterpretError, UnknownAssociationField) {
 	auto errs =

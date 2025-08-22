@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "ecsact/interpret/eval.h"
 
-#include "test_lib.hh"
+#include "ecsact_interpret/test/test_lib.hh"
 
 TEST(UnknownParamValue, UnknownStreamComponentParamValue) {
 	auto errs = ecsact_interpret_test_files({

@@ -7,8 +7,8 @@
 #include <utility>
 #include <memory>
 #include <stdexcept>
-#include "parse-resolver-runtime/ids.hh"
-#include "parse-resolver-runtime/lifecycle.hh"
+#include "ecsact_interpret/parse-resolver-runtime/ids.hh"
+#include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
 using ecsact::interpret::details::event_ref;
 using ecsact::interpret::details::gen_next_id;

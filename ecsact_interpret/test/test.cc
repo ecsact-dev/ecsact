@@ -45,7 +45,8 @@ TEST(EcsactParseRuntimeInterop, Simple) {
 	auto runfiles = bazel_sundry::CreateDefaultRunfiles();
 	ASSERT_TRUE(runfiles);
 
-	auto test_ecsact = runfiles->Rlocation("ecsact_interpret_test/test.ecsact");
+	auto test_ecsact =
+		runfiles->Rlocation("ecsact/ecsact_interpret/test/test.ecsact");
 	ASSERT_FALSE(test_ecsact.empty());
 	ASSERT_TRUE(fs::exists(test_ecsact));
 
@@ -142,8 +143,7 @@ TEST(EcsactParseRuntimeInterop, Simple) {
 				 ECSACT_PAR_EXEC_AUTO
 			 );
 		 }},
-		{"TestNestedSystem",
-		 [&](ecsact_system_id sys_id) {
+		{"TestNestedSystem", [&](ecsact_system_id sys_id) {
 			 auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
 
 			 ASSERT_EQ(ecsact_meta_system_capabilities_count(sys_like_id), 1);

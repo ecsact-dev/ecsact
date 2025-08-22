@@ -1,4 +1,4 @@
-#include "parse-resolver-runtime/lifecycle.hh"
+#include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
 #include <array>
 #include "ecsact/runtime/common.h"
