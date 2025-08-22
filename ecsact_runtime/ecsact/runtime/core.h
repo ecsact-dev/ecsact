@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "common.h"
 #include "ecsact/runtime/common.h"
 
 #ifdef ECSACT_CORE_API_VISIBILITY
