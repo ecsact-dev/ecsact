@@ -29,7 +29,7 @@ public:
 		"id_map MaxKeyValue must be > MinKeyValue"
 	);
 
-	std::array<ValueT, max_key_value() - min_key_value()> _data;
+	std::array<ValueT, (max_key_value() - min_key_value()) + 1> _data;
 
 	constexpr auto key_index(const key_type& key) const -> size_t {
 		auto index = static_cast<size_t>(key);
@@ -38,11 +38,17 @@ public:
 	}
 
 	constexpr auto operator[](const key_type& key) -> value_type& {
-		return _data[key_index(key)];
+		const auto index = key_index(key);
+		assert(index >= 0);
+		assert(index < _data.size());
+		return _data[index];
 	}
 
 	constexpr auto operator[](const key_type& key) const -> const value_type& {
-		return _data[key_index(key)];
+		const auto index = key_index(key);
+		assert(index >= 0);
+		assert(index < _data.size());
+		return _data[index];
 	}
 };
 } // namespace ecsact::entt::detail

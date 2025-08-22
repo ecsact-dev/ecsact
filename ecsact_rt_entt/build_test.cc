@@ -36,6 +36,19 @@ MOCK_DEF_GLOBAL(remove_component_fns);
 MOCK_DEF_GLOBAL(exec_ctx_action_fns);
 MOCK_DEF_GLOBAL(ecsact_stream_fns);
 
+// mock functions just for the build test
+
+auto ecsact::entt::copy_components(const ::entt::registry&, ::entt::registry&)
+	-> void {
+}
+
+auto ecsact::entt::hash_registry(const ::entt::registry&) -> std::uint64_t {
+	return {};
+}
+
+auto ecsact::entt::ecsact_init_registry_storage(::entt::registry&) -> void {
+}
+
 auto main() -> int {
 	// This is only here to get compile commands working
 	return 0;

@@ -6,7 +6,6 @@
 #include <format>
 #include "ecsact/lang-support/lang-cc.hh"
 #include "rt_entt_codegen/shared/system_variant.hh"
-#include "system_variant.hh"
 #include "ecsact/runtime/meta.hh"
 
 using ecsact::rt_entt_codegen::system_like_id_variant;
@@ -50,25 +49,31 @@ auto ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(
 		if(systems_to_parallel.size() == 1) {
 			auto single_system_like_variant = systems_to_parallel.begin();
 
-			auto sync_sys_name = cpp_identifier(ecsact::meta::decl_full_name(
-				single_system_like_variant->get_sys_like_id()
-			));
+			auto sync_sys_name = cpp_identifier(
+				ecsact::meta::decl_full_name(
+					single_system_like_variant->get_sys_like_id()
+				)
+			);
 
 			if(single_system_like_variant->is_action()) {
-				ctx.write(std::format(
-					"ecsact::entt::execute_actions<{}>(registry, {}, "
-					"actions_map);\n",
-					sync_sys_name,
-					"nullptr"
-				));
+				ctx.write(
+					std::format(
+						"ecsact::entt::execute_actions<{}>(registry, {}, "
+						"actions_map);\n",
+						sync_sys_name,
+						"nullptr"
+					)
+				);
 			}
 			if(single_system_like_variant->is_system()) {
-				ctx.write(std::format(
-					"ecsact::entt::execute_system<{}>(registry, {}, "
-					"actions_map);\n",
-					sync_sys_name,
-					"nullptr"
-				));
+				ctx.write(
+					std::format(
+						"ecsact::entt::execute_system<{}>(registry, {}, "
+						"actions_map);\n",
+						sync_sys_name,
+						"nullptr"
+					)
+				);
 			}
 			continue;
 		}
@@ -76,10 +81,12 @@ auto ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(
 		}
 
 		ctx.write("execute_parallel_cluster(registry, nullptr, ");
-		ctx.write(std::format(
-			"std::array<exec_entry_t, {}> {{\n",
-			systems_to_parallel.size()
-		));
+		ctx.write(
+			std::format(
+				"std::array<exec_entry_t, {}> {{\n",
+				systems_to_parallel.size()
+			)
+		);
 		for(const auto system_like_id_variant : systems_to_parallel) {
 			auto cpp_decl_name =
 				cpp_identifier(ecsact::meta::decl_full_name(system_like_id_variant));

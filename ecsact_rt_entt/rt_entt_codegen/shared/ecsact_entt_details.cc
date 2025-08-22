@@ -1,11 +1,10 @@
-#include "ecsact_entt_details.hh"
+#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 
 #include <cassert>
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/runtime/meta.hh"
-#include "rt_entt_codegen/shared/ecsact_entt_details.hh"
 
 using ecsact::rt_entt_codegen::ecsact_entt_details;
 using ecsact::rt_entt_codegen::ecsact_entt_system_details;

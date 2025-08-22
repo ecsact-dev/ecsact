@@ -16,13 +16,12 @@
 #include "rt_entt_codegen/shared/system_util.hh"
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/shared/parallel.hh"
-#include "system_provider/system_provider.hh"
+#include "rt_entt_codegen/core/system_provider/system_provider.hh"
 #include "rt_entt_codegen/core/system_provider/lazy/lazy.hh"
-#include "system_provider/lazy/lazy.hh"
-#include "system_provider/association/association.hh"
-#include "system_provider/notify/notify.hh"
-#include "system_provider/basic/basic.hh"
-#include "system_provider/parallel/parallel.hh"
+#include "rt_entt_codegen/core/system_provider/association/association.hh"
+#include "rt_entt_codegen/core/system_provider/notify/notify.hh"
+#include "rt_entt_codegen/core/system_provider/basic/basic.hh"
+#include "rt_entt_codegen/core/system_provider/parallel/parallel.hh"
 
 using capability_t =
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
@@ -315,7 +314,8 @@ static auto print_system_execution_context(
 	auto system_name = cpp_identifier(decl_full_name(sys_like_id));
 
 	auto context_type_name =
-		ecsact::rt_entt_codegen::system_util::create_context_struct_name(sys_like_id
+		ecsact::rt_entt_codegen::system_util::create_context_struct_name(
+			sys_like_id
 		);
 
 	auto struct_header = std::format(

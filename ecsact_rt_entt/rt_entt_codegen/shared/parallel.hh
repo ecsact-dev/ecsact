@@ -2,7 +2,7 @@
 
 #include "ecsact/codegen/plugin.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
-#include "system_variant.hh"
+#include "rt_entt_codegen/shared/system_variant.hh"
 
 namespace ecsact::rt_entt_codegen::parallel {
 auto get_parallel_execution_cluster(

@@ -1,4 +1,4 @@
-#include "lazy.hh"
+#include "rt_entt_codegen/core/system_provider/lazy/lazy.hh"
 
 #include <format>
 
