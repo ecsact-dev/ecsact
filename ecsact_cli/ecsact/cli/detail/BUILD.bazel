@@ -8,6 +8,7 @@ cc_library(
     srcs = ["argv0.cc"],
     hdrs = ["argv0.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "//ecsact_cli/ecsact/cli/detail/executable_path",
     ],
@@ -18,6 +19,7 @@ cc_library(
     srcs = ["archive.cc"],
     hdrs = ["archive.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "@libarchive//libarchive",
     ],
@@ -28,6 +30,7 @@ cc_library(
     srcs = ["download.cc"],
     hdrs = ["download.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":proc_exec",
         "@boost.url",
@@ -41,6 +44,7 @@ cc_library(
     srcs = ["glob.cc"],
     hdrs = ["glob.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
 )
 
 cc_library(
@@ -48,6 +52,7 @@ cc_library(
     srcs = ["json_report.cc"],
     hdrs = ["json_report.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "//ecsact_cli/ecsact/cli:report_message",
         "@nlohmann_json//:json",
@@ -59,6 +64,7 @@ cc_library(
     srcs = ["text_report.cc"],
     hdrs = ["text_report.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "//ecsact_cli/ecsact/cli:report_message",
     ],
@@ -69,6 +75,7 @@ cc_library(
     srcs = ["proc_exec.cc"],
     hdrs = ["proc_exec.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "//ecsact_cli/ecsact/cli:report",
         "@boost.process",
@@ -80,4 +87,5 @@ cc_library(
     srcs = ["long_path_workaround.cc"],
     hdrs = ["long_path_workaround.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
 )

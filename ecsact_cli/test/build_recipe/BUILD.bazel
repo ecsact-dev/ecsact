@@ -1,18 +1,19 @@
-load("//bazel:copts.bzl", "copts")
 load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel:copts.bzl", "copts")
 
 cc_test(
     name = "test_build_recipe",
     srcs = ["test_build_recipe.cc"],
+    args = ["--gtest_catch_exceptions=0"],
     copts = copts,
     data = [
         "ecsact_build_test.cc",
         "ecsact_build_test_merge.cc",
         "test-merge-recipe.yml",
         "test-recipe.yml",
-        "//:test.ecsact",
-        "//:test_codegen_plugin",
         "//ecsact_cli",
+        "//ecsact_cli/test:test.ecsact",
+        "//ecsact_cli/test:test_codegen_plugin",
     ] + select({
         "@platforms//os:windows": [],
         "//conditions:default": [
@@ -24,15 +25,15 @@ cc_test(
             "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
             "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
             "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
-            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
-            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //ecsact_cli/test:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_cli/test:test_codegen_plugin)",
         },
         "//conditions:default": {
             "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
             "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
             "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
-            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
-            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //ecsact_cli/test:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_cli/test:test_codegen_plugin)",
             "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
         },
     }),
@@ -60,21 +61,21 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
-    args = ["--gtest_catch_exceptions=0"],
 )
 
 cc_test(
     name = "test_build_recipe_bundle",
     srcs = ["test_build_recipe_bundle.cc"],
+    args = ["--gtest_catch_exceptions=0"],
     copts = copts,
     data = [
         "ecsact_build_test.cc",
         "ecsact_build_test_merge.cc",
         "test-merge-recipe.yml",
         "test-recipe.yml",
-        "//:test.ecsact",
-        "//:test_codegen_plugin",
         "//ecsact_cli",
+        "//ecsact_cli/test:test.ecsact",
+        "//ecsact_cli/test:test_codegen_plugin",
     ] + select({
         "@platforms//os:windows": [],
         "//conditions:default": [
@@ -86,15 +87,15 @@ cc_test(
             "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
             "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
             "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
-            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
-            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //ecsact_cli/test:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_cli/test:test_codegen_plugin)",
         },
         "//conditions:default": {
             "TEST_ECSACT_CLI": "$(rootpath //ecsact_cli)",
             "TEST_ECSACT_BUILD_RECIPE_PATH": "$(rootpath test-recipe.yml)",
             "TEST_ECSACT_BUILD_MERGE_RECIPE_PATH": "$(rootpath test-merge-recipe.yml)",
-            "TEST_ECSACT_FILE_PATH": "$(rootpath //:test.ecsact)",
-            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //:test_codegen_plugin)",
+            "TEST_ECSACT_FILE_PATH": "$(rootpath //ecsact_cli/test:test.ecsact)",
+            "TEST_CODEGEN_PLUGIN_PATH": "$(rootpath //ecsact_cli/test:test_codegen_plugin)",
             "CC": "$(rootpath @llvm_toolchain_llvm//:bin/clang)",
         },
     }),
@@ -123,5 +124,4 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
-    args = ["--gtest_catch_exceptions=0"],
 )

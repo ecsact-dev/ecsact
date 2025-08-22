@@ -1,5 +1,5 @@
 #include "ecsact/cli/report.hh"
-#include "report_message.hh"
+#include "ecsact/cli/report_message.hh"
 
 #include <array>
 

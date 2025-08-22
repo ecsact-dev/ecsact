@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "./command.hh"
+#include "ecsact/cli/commands/command.hh"
 
 namespace ecsact::cli::detail {
 

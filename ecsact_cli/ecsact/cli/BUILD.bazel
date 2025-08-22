@@ -6,15 +6,17 @@ package(default_visibility = ["//:__subpackages__"])
 
 cc_library(
     name = "report_message",
-    copts = copts,
     hdrs = ["report_message.hh"],
+    copts = copts,
+    strip_include_prefix = "/ecsact_cli",
 )
 
 cc_library(
     name = "report",
-    copts = copts,
-    hdrs = ["report.hh"],
     srcs = ["report.cc"],
+    hdrs = ["report.hh"],
+    copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":report_message",
     ],
@@ -27,17 +29,20 @@ cc_stamp_header(
 
 cc_binary(
     name = "ecsact",
-    visibility = ["//visibility:public"],
     srcs = [
-        "ecsact_cli.cc",
         "bazel_stamp_header.hh",
+        "ecsact_cli.cc",
+    ],
+    copts = copts,
+    data = [
+        "@tracy//:tracy_srcs",
     ],
     defines = select({
         "//ecsact_cli:use_sdk_version_enabled": ["ECSACT_CLI_USE_SDK_VERSION"],
         "//ecsact_cli:use_sdk_version_disabled": [],
     }),
-    copts = copts,
     stamp = 1,
+    visibility = ["//visibility:public"],
     deps = [
         # "//ecsact_cli/ecsact/cli/commands:benchmark",
         "//ecsact_cli/ecsact/cli/commands:codegen",
@@ -46,8 +51,4 @@ cc_binary(
         "//ecsact_cli/ecsact/cli/commands:build",
         "//ecsact_cli/ecsact/cli/commands:recipe-bundle",
     ],
-    data = [
-        "@tracy//:tracy_srcs",
-    ],
 )
-

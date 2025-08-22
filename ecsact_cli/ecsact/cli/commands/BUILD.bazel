@@ -7,9 +7,11 @@ cc_library(
     name = "command",
     hdrs = ["command.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
 )
 
 # cc_library(
+# strip_include_prefix = "/ecsact_cli",
 #     name = "benchmark",
 #     srcs = ["benchmark.cc"],
 #     hdrs = ["benchmark.hh"],
@@ -33,12 +35,13 @@ cc_library(
     srcs = ["common.cc"],
     hdrs = ["common.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
-        "@docopt.cpp//:docopt",
         "//ecsact_cli/ecsact/cli:report",
         "//ecsact_cli/ecsact/cli:report_message",
         "//ecsact_cli/ecsact/cli/detail:json_report",
         "//ecsact_cli/ecsact/cli/detail:text_report",
+        "@docopt.cpp//:docopt",
     ],
 )
 
@@ -47,18 +50,19 @@ cc_library(
     srcs = ["codegen.cc"],
     hdrs = ["codegen.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":command",
         ":common",
-        "//ecsact_cli/ecsact/cli/commands/codegen:codegen",
-        "@magic_enum",
-        "@docopt.cpp//:docopt",
-        "@boost.dll",
-        "//ecsact_interpret",
+        "//ecsact_cli/ecsact/cli/commands/codegen",
         "//ecsact_codegen:plugin",
         "//ecsact_codegen:plugin_validate",
+        "//ecsact_interpret",
         "//ecsact_runtime:dylib",
         "//ecsact_runtime:meta",
+        "@boost.dll",
+        "@docopt.cpp//:docopt",
+        "@magic_enum",
     ],
 )
 
@@ -67,6 +71,7 @@ cc_library(
     srcs = ["config.cc"],
     hdrs = ["config.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":command",
         "//ecsact_cli/ecsact/cli/detail:argv0",
@@ -80,20 +85,21 @@ cc_library(
     srcs = ["build.cc"],
     hdrs = ["build.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":command",
         ":common",
         "//ecsact_cli/ecsact/cli:report",
         "//ecsact_cli/ecsact/cli:report_message",
-        "//ecsact_cli/ecsact/cli/commands/build/recipe:taste",
-        "//ecsact_cli/ecsact/cli/commands/build/recipe:cook",
-        "//ecsact_cli/ecsact/cli/commands/build:cc_compiler",
         "//ecsact_cli/ecsact/cli/commands/build:build_recipe",
+        "//ecsact_cli/ecsact/cli/commands/build:cc_compiler",
+        "//ecsact_cli/ecsact/cli/commands/build/recipe:cook",
+        "//ecsact_cli/ecsact/cli/commands/build/recipe:taste",
         "//ecsact_cli/ecsact/cli/commands/recipe-bundle:build_recipe_bundle",
         "//ecsact_interpret",
+        "@boost.regex",
         "@docopt.cpp//:docopt",
         "@magic_enum",
-        "@boost.regex",
     ],
 )
 
@@ -102,6 +108,7 @@ cc_library(
     srcs = ["recipe-bundle.cc"],
     hdrs = ["recipe-bundle.hh"],
     copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":command",
         ":common",

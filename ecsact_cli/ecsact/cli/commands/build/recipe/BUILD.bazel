@@ -5,9 +5,10 @@ package(default_visibility = ["//:__subpackages__"])
 
 cc_library(
     name = "taste",
-    copts = copts,
     srcs = ["taste.cc"],
     hdrs = ["taste.hh"],
+    copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "//ecsact_cli/ecsact/cli:report",
         "//ecsact_cli/ecsact/cli/commands/build:build_recipe",
@@ -18,9 +19,10 @@ cc_library(
 
 cc_library(
     name = "integrity",
-    copts = copts,
     srcs = ["integrity.cc"],
     hdrs = ["integrity.hh"],
+    copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "@boringssl//:crypto",
     ],
@@ -28,54 +30,21 @@ cc_library(
 
 cc_library(
     name = "cook_runfiles",
-    copts = copts,
-    hdrs = ["cook_runfiles.hh"],
     srcs = ["cook_runfiles.cc"],
+    hdrs = ["cook_runfiles.hh"],
+    copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
-        "@bazel_tools//tools/cpp/runfiles",
         "//ecsact_cli/ecsact/cli:report",
-    ]
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
 )
 
 cc_library(
     name = "cook",
-    copts = copts,
     srcs = ["cook.cc"],
     hdrs = ["cook.hh"],
-    defines = select({
-        "//ecsact_cli:use_sdk_version_enabled": ["ECSACT_CLI_USE_SDK_VERSION"],
-        "//ecsact_cli:use_sdk_version_disabled": [],
-    }),
-    linkopts = select({
-        "@rules_cc//cc/compiler:msvc-cl": [
-            "/DEFAULTLIB:Wldap32.lib",
-        ],
-        "//conditions:default": [],
-    }),
-    deps = [
-        ":integrity",
-        ":cook_runfiles",
-        "//ecsact_cli/ecsact/cli:report",
-        "//ecsact_cli/ecsact/cli/detail:argv0",
-        "//ecsact_cli/ecsact/cli/detail:download",
-        "//ecsact_cli/ecsact/cli/detail:glob",
-        "//ecsact_cli/ecsact/cli/detail:archive",
-        "//ecsact_cli/ecsact/cli/detail:long_path_workaround",
-        "//ecsact_cli/ecsact/cli/commands/build:build_recipe",
-        "//ecsact_cli/ecsact/cli/commands/build:cc_compiler_config",
-        "//ecsact_cli/ecsact/cli/commands/build:cc_defines_gen",
-        "//ecsact_cli/ecsact/cli/commands/build:get_modules",
-        "//ecsact_cli/ecsact/cli/commands/codegen:codegen",
-        "//ecsact_cli/ecsact/cli/commands/codegen:codegen_util",
-        "//ecsact_cli/ecsact/cli/detail:proc_exec",
-        "@curl",
-        "@boost.url",
-        "@magic_enum",
-    ] + select({
-        "//ecsact_cli:use_sdk_version_enabled": [],
-        "//ecsact_cli:use_sdk_version_disabled": [
-        ],
-    }),
+    copts = copts,
     data = select({
         "//ecsact_cli:use_sdk_version_enabled": [
         ],
@@ -97,6 +66,41 @@ cc_library(
             "//ecsact_runtime:ecsact/runtime/static.h",
             "//ecsact_runtime:ecsact/si/wasm.h",
             "//ecsact_runtime:ecsact/si/wasm.hh",
+        ],
+    }),
+    defines = select({
+        "//ecsact_cli:use_sdk_version_enabled": ["ECSACT_CLI_USE_SDK_VERSION"],
+        "//ecsact_cli:use_sdk_version_disabled": [],
+    }),
+    linkopts = select({
+        "@rules_cc//cc/compiler:msvc-cl": [
+            "/DEFAULTLIB:Wldap32.lib",
+        ],
+        "//conditions:default": [],
+    }),
+    strip_include_prefix = "/ecsact_cli",
+    deps = [
+        ":cook_runfiles",
+        ":integrity",
+        "//ecsact_cli/ecsact/cli:report",
+        "//ecsact_cli/ecsact/cli/commands/build:build_recipe",
+        "//ecsact_cli/ecsact/cli/commands/build:cc_compiler_config",
+        "//ecsact_cli/ecsact/cli/commands/build:cc_defines_gen",
+        "//ecsact_cli/ecsact/cli/commands/build:get_modules",
+        "//ecsact_cli/ecsact/cli/commands/codegen",
+        "//ecsact_cli/ecsact/cli/commands/codegen:codegen_util",
+        "//ecsact_cli/ecsact/cli/detail:archive",
+        "//ecsact_cli/ecsact/cli/detail:argv0",
+        "//ecsact_cli/ecsact/cli/detail:download",
+        "//ecsact_cli/ecsact/cli/detail:glob",
+        "//ecsact_cli/ecsact/cli/detail:long_path_workaround",
+        "//ecsact_cli/ecsact/cli/detail:proc_exec",
+        "@boost.url",
+        "@curl",
+        "@magic_enum",
+    ] + select({
+        "//ecsact_cli:use_sdk_version_enabled": [],
+        "//ecsact_cli:use_sdk_version_disabled": [
         ],
     }),
 )

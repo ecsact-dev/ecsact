@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include "ecsact/cli/bazel_stamp_header.hh"
+#include "ecsact_cli/ecsact/cli/bazel_stamp_header.hh"
 #include "ecsact/cli/commands/build.hh"
 #include "ecsact/cli/commands/codegen.hh"
 #include "ecsact/cli/commands/recipe-bundle.hh"

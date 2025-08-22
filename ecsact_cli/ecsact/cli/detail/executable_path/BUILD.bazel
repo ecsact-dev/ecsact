@@ -15,4 +15,5 @@ cc_library(
         "@platforms//os:windows": ["-DEFAULTLIB:Kernel32"],
         "//conditions:default": [],
     }),
+    strip_include_prefix = "/ecsact_cli",
 )

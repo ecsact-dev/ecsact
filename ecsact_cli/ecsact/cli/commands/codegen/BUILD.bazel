@@ -5,28 +5,30 @@ package(default_visibility = ["//:__subpackages__"])
 
 cc_library(
     name = "codegen",
-    copts = copts,
-    hdrs = ["codegen.hh"],
     srcs = ["codegen.cc"],
+    hdrs = ["codegen.hh"],
+    copts = copts,
     defines = [
         "ECSACT_DYNAMIC_API=\"\"",
         "ECSACT_META_API=\"\"",
     ],
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         ":codegen_util",
         "//ecsact_cli/ecsact/cli:report",
         "//ecsact_cli/ecsact/cli/detail/executable_path",
-        "//ecsact_runtime:meta",
-        "//ecsact_runtime:dylib",
         "//ecsact_codegen:plugin",
+        "//ecsact_runtime:dylib",
+        "//ecsact_runtime:meta",
     ],
 )
 
 cc_library(
     name = "codegen_util",
-    copts = copts,
-    hdrs = ["codegen_util.hh"],
     srcs = ["codegen_util.cc"],
+    hdrs = ["codegen_util.hh"],
+    copts = copts,
+    strip_include_prefix = "/ecsact_cli",
     deps = [
         "//ecsact_cli/ecsact/cli:report",
         "//ecsact_cli/ecsact/cli/detail/executable_path",
