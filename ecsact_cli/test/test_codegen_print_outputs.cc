@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <boost/process.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include "tools/cpp/runfiles/runfiles.h"
 
 using bazel::tools::cpp::runfiles::Runfiles;
@@ -56,17 +57,21 @@ TEST(Codegen, Stdout) {
 		if(line.ends_with("\r")) {
 			line.pop_back();
 		}
-		output_files.emplace_back(line);
+		output_files.emplace_back(fs::relative(fs::path{line}).generic_string());
 	}
 
 	EXPECT_EQ(output_files.size(), 2);
 
 	EXPECT_FALSE(
-		std::ranges::find(output_files, "test.txt") == output_files.end()
-	);
+		std::ranges::find(output_files, "ecsact_cli/test/test.txt") ==
+		output_files.end()
+	) << "output_files:\n"
+		<< boost::algorithm::join(output_files, "\n");
 	EXPECT_FALSE(
-		std::ranges::find(output_files, "test.zomsky") == output_files.end()
-	);
+		std::ranges::find(output_files, "ecsact_cli/test/test.zomsky") ==
+		output_files.end()
+	) << "output_files:\n"
+		<< boost::algorithm::join(output_files, "\n");
 	EXPECT_FALSE(fs::exists(bad_generated_file_path))
 		<< bad_generated_file_path.string()
 		<< " was generated even with --print-output-files option!";
