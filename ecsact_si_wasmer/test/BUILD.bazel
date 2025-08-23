@@ -44,7 +44,7 @@ cc_library(
 cc_test(
     name = "minst_test",
     srcs = ["minst_test.cc"],
-    args = ["ecsact_si_wasmer_test/minst_test.wasm"],
+    args = ["$(location :minst_test_wasm)"],
     copts = copts,
     data = [":minst_test_wasm"],
     linkopts = linkopts,

@@ -68,8 +68,7 @@ auto main(int argc, char* argv[]) -> int {
 		std::views::transform([](auto arg) { return std::string_view(arg); });
 
 	for(auto arg : args) {
-		fs::path file_path = //
-			runfiles ? runfiles->Rlocation(arg.data()) : std::string{arg};
+		fs::path file_path = std::string{arg};
 
 		auto file_content = read_file(file_path);
 
