@@ -15,6 +15,7 @@ ecsact_binary(
         "//ecsact_si_wasmer",
         "//ecsact_rt_entt",
     ],
+    tags = ["manual"],
 )
 
 cc_library(
