@@ -1,22 +1,11 @@
 load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("//bazel:copts.bzl", "copts", "linkopts")
-load("//bazel/rules:defs.bzl", "ecsact_binary")
 load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
 
 package(default_visibility = [":__subpackages__"])
 
 exports_files(["test.cc"])
-
-ecsact_binary(
-    name = "bundle_runtime",
-    srcs = ["wasi_test.ecsact"],
-    recipes = [
-        "//ecsact_si_wasmer",
-        "//ecsact_rt_entt",
-    ],
-    tags = ["manual"],
-)
 
 cc_library(
     name = "impl",

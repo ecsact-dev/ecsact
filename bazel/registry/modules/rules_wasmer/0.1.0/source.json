@@ -1,0 +1,8 @@
+{
+    "integrity": "sha256-WNq9QW45nWSJ+ZVR7cckku9ii3KJZmHpdxM0PzviNs0=",
+    "overlay": {},
+    "patch_strip": 0,
+    "patches": {},
+    "strip_prefix": "",
+    "url": "https://github.com/ecsact-dev/rules_wasmer/releases/download/0.1.0/rules_wasmer-0.1.0.tar.gz"
+}

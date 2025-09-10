@@ -1,0 +1,8 @@
+{
+    "integrity": "sha256-wDQmgYc2zLSiDPNMxmvGy7DnNKTO71RcWbbI+Ng7vqM=",
+    "overlay": {},
+    "patch_strip": 0,
+    "patches": {},
+    "strip_prefix": "",
+    "url": "https://github.com/zaucy/lexy/releases/download/bzlmod-v2022.05.1/bzlmod-lexy-v2022.05.1.tar.gz"
+}

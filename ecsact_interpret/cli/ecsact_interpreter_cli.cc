@@ -2,7 +2,7 @@
 #include <iostream>
 #include <array>
 #include <optional>
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/parse.h"

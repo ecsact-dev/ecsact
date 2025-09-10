@@ -6,7 +6,7 @@
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
 #include "nlohmann/json.hpp"
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 
 namespace fs = std::filesystem;
 

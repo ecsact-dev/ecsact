@@ -94,8 +94,8 @@ int ecsact::cli::detail::codegen_command(int argc, const char* argv[]) {
 		);
 
 		if(plugin_path) {
-			std::error_code ec;
-			auto&           plugin = plugins.emplace_back();
+			auto  ec = boost::dll::fs::error_code{};
+			auto& plugin = plugins.emplace_back();
 			plugin.load(plugin_path->string(), ec);
 			auto validate_result = ecsact::codegen::plugin_validate(*plugin_path);
 			if(validate_result.ok()) {

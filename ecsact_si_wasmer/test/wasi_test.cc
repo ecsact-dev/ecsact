@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <iostream>
 #include <csignal>
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 #include "ecsact/runtime/core.h"
 #include "ecsact/runtime/core.hh"
 #include "ecsact/si/wasm.h"

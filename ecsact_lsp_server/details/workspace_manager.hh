@@ -11,7 +11,7 @@
 #include "ecsact/parse/statements.h"
 #include "ecsact/interpret/eval.h"
 #include "ecsact/runtime/dynamic.h"
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 
 #include "./messages.hh"
 #include "./interfaces.hh"

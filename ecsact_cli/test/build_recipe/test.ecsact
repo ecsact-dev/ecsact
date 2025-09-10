@@ -1,5 +1,0 @@
-main package test;
-
-component Hello {
-  i32 num;
-}

@@ -77,7 +77,7 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 	};
 
 	for(auto plugin_path : options.plugin_paths) {
-		auto  ec = std::error_code{};
+		auto  ec = boost::dll::fs::error_code{};
 		auto& plugin = plugins.emplace_back();
 		plugin.load(plugin_path.string(), ec);
 		if(ec) {
@@ -133,9 +133,9 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 				plugin.get<decltype(ecsact_dylib_has_fn)>("ecsact_dylib_has_fn");
 		}
 
-		auto dylib_set_fn_addr =
-			plugin.get<decltype(ecsact_dylib_set_fn_addr)>("ecsact_dylib_set_fn_addr"
-			);
+		auto dylib_set_fn_addr = plugin.get<decltype(ecsact_dylib_set_fn_addr)>(
+			"ecsact_dylib_set_fn_addr"
+		);
 
 		auto set_meta_fn_ptr = [&](const char* fn_name, auto fn_ptr) {
 			if(dylib_has_fn && !dylib_has_fn(fn_name)) {
@@ -150,7 +150,7 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 #undef CALL_SET_META_FN_PTR
 
 		if(options.outdir && !fs::exists(*options.outdir)) {
-			auto ec = std::error_code{};
+			auto ec = boost::dll::fs::error_code{};
 			fs::create_directories(*options.outdir, ec);
 			if(ec) {
 				ecsact::cli::report_error(
@@ -258,9 +258,11 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 
 				if(options.only_print_output_files) {
 					for(auto& output_file_path : plugin_output_paths) {
-						report(output_path_message{
-							fs::weakly_canonical(output_file_path).generic_string()
-						});
+						report(
+							output_path_message{
+								fs::weakly_canonical(output_file_path).generic_string()
+							}
+						);
 					}
 					plugin.unload();
 					continue;

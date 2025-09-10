@@ -34,7 +34,7 @@ plugin_validate_result ecsact::codegen::plugin_validate(fs::path plugin_path) {
 		return result;
 	}
 
-	std::error_code     ec;
+	dll::fs::error_code ec;
 	dll::shared_library plugin;
 	plugin.load(plugin_path.string(), ec);
 	if(ec) {
