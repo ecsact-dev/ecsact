@@ -50,7 +50,7 @@ bazel_dep(name = "tracy", version = "0.11.1.edr.2")
 bazel_dep(name = "xxhash", version = "0.8.3")
 bazel_dep(name = "boost.url", version = "1.87.0")
 bazel_dep(name = "googletest", version = "1.17.0")
-bazel_dep(name = "lexy", version = "2022.05.1.bcr.1")
+bazel_dep(name = "lexy", version = "2022.05.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "rules_wasmer", version = "0.1.2")
 

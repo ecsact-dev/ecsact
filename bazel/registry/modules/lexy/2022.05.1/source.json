@@ -1,8 +1,12 @@
 {
-    "integrity": "sha256-wDQmgYc2zLSiDPNMxmvGy7DnNKTO71RcWbbI+Ng7vqM=",
-    "overlay": {},
+    "integrity": "sha256-3iGZ+CM+pe2dTb6GqOr4jXVN7NKOKFVDKaeym02VJ3M=",
+    "overlay": {
+        "BUILD.bazel": "sha256-YN0HB7uyEoZhhPFXlkRKGD3oGJ8YT5BXq+MjoA2WEwI="
+    },
     "patch_strip": 0,
-    "patches": {},
+    "patches": {
+        "input-location-column-typo.patch": "sha256-USWGiHRa29lFl9s9z6KfdCDVemIZXiNBun7f79jb4Go="
+    },
     "strip_prefix": "",
-    "url": "https://github.com/zaucy/lexy/releases/download/bzlmod-v2022.05.1/bzlmod-lexy-v2022.05.1.tar.gz"
+    "url": "https://github.com/foonathan/lexy/releases/download/v2022.05.1/lexy-src.zip"
 }
