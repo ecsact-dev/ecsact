@@ -1,8 +1,5 @@
-startup --windows_enable_symlinks
 common --enable_bzlmod
-common --registry=https://raw.githubusercontent.com/ecsact-dev/bazel_registry/main
-common --registry=https://raw.githubusercontent.com/zaucy/bazel-central-registry/add-curl-config2 # temporary
-common --registry=https://raw.githubusercontent.com/bazelboost/registry/main
+common --registry=file:///%workspace%/bazel/registry
 common --registry=https://bcr.bazel.build
 build --enable_platform_specific_config
 build --incompatible_enable_cc_toolchain_resolution
@@ -15,17 +12,11 @@ build --action_env=WASMER_DIR
 # needed until https://github.com/emscripten-core/emsdk/pull/1333 or similar is merged
 build --noincompatible_strict_action_env
 
-# some of the bazelboost globs have empty globs
-common --noincompatible_disallow_empty_glob
-
 common:ci --announce_rc
 common:ci --verbose_failures
 common:ci --keep_going
 common:ci --disk_cache=~/.cache/bazel-disk-cache
 
-common --@boost.dll//:use_std_fs
-common --@boost.process//:use_std_fs
-common --@docopt.cpp//:use_boost_regex
 common --//ecsact_cli:use_sdk_version
 
 build:windows --workspace_status_command=bazel/tools/wsc.cmd

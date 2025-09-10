@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <cassert>
 #include <iostream> //  TODO(ZAUCY): Remove this
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/interpret/parse_eval_error.hh"

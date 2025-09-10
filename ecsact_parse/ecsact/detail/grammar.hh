@@ -8,7 +8,7 @@
 #include <lexy/callback.hpp>
 #include "ecsact/parse/status.h"
 #include "ecsact/parse/statements.h"
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 
 namespace ecsact::parse::detail::grammar {
 

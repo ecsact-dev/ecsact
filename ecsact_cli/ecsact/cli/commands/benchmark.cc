@@ -19,7 +19,7 @@
 #include "ecsact/runtime/serialize.h"
 #include "ecsact/runtime/async.h"
 #include "ecsactsi_wasm.h"
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 
 using std::chrono::duration;
 using std::chrono::duration_cast;

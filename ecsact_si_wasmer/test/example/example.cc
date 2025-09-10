@@ -7,7 +7,7 @@
 #include <span>
 #include <array>
 #include <format>
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 #include "ecsact/runtime/core.h"
 #include "ecsact/runtime/core.hh"
 #include "ecsact/si/wasm.hh"

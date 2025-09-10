@@ -48,7 +48,5 @@ cc_binary(
         "//ecsact_cli/ecsact/cli/commands:codegen",
         "//ecsact_cli/ecsact/cli/commands:command",
         "//ecsact_cli/ecsact/cli/commands:config",
-        "//ecsact_cli/ecsact/cli/commands:build",
-        "//ecsact_cli/ecsact/cli/commands:recipe-bundle",
     ],
 )

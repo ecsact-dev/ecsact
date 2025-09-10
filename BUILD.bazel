@@ -1,3 +1,4 @@
+load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("//bazel/rules:toolchain.bzl", "ecsact_toolchain")
 
 ecsact_toolchain(
@@ -9,4 +10,11 @@ toolchain(
     name = "ecsact_cli_toolchain",
     toolchain = ":ecsact_cli",
     toolchain_type = "//bazel/rules:toolchain_type",
+)
+
+refresh_compile_commands(
+    name = "refresh_compile_commands",
+    targets = {
+        "//ecsact_cli": "",
+    },
 )

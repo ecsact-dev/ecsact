@@ -2,7 +2,7 @@
 
 #include <string_view>
 #include <string>
-#include "magic_enum.hpp"
+#include <magic_enum/magic_enum.hpp>
 #include "ecsact/parse.h"
 
 using namespace std::string_literals;

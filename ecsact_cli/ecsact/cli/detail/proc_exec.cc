@@ -19,7 +19,7 @@ auto ecsact::cli::detail::which(std::string_view prog)
 	if(result.empty()) {
 		return std::nullopt;
 	} else {
-		return fs::path{result};
+		return fs::path{result.string()};
 	}
 }
 
@@ -42,27 +42,33 @@ auto ecsact::cli::detail::spawn_and_report( //
 
 	auto subcommand_id = static_cast<subcommand_id_t>(proc.id());
 
-	ecsact::cli::report(subcommand_start_message{
-		.id = subcommand_id,
-		.executable = exe.string(),
-		.arguments = args,
-	});
+	ecsact::cli::report(
+		subcommand_start_message{
+			.id = subcommand_id,
+			.executable = exe.string(),
+			.arguments = args,
+		}
+	);
 
 	auto line = std::string{};
 
 	while(proc_stdout && std::getline(proc_stdout, line)) {
-		auto msg = reporter.on_std_out(line).value_or(subcommand_stdout_message{
-			.id = subcommand_id,
-			.line = line,
-		});
+		auto msg = reporter.on_std_out(line).value_or(
+			subcommand_stdout_message{
+				.id = subcommand_id,
+				.line = line,
+			}
+		);
 		ecsact::cli::report(msg);
 	}
 
 	while(proc_stderr && std::getline(proc_stderr, line)) {
-		auto msg = reporter.on_std_err(line).value_or(subcommand_stderr_message{
-			.id = subcommand_id,
-			.line = line,
-		});
+		auto msg = reporter.on_std_err(line).value_or(
+			subcommand_stderr_message{
+				.id = subcommand_id,
+				.line = line,
+			}
+		);
 		ecsact::cli::report(msg);
 	}
 
@@ -70,10 +76,12 @@ auto ecsact::cli::detail::spawn_and_report( //
 
 	auto proc_exit_code = proc.exit_code();
 
-	ecsact::cli::report(subcommand_end_message{
-		.id = subcommand_id,
-		.exit_code = proc_exit_code,
-	});
+	ecsact::cli::report(
+		subcommand_end_message{
+			.id = subcommand_id,
+			.exit_code = proc_exit_code,
+		}
+	);
 
 	return proc_exit_code;
 }
@@ -96,11 +104,13 @@ auto ecsact::cli::detail::spawn_and_report_output( //
 
 	auto subcommand_id = static_cast<subcommand_id_t>(proc.id());
 
-	ecsact::cli::report(subcommand_start_message{
-		.id = subcommand_id,
-		.executable = exe.string(),
-		.arguments = args,
-	});
+	ecsact::cli::report(
+		subcommand_start_message{
+			.id = subcommand_id,
+			.executable = exe.string(),
+			.arguments = args,
+		}
+	);
 
 	ecsact::cli::report_stdout(subcommand_id, proc_stdout);
 	ecsact::cli::report_stderr(subcommand_id, proc_stderr);
@@ -109,10 +119,12 @@ auto ecsact::cli::detail::spawn_and_report_output( //
 
 	auto proc_exit_code = proc.exit_code();
 
-	ecsact::cli::report(subcommand_end_message{
-		.id = subcommand_id,
-		.exit_code = proc_exit_code,
-	});
+	ecsact::cli::report(
+		subcommand_end_message{
+			.id = subcommand_id,
+			.exit_code = proc_exit_code,
+		}
+	);
 
 	return proc_exit_code;
 }
@@ -124,7 +136,7 @@ auto ecsact::cli::detail::spawn_get_stdout( //
 ) -> std::optional<std::string> {
 	auto proc_stdout = bp::ipstream{};
 	auto proc = bp::child{
-		bp::exe(fs::absolute(exe)),
+		bp::exe(fs::absolute(exe).string()),
 		bp::args(args),
 		bp::start_dir(start_dir.string()),
 		bp::std_out > proc_stdout,
@@ -154,7 +166,7 @@ auto ecsact::cli::detail::spawn_get_stdout_bytes( //
 ) -> std::optional<std::vector<std::byte>> {
 	auto proc_stdout = bp::ipstream{};
 	auto proc = bp::child{
-		bp::exe(fs::absolute(exe)),
+		bp::exe(fs::absolute(exe).string()),
 		bp::args(args),
 		bp::start_dir(start_dir.string()),
 		bp::std_out > proc_stdout,

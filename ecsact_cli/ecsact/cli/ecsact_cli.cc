@@ -4,9 +4,7 @@
 #include <string_view>
 #include <unordered_map>
 #include "ecsact_cli/ecsact/cli/bazel_stamp_header.hh"
-#include "ecsact/cli/commands/build.hh"
 #include "ecsact/cli/commands/codegen.hh"
-#include "ecsact/cli/commands/recipe-bundle.hh"
 #include "ecsact/cli/commands/command.hh"
 #include "ecsact/cli/commands/config.hh"
 
@@ -33,10 +31,8 @@ Usage:
 	ecsact (--help | -h)
 	ecsact (--version | -v)
 	ecsact benchmark ([<options>...] | --help)
-	ecsact build ([<options>...] | --help)
 	ecsact codegen ([<options>...] | --help)
 	ecsact config ([<options>...] | --help)
-	ecsact recipe-bundle ([<options>...] | --help)
 )";
 
 std::string colorize_logo() {
@@ -76,10 +72,8 @@ int main(int argc, const char* argv[]) {
 
 	const std::unordered_map<std::string, command_fn_t> commands{
 		// {"benchmark", &ecsact::cli::detail::benchmark_command},
-		{"build", &ecsact::cli::detail::build_command},
 		{"codegen", &ecsact::cli::detail::codegen_command},
 		{"config", &ecsact::cli::detail::config_command},
-		{"recipe-bundle", &ecsact::cli::detail::recipe_bundle_command},
 	};
 
 	if(argc >= 2) {

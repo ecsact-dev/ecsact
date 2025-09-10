@@ -1,0 +1,8 @@
+{
+    "integrity": "sha256-byjo1zgdKn08PVVdJRBftnIu/Bk8Fg9XSjCnguBxee8=",
+    "overlay": {},
+    "patch_strip": 0,
+    "patches": {},
+    "strip_prefix": "",
+    "url": "https://github.com/ecsact-dev/tracy/releases/download/ecsact-bzlmod-0.11.1.edr.2/tracy-ecsact-bzlmod-0.11.1.edr.2.tar.gz"
+}
