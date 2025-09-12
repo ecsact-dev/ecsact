@@ -1,0 +1,21 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//bazel:copts.bzl", "copts")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "runfiles",
+    srcs = select({
+        "@platforms//os:windows": ["windows_runfiles.cc"],
+        "//conditions:default": ["unix_runfiles.cc"],
+    }),
+    hdrs = ["runfiles.hh"],
+    copts = copts,
+    linkopts = select({
+        "@rules_cc//cc/compiler:msvc-cl": ["/DEFAULTLIB:Kernel32"],
+        "//conditions:default": [],
+    }),
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+)

@@ -9,7 +9,7 @@
 #include "ecsact/interpret/eval.hh"
 #include "ecsact/runtime/meta.hh"
 #include <magic_enum/magic_enum.hpp>
-#include "bazel_sundry/runfiles.hh"
+#include "bazel/runfiles/runfiles.hh"
 
 inline auto get_component_by_name( //
 	ecsact_package_id pkg_id,

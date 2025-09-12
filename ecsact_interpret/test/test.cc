@@ -7,7 +7,7 @@
 #include <functional>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/interpret/eval.hh"
-#include "bazel_sundry/runfiles.hh"
+#include "bazel/runfiles/runfiles.hh"
 
 namespace fs = std::filesystem;
 

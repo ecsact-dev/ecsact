@@ -25,13 +25,6 @@ git_override(
     strip_prefix = "bazel",
 )
 
-bazel_dep(name = "bazel_sundry")
-git_override(
-    module_name = "bazel_sundry",
-    commit = "a999751b4992fab12a06f1bede2414708c6db540",
-    remote = "https://github.com/seaube/bazel_sundry",
-)
-
 bazel_dep(name = "rules_cc", version = "0.2.3")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "boost.mp11", version = "1.87.0")

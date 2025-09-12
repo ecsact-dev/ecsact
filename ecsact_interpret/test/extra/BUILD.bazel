@@ -12,7 +12,7 @@ cc_test(
     deps = [
         "//ecsact_interpret",
         "//ecsact_interpret/test:test_lib",
-        "@bazel_sundry//bazel_sundry:runfiles",
+        "//bazel/runfiles",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
