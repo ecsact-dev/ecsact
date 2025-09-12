@@ -40,7 +40,7 @@ _cc_ecsact_codegen_plugin = rule(
     attrs = {
         "cc_binary": attr.label(mandatory = True),
         "output_extension": attr.string(mandatory = False),
-        "outputs": attr.string_list(mandatory = False)
+        "outputs": attr.string_list(mandatory = False),
     },
 )
 
@@ -54,12 +54,12 @@ const char* ecsact_codegen_plugin_name() {{
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
-    if ctx.attr.output_extension!= None: 
+    if ctx.attr.output_extension != None:
         ctx.actions.write(
             output = output_cc_src,
             content = _generated_src.format(output_extension = ctx.attr.output_extension),
         )
-    else: 
+    else:
         ctx.actions.write(
             output = output_cc_src,
             content = _generated_src.format(output_extension = ctx.attr.name),
@@ -99,20 +99,20 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
     cc_binary(
         name = "{}__bin".format(name_hash),
         srcs = srcs + [
-            "//ecsact_runtime/dylib:dylib.cc",
+            "@ecsact//ecsact_runtime/dylib:dylib.cc",
             ":{}__src".format(name_hash),
         ],
         deps = deps + [
-            "//ecsact_runtime:dylib",
-            "//ecsact_runtime/dylib:meta",
-            "//ecsact_codegen:plugin",
+            "@ecsact//ecsact_runtime:dylib",
+            "@ecsact//ecsact_runtime/dylib:meta",
+            "@ecsact//ecsact_codegen:plugin",
         ],
         defines = defines + ["ECSACT_META_API_LOAD_AT_RUNTIME"],
         linkshared = True,
         **kwargs
     )
 
-    if(output_extension != None):
+    if (output_extension != None):
         _cc_ecsact_codegen_plugin_src(
             name = "{}__src".format(name_hash),
             output_extension = output_extension,
@@ -126,5 +126,5 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         name = name,
         cc_binary = ":{}__bin".format(name_hash),
         output_extension = output_extension,
-        outputs = outputs
+        outputs = outputs,
     )

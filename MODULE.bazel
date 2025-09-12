@@ -14,8 +14,8 @@ use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
 
 git_override(
     module_name = "hedron_compile_commands",
-    commit = "abb61a688167623088f8768cc9264798df6a9d10",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+    commit = "81b7638900b0b80eeae046e2f5d538154a592bd2",
+    remote = "https://github.com/zaucy/bazel-compile-commands-extractor.git",
 )
 
 git_override(

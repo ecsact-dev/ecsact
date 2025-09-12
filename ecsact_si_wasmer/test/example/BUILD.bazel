@@ -11,6 +11,7 @@ ecsact_entt_runtime(
     ECSACT_ENTT_RUNTIME_PACKAGE = "::example::package",
     ECSACT_ENTT_RUNTIME_USER_HEADER = "example.ecsact.meta.hh",
     system_impls = ["dynamic"],
+    tags = ["no_refresh_compile_commands"],
 )
 
 cc_binary(
@@ -27,7 +28,10 @@ cc_binary(
         "--no-entry",
     ],
     linkshared = True,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "no_refresh_compile_commands",
+    ],
     deps = [
         ":runtime__public_cc",
         "//ecsact_lang_cpp:execution_context",
@@ -57,6 +61,7 @@ wasm_cc_binary(
         "system_impls.wasm",
     ],
     standalone = True,
+    tags = ["no_refresh_compile_commands"],
 )
 
 cc_test(
@@ -77,6 +82,7 @@ cc_test(
         "ECSACT_CORE_API=",
     ],
     linkopts = linkopts,
+    tags = ["no_refresh_compile_commands"],
     deps = [
         ":runtime",
         "//ecsact_runtime:core",

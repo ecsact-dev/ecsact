@@ -23,6 +23,7 @@ cc_library(
         "ECSACT_DYNAMIC_API=",
     ],
     strip_include_prefix = "/ecsact_si_wasmer",
+    tags = ["no_refresh_compile_commands"],
     deps = [
         "//ecsact_runtime:dynamic",
         "//ecsact_runtime:si_wasm",
@@ -37,6 +38,7 @@ cc_test(
     copts = copts,
     data = [":minst_test_wasm"],
     linkopts = linkopts,
+    tags = ["no_refresh_compile_commands"],
     deps = [
         "//ecsact_si_wasmer:minst",
         "@bazel_tools//tools/cpp/runfiles",
@@ -55,7 +57,10 @@ cc_binary(
         "--no-entry",
     ],
     linkshared = True,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "no_refresh_compile_commands",
+    ],
     deps = [
         "//ecsact_runtime:common",
     ],
@@ -67,6 +72,7 @@ wasm_cc_binary(
     cc_target = ":minst_test_wasm_cc",
     outputs = ["minst_test.wasm"],
     standalone = True,
+    tags = ["no_refresh_compile_commands"],
 )
 
 # keep sorted
@@ -85,6 +91,7 @@ ecsact_entt_runtime(
     ECSACT_ENTT_RUNTIME_PACKAGE = "::wasi_test::package",
     ECSACT_ENTT_RUNTIME_USER_HEADER = "wasi_test.ecsact.meta.hh",
     system_impls = ["dynamic"],
+    tags = ["no_refresh_compile_commands"],
 )
 
 [cc_binary(
@@ -102,7 +109,10 @@ ecsact_entt_runtime(
         "--no-entry",
     ],
     linkshared = True,
-    tags = ["manual"],
+    tags = [
+        "manual",
+        "no_refresh_compile_commands",
+    ],
     deps = [
         ":wasi_test_runtime__public_cc",
         "//ecsact_lang_cpp:execution_context",
@@ -119,6 +129,7 @@ ecsact_entt_runtime(
     # exported_functions = ["_wasi_test__WasiTestSystem"],
     outputs = ["{}__system_impl.wasm".format(wasi_test)],
     standalone = True,
+    tags = ["no_refresh_compile_commands"],
 ) for wasi_test in _WASI_TESTS]
 
 [cc_binary(
@@ -133,6 +144,7 @@ ecsact_entt_runtime(
     ],
     defines = ["ECSACT_SI_WASM_API="],
     linkopts = linkopts,
+    tags = ["no_refresh_compile_commands"],
     deps = [
         ":impl",
         ":wasi_test_runtime",
@@ -158,4 +170,5 @@ ecsact_entt_runtime(
         "wasi_test_file.txt",
     ],
     linkopts = linkopts,
+    tags = ["no_refresh_compile_commands"],
 ) for wasi_test in _WASI_TESTS]
