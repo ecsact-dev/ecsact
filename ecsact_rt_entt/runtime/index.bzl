@@ -1,8 +1,8 @@
 """
 """
 
-load("//bazel:copts.bzl", "copts")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("//bazel:copts.bzl", "copts")
 load("//bazel/rules:defs.bzl", "ecsact_codegen")
 
 def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
@@ -14,7 +14,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         srcs = srcs,
         tags = tags,
         plugins = [
-            "//ecsact_rt_entt/rt_entt_codegen",
+            "@ecsact//ecsact_rt_entt/rt_entt_codegen",
         ],
         output_directory = "_%s__cc_srcs" % name,
         **kwargs
@@ -25,9 +25,9 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         srcs = srcs,
         tags = tags,
         plugins = [
-            "//ecsact_lang_cpp/cpp_header_codegen",
-            "//ecsact_lang_cpp/cpp_systems_header_codegen",
-            "//ecsact_lang_cpp/systems_header_codegen",
+            "@ecsact//ecsact_lang_cpp/cpp_header_codegen",
+            "@ecsact//ecsact_lang_cpp/cpp_systems_header_codegen",
+            "@ecsact//ecsact_lang_cpp/systems_header_codegen",
         ],
         output_directory = "_%s__public_hdrs" % name,
         **kwargs
@@ -40,7 +40,7 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         copts = copts,
         strip_include_prefix = "_%s__public_hdrs" % name,
         deps = [
-            "//ecsact_lang_cpp:execution_context",
+            "@ecsact//ecsact_lang_cpp:execution_context",
         ],
         **kwargs
     )
@@ -69,21 +69,21 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
         fail("ecsact_entt_runtime: system_impls must contain at least one of the following: %s" % ", ".join(allowed_system_impls))
 
     _cc_srcs = [
-        "//ecsact_rt_entt/runtime:sources",
+        "@ecsact//ecsact_rt_entt/runtime:sources",
         "%s__cc_srcs" % name,
     ]
 
     # keep sorted
     _cc_deps = [
         "@boost.mp11",
-        "//ecsact_rt_entt:lib",
-        "//ecsact_runtime:core",
-        "//ecsact_runtime:dynamic",
-        "//ecsact_runtime:lib",
+        "@ecsact//ecsact_rt_entt:lib",
+        "@ecsact//ecsact_runtime:core",
+        "@ecsact//ecsact_runtime:dynamic",
+        "@ecsact//ecsact_runtime:lib",
         "@entt",
         "@xxhash",
         "%s__public_cc" % name,
-        "@tracy"
+        "@tracy",
     ]
 
     cc_library(

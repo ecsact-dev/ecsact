@@ -5,10 +5,6 @@
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/core.h"
 
-#ifdef ECSACT_ASYNC_API_VISIBILITY
-#	error "ECSACT_ASYNC_API_VISIBILITY define is deprecated"
-#endif
-
 #ifndef ECSACT_ASYNC_API_FN
 #	if defined(ECSACT_ASYNC_API)
 #		define ECSACT_ASYNC_API_FN(ret, name) ECSACT_ASYNC_API ret name
@@ -23,9 +19,11 @@
 #	elif defined(ECSACT_ASYNC_API_EXPORT)
 #		define ECSACT_ASYNC_API_FN(ret, name) \
 			ECSACT_EXTERN ECSACT_EXPORT(#name) ret name
-#	else
+#	elif defined(ECSACT_ASYNC_API_IMPORT)
 #		define ECSACT_ASYNC_API_FN(ret, name) \
 			ECSACT_EXTERN ECSACT_IMPORT("env", #name) ret name
+#	else
+#		define ECSACT_ASYNC_API_FN(ret, name) ret name
 #	endif
 #endif // ECSACT_ASYNC_API_FN
 

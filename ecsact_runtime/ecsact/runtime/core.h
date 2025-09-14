@@ -5,10 +5,6 @@
 #include <stdbool.h>
 #include "ecsact/runtime/common.h"
 
-#ifdef ECSACT_CORE_API_VISIBILITY
-#	error "ECSACT_CORE_API_VISIBILITY define is deprecated"
-#endif
-
 #ifndef ECSACT_CORE_API_FN
 #	if defined(ECSACT_CORE_API)
 #		define ECSACT_CORE_API_FN(ret, name) ECSACT_CORE_API ret name
@@ -23,9 +19,11 @@
 #	elif defined(ECSACT_CORE_API_EXPORT)
 #		define ECSACT_CORE_API_FN(ret, name) \
 			ECSACT_EXTERN ECSACT_EXPORT(#name) ret name
-#	else
+#	elif defined(ECSACT_CORE_API_IMPORT)
 #		define ECSACT_CORE_API_FN(ret, name) \
 			ECSACT_EXTERN ECSACT_IMPORT("env", #name) ret name
+#	else
+#		define ECSACT_CORE_API_FN(ret, name) ret name
 #	endif
 #endif // ECSACT_CORE_API_FN
 
