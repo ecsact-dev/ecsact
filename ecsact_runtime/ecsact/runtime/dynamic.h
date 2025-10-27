@@ -25,9 +25,11 @@
 #	elif defined(ECSACT_DYNAMIC_API_EXPORT)
 #		define ECSACT_DYNAMIC_API_FN(ret, name) \
 			ECSACT_EXTERN ECSACT_EXPORT(#name) ret name
-#	else
+#	elif defined(ECSACT_DYNAMIC_API_IMPORT)
 #		define ECSACT_DYNAMIC_API_FN(ret, name) \
 			ECSACT_EXTERN ECSACT_IMPORT("env", #name) ret name
+#	else
+#		define ECSACT_DYNAMIC_API_FN(ret, name) ret name
 #	endif
 #endif // ECSACT_DYNAMIC_API_FN
 
