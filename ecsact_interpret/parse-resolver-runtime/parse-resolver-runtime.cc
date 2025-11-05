@@ -660,6 +660,10 @@ static auto builtin_type_size(ecsact_builtin_type builtin_type) {
 		case ECSACT_U32:
 		case ECSACT_F32:
 			return 4;
+		case ECSACT_I64:
+		case ECSACT_U64:
+		case ECSACT_F64:
+			return 8;
 		case ECSACT_ENTITY_TYPE:
 			return 4;
 	}

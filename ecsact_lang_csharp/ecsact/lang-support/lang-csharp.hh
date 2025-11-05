@@ -23,6 +23,12 @@ constexpr auto csharp_type_str(ecsact_builtin_type type) {
 			return "global::System.UInt32";
 		case ECSACT_F32:
 			return "global::System.Single";
+		case ECSACT_I64:
+			return "global::System.Int64";
+		case ECSACT_U64:
+			return "global::System.UInt64";
+		case ECSACT_F64:
+			return "global::System.Double";
 		case ECSACT_ENTITY_TYPE:
 			return "global::System.Int32";
 	}

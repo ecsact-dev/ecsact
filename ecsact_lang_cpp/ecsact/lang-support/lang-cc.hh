@@ -67,6 +67,12 @@ constexpr auto cpp_type_str(ecsact_builtin_type type) {
 			return "uint32_t";
 		case ECSACT_F32:
 			return "float";
+		case ECSACT_I64:
+			return "int64_t";
+		case ECSACT_U64:
+			return "uint64_t";
+		case ECSACT_F64:
+			return "double";
 		case ECSACT_ENTITY_TYPE:
 			return "::ecsact_entity_id";
 	}

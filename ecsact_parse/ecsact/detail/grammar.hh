@@ -68,8 +68,10 @@ struct whitespace {
 };
 
 struct parameter_name {
-	static constexpr auto rule = lexy::dsl::
-		identifier(lexy::dsl::ascii::alpha, lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'_'>);
+	static constexpr auto rule = lexy::dsl::identifier(
+		lexy::dsl::ascii::alpha,
+		lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'_'>
+	);
 
 	static constexpr auto value = lexy::as_string<std::string_view>;
 };
@@ -189,8 +191,10 @@ struct parameters {
  * Lookupable type name
  */
 struct type_name {
-	static constexpr auto rule = lexy::dsl::
-		identifier(lexy::dsl::ascii::alpha, lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'.'> / lexy::dsl::lit_c<'_'>);
+	static constexpr auto rule = lexy::dsl::identifier(
+		lexy::dsl::ascii::alpha,
+		lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'.'> / lexy::dsl::lit_c<'_'>
+	);
 
 	static constexpr auto value = lexy::as_string<std::string_view>;
 };
@@ -206,15 +210,19 @@ struct type_name_decl {
 };
 
 struct package_name {
-	static constexpr auto rule = lexy::dsl::
-		identifier(lexy::dsl::ascii::alpha, lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'.'> / lexy::dsl::lit_c<'_'>);
+	static constexpr auto rule = lexy::dsl::identifier(
+		lexy::dsl::ascii::alpha,
+		lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'.'> / lexy::dsl::lit_c<'_'>
+	);
 
 	static constexpr auto value = lexy::as_string<std::string_view>;
 };
 
 struct field_name {
-	static constexpr auto rule = lexy::dsl::
-		identifier(lexy::dsl::ascii::alpha, lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'_'>);
+	static constexpr auto rule = lexy::dsl::identifier(
+		lexy::dsl::ascii::alpha,
+		lexy::dsl::ascii::alnum / lexy::dsl::lit_c<'_'>
+	);
 
 	static constexpr auto value = lexy::as_string<std::string_view>;
 };
@@ -535,6 +543,21 @@ struct field_statement {
 		static constexpr auto value = lexy::constant(ECSACT_F32);
 	};
 
+	struct i64_keyword : lexy::transparent_production {
+		static constexpr auto rule = LEXY_LIT("i64");
+		static constexpr auto value = lexy::constant(ECSACT_I64);
+	};
+
+	struct u64_keyword : lexy::transparent_production {
+		static constexpr auto rule = LEXY_LIT("u64");
+		static constexpr auto value = lexy::constant(ECSACT_U64);
+	};
+
+	struct f64_keyword : lexy::transparent_production {
+		static constexpr auto rule = LEXY_LIT("f64");
+		static constexpr auto value = lexy::constant(ECSACT_F64);
+	};
+
 	struct entity_keyword : lexy::transparent_production {
 		static constexpr auto rule = LEXY_LIT("entity");
 		static constexpr auto value = lexy::constant(ECSACT_ENTITY_TYPE);
@@ -544,7 +567,9 @@ struct field_statement {
 		(lexy::dsl::p<i8_keyword> | lexy::dsl::p<u8_keyword> |
 		 lexy::dsl::p<i16_keyword> | lexy::dsl::p<u16_keyword> |
 		 lexy::dsl::p<i32_keyword> | lexy::dsl::p<u32_keyword> |
-		 lexy::dsl::p<f32_keyword> | lexy::dsl::p<entity_keyword>);
+		 lexy::dsl::p<f32_keyword> | lexy::dsl::p<i64_keyword> |
+		 lexy::dsl::p<u64_keyword> | lexy::dsl::p<f64_keyword> |
+		 lexy::dsl::p<entity_keyword>);
 
 	static constexpr auto rule = type_keyword >>
 		lexy::dsl::opt(lexy::dsl::p<array_length>) >> lexy::dsl::p<field_name>;
@@ -883,10 +908,12 @@ struct system_notify_component_statement {
 
 struct none_statement {
 	static constexpr auto rule = LEXY_LIT("");
-	static constexpr auto value = lexy::constant(ecsact_statement{
-		.type = ECSACT_STATEMENT_NONE,
-		.data = {},
-	});
+	static constexpr auto value = lexy::constant(
+		ecsact_statement{
+			.type = ECSACT_STATEMENT_NONE,
+			.data = {},
+		}
+	);
 };
 
 // Simple control grammar used in lexy::scan

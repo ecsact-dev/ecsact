@@ -74,6 +74,18 @@ TEST(Parse, F32Field) {
 	TestValidField("f32 example_field;"s, ECSACT_F32, "example_field");
 }
 
+TEST(Parse, I64Field) {
+	TestValidField("i64 example_field;"s, ECSACT_I64, "example_field");
+}
+
+TEST(Parse, U64Field) {
+	TestValidField("u64 example_field;"s, ECSACT_U64, "example_field");
+}
+
+TEST(Parse, F64Field) {
+	TestValidField("f64 example_field;"s, ECSACT_F64, "example_field");
+}
+
 TEST(Parse, EntityField) {
 	TestValidField("entity example_field;"s, ECSACT_ENTITY_TYPE, "example_field");
 }

@@ -94,6 +94,15 @@ static void json_composite_properties(
 				case ECSACT_F32:
 					field_type_json["type"] = "f32";
 					break;
+				case ECSACT_I64:
+					field_type_json["type"] = "i64";
+					break;
+				case ECSACT_U64:
+					field_type_json["type"] = "u64";
+					break;
+				case ECSACT_F64:
+					field_type_json["type"] = "f64";
+					break;
 				case ECSACT_ENTITY_TYPE:
 					field_type_json["type"] = "entity";
 					break;
