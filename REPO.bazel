@@ -1,0 +1,7 @@
+repo(
+    features = [
+        # we're setting c++ standard ourselves to a newer version
+        # this supresses the warning about overriding /std:c++17
+        "-default_cpp_std",
+    ],
+)
