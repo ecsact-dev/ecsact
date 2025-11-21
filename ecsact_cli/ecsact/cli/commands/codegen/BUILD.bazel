@@ -8,10 +8,6 @@ cc_library(
     srcs = ["codegen.cc"],
     hdrs = ["codegen.hh"],
     copts = copts,
-    defines = [
-        "ECSACT_DYNAMIC_API=\"\"",
-        "ECSACT_META_API=\"\"",
-    ],
     strip_include_prefix = "/ecsact_cli",
     deps = [
         ":codegen_util",

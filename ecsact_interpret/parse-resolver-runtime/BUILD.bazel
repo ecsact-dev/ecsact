@@ -5,12 +5,11 @@ package(default_visibility = ["//:__subpackages__"])
 
 cc_library(
     name = "parse-resolver-runtime",
-    srcs = glob(["*.cc", "*.hh"]),
+    srcs = glob([
+        "*.cc",
+        "*.hh",
+    ]),
     copts = copts,
-    defines = [
-        "ECSACT_DYNAMIC_API=\"\"",
-        "ECSACT_META_API=\"\"",
-    ],
     deps = [
         "//ecsact_runtime:dynamic",
         "//ecsact_runtime:meta",
