@@ -76,6 +76,8 @@ constexpr auto cpp_type_str(ecsact_builtin_type type) {
 		case ECSACT_ENTITY_TYPE:
 			return "::ecsact_entity_id";
 	}
+
+	return "/* unhandled cpp_type_str */";
 }
 
 ECSACT_ALWAYS_INLINE auto cpp_field_type_name( //
@@ -94,6 +96,8 @@ ECSACT_ALWAYS_INLINE auto cpp_field_type_name( //
 			return cpp_field_type_name(field_index_field_type);
 		}
 	}
+
+	return "/* unhandled cpp_field_type_name */";
 }
 
 constexpr auto c_type_str(ecsact_builtin_type type) {

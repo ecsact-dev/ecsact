@@ -64,6 +64,8 @@ static auto cpp_field_type_name(ecsact_field_type field_type) -> std::string {
 			return cpp_field_type_name(field_index_field_type);
 		}
 	}
+
+	return "/* unhandled cpp_field_type_name */";
 }
 
 static void write_fields(
