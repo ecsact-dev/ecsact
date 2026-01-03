@@ -203,7 +203,7 @@ ECSACT_COMPARE_ID_FN(ecsact_transient_id, ecsact_component_like_id)
  */
 struct ecsact_system_execution_context;
 
-typedef void (*ecsact_system_execution_impl)(//
+typedef void (*ecsact_system_execution_impl)( //
 	struct ecsact_system_execution_context*
 );
 

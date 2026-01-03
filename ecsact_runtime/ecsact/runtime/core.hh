@@ -16,10 +16,12 @@ class builder_entity {
 public:
 	template<typename C>
 	ECSACT_ALWAYS_INLINE auto add_component(C* component) -> builder_entity& {
-		components.push_back(ecsact_component{
-			.component_id = C::id,
-			.component_data = component,
-		});
+		components.push_back(
+			ecsact_component{
+				.component_id = C::id,
+				.component_data = component,
+			}
+		);
 		return *this;
 	}
 
@@ -91,6 +93,10 @@ public:
 	template<typename Action>
 	ECSACT_ALWAYS_INLINE void push_action(const Action* action) {
 		actions.push_back(ecsact_action{Action::id, action});
+	}
+
+	ECSACT_ALWAYS_INLINE void push_action_raw(ecsact_action action) {
+		actions.push_back(action);
 	}
 
 	ECSACT_ALWAYS_INLINE void clear() {
