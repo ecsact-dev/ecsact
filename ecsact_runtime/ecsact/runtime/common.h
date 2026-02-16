@@ -136,9 +136,6 @@ ECSACT_CAST_ID_FN(ecsact_system_like_id, ecsact_decl_id)
 ECSACT_CAST_ID_FN(ecsact_composite_id, ecsact_decl_id)
 ECSACT_CAST_ID_FN(ecsact_component_like_id, ecsact_decl_id)
 
-ECSACT_CAST_ID_FN(ecsact_system_like_id, ecsact_system_id)
-ECSACT_CAST_ID_FN(ecsact_system_like_id, ecsact_action_id)
-
 ECSACT_CAST_ID_FN(ecsact_component_id, ecsact_component_like_id)
 ECSACT_CAST_ID_FN(ecsact_transient_id, ecsact_component_like_id)
 
