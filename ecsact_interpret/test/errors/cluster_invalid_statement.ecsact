@@ -1,0 +1,5 @@
+main package cluster_invalid_statement;
+
+cluster {
+	component CompA {}
+}

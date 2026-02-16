@@ -1077,8 +1077,14 @@ constexpr char cluster_level_statement_expected_message[] =
 using cluster_level_statement = statement<
 	cluster_level_statement_name,
 	cluster_level_statement_expected_message,
+	package_statement,
+	import_statement,
+	component_statement,
+	transient_statement,
 	system_statement,
-	action_statement>;
+	action_statement,
+	enum_statement,
+	cluster_statement>;
 
 constexpr char action_level_statement_name[] = "action level statement";
 constexpr char action_level_statement_expected_message[] =
