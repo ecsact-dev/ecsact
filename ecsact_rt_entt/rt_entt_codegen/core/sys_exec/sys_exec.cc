@@ -38,12 +38,8 @@ auto ecsact::rt_entt_codegen::core::print_child_systems(
 		}
 	} else {
 		auto parallel_system_cluster =
-			ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
-				ctx,
-				std::vector<system_like_id_variant>{
-					child_system_ids.begin(),
-					child_system_ids.end()
-				}
+			ecsact::rt_entt_codegen::parallel::get_system_parallel_execution_cluster(
+				sys_like_id
 			);
 
 		ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(

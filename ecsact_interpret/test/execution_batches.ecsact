@@ -1,0 +1,75 @@
+main package execution_batches_test;
+
+component CompA { i32 a; }
+component CompB { i32 b; }
+component CompC { i32 c; }
+component CompD { i32 d; }
+component CompE { i32 e; }
+component CompF { i32 f; }
+component CompG { i32 g; }
+component CompH { i32 h; }
+component CompI { i32 i; }
+component CompJ { i32 j; }
+
+system SysA { readonly CompA; }
+system SysB { readonly CompA; }
+
+system MultiSys1 {
+	readonly CompA;
+	readonly CompB;
+}
+
+system SysC { readwrite CompA; }
+
+system MultiSys2 {
+	readonly CompB;
+	readonly CompC;
+	readonly CompD;
+	readonly CompE;
+}
+
+system SysD { readonly CompB; }
+
+system ParentSys {
+	readonly CompA;
+	system ParentSysChild {
+		readwrite CompA;
+	}
+}
+
+system OtherSys { readonly CompA; }
+
+system MultiSys3 {
+	include CompC;
+	exclude CompD;
+	adds CompG;
+	removes CompH;
+	stream_toggle CompI;
+}
+
+system IncludeSys { include CompC; }
+system ExcludeSys { exclude CompD; }
+
+system GeneratesSys {
+	generates { required CompF; }
+}
+
+system ConflictGenerates { readonly CompF; }
+
+system MultiSys4 {
+	readonly CompF;
+	readonly CompJ;
+}
+
+system LastSys { readonly CompJ; }
+
+system ParentGenerates {
+	system ParentGeneratesChild {
+		generates { required CompF; }
+	}
+}
+
+system AfterParent {
+	readonly CompA;
+}
+
