@@ -544,6 +544,55 @@ ECSACT_DYNAMIC_API_FN(void, ecsact_set_component_type)
 	ecsact_component_type component_type
 );
 
+ECSACT_DYNAMIC_API_FN(void, ecsact_add_cluster)
+( //
+	ecsact_package_id package_id,
+	const char*       cluster_name,
+	int32_t           cluster_name_len
+);
+
+ECSACT_DYNAMIC_API_FN(void, ecsact_add_system_cluster)
+( //
+	ecsact_system_like_id parent_system_id,
+	const char*           cluster_name,
+	int32_t               cluster_name_len
+);
+
+ECSACT_DYNAMIC_API_FN(void, ecsact_end_cluster)
+( //
+	ecsact_package_id package_id
+);
+
+ECSACT_DYNAMIC_API_FN(void, ecsact_end_system_cluster)
+( //
+	ecsact_system_like_id parent_system_id
+);
+
+/**
+ * Validates the explicit clusters. If a cluster contains systems that conflict
+ * then the system ID of the system that causes the conflict is returned.
+ *
+ * @returns invalid system ID or (ecsact_system_like_id)-1 if all clusters are
+ *          valid.
+ */
+ECSACT_DYNAMIC_API_FN(ecsact_system_like_id, ecsact_check_execution_batches)
+( //
+	ecsact_package_id package_id
+);
+
+/**
+ * Validates the explicit clusters for a system.
+ *
+ * @see ecsact_check_execution_batches
+ */
+ECSACT_DYNAMIC_API_FN(
+	ecsact_system_like_id,
+	ecsact_check_system_execution_batches
+)
+( //
+	ecsact_system_like_id system_id
+);
+
 // # BEGIN FOR_EACH_ECSACT_DYNAMIC_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL
 #	define FOR_EACH_ECSACT_DYNAMIC_API_FN(fn, ...) \
@@ -601,7 +650,13 @@ ECSACT_DYNAMIC_API_FN(void, ecsact_set_component_type)
 		fn(ecsact_set_entity_execution_status, __VA_ARGS__);            \
 		fn(ecsact_set_system_parallel_execution, __VA_ARGS__);          \
 		fn(ecsact_set_system_notify_component_setting, __VA_ARGS__);    \
-		fn(ecsact_set_component_type, __VA_ARGS__)
+		fn(ecsact_set_component_type, __VA_ARGS__);                     \
+		fn(ecsact_add_cluster, __VA_ARGS__);                            \
+		fn(ecsact_add_system_cluster, __VA_ARGS__);                     \
+		fn(ecsact_end_cluster, __VA_ARGS__);                            \
+		fn(ecsact_end_system_cluster, __VA_ARGS__);                     \
+		fn(ecsact_check_execution_batches, __VA_ARGS__);                \
+		fn(ecsact_check_system_execution_batches, __VA_ARGS__)
 #endif
 
 #endif // ECSACT_RUNTIME_DYNAMIC_H

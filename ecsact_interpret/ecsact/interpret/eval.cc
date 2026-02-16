@@ -1996,7 +1996,7 @@ static ecsact_eval_error eval_cluster_statement(
 	auto& cluster_statement = statement.data.cluster_statement;
 
 	if(context_statements.empty()) {
-		ecsact_meta_add_cluster(
+		ecsact_add_cluster(
 			package_id,
 			cluster_statement.cluster_name.data,
 			cluster_statement.cluster_name.length
@@ -2014,7 +2014,7 @@ static ecsact_eval_error eval_cluster_statement(
 			};
 		}
 
-		ecsact_meta_add_system_cluster(
+		ecsact_add_system_cluster(
 			*parent_sys_like_id,
 			cluster_statement.cluster_name.data,
 			cluster_statement.cluster_name.length
@@ -2218,9 +2218,9 @@ void ecsact::detail::check_file_eval_error(
 				find_parent_system_like_id(package_id, context_stack);
 
 			if(parent_sys_like_id) {
-				ecsact_meta_end_system_cluster(*parent_sys_like_id);
+				ecsact_end_system_cluster(*parent_sys_like_id);
 			} else {
-				ecsact_meta_end_cluster(package_id);
+				ecsact_end_cluster(package_id);
 			}
 		}
 	}

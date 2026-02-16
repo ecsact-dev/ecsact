@@ -27,7 +27,7 @@ static void check_batches(
 	std::vector<ecsact::parse_eval_error>& errors
 ) {
 	auto package_id = *file_state.package_id;
-	auto invalid_sys_id = ecsact_meta_check_execution_batches(package_id);
+	auto invalid_sys_id = ecsact_check_execution_batches(package_id);
 	if(invalid_sys_id != (ecsact_system_like_id)-1) {
 		errors.push_back(ecsact::parse_eval_error{
 			.eval_error = ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
@@ -40,7 +40,7 @@ static void check_batches(
 	}
 
 	for(auto sys_id : ecsact::meta::get_system_ids(package_id)) {
-		auto invalid_nested_sys_id = ecsact_meta_check_system_execution_batches(
+		auto invalid_nested_sys_id = ecsact_check_system_execution_batches(
 			static_cast<ecsact_system_like_id>(sys_id)
 		);
 		if(invalid_nested_sys_id != (ecsact_system_like_id)-1) {

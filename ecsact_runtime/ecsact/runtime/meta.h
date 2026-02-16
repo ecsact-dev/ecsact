@@ -551,16 +551,6 @@ ECSACT_META_API_FN(void, ecsact_meta_get_system_execution_batch)
 	int32_t*               out_systems_count
 );
 
-ECSACT_META_API_FN(ecsact_system_like_id, ecsact_meta_check_execution_batches)
-( //
-	ecsact_package_id package_id
-);
-
-ECSACT_META_API_FN(ecsact_system_like_id, ecsact_meta_check_system_execution_batches)
-( //
-	ecsact_system_like_id system_id
-);
-
 ECSACT_META_API_FN(bool, ecsact_meta_is_system)
 ( //
 	ecsact_system_like_id system_id
@@ -569,30 +559,6 @@ ECSACT_META_API_FN(bool, ecsact_meta_is_system)
 ECSACT_META_API_FN(bool, ecsact_meta_is_action)
 ( //
 	ecsact_system_like_id system_id
-);
-
-ECSACT_META_API_FN(void, ecsact_meta_add_cluster)
-( //
-	ecsact_package_id package_id,
-	const char*       cluster_name,
-	int32_t           cluster_name_len
-);
-
-ECSACT_META_API_FN(void, ecsact_meta_add_system_cluster)
-( //
-	ecsact_system_like_id parent_system_id,
-	const char*           cluster_name,
-	int32_t               cluster_name_len
-);
-
-ECSACT_META_API_FN(void, ecsact_meta_end_cluster)
-( //
-	ecsact_package_id package_id
-);
-
-ECSACT_META_API_FN(void, ecsact_meta_end_system_cluster)
-( //
-	ecsact_system_like_id parent_system_id
 );
 
 // # BEGIN FOR_EACH_ECSACT_META_API_FN
@@ -665,14 +631,8 @@ ECSACT_META_API_FN(void, ecsact_meta_end_system_cluster)
 		fn(ecsact_meta_get_execution_batch, __VA_ARGS__);                   \
 		fn(ecsact_meta_count_system_execution_batches, __VA_ARGS__);        \
 		fn(ecsact_meta_get_system_execution_batch, __VA_ARGS__);            \
-		fn(ecsact_meta_check_execution_batches, __VA_ARGS__);               \
-		fn(ecsact_meta_check_system_execution_batches, __VA_ARGS__);        \
 		fn(ecsact_meta_is_system, __VA_ARGS__);                             \
-		fn(ecsact_meta_is_action, __VA_ARGS__);                             \
-		fn(ecsact_meta_add_cluster, __VA_ARGS__);                           \
-		fn(ecsact_meta_add_system_cluster, __VA_ARGS__);                    \
-		fn(ecsact_meta_end_cluster, __VA_ARGS__);                           \
-		fn(ecsact_meta_end_system_cluster, __VA_ARGS__)
+		fn(ecsact_meta_is_action, __VA_ARGS__)
 #endif
 
 #endif // ECSACT_RUNTIME_META_H

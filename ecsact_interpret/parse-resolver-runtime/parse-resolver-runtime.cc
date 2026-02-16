@@ -1483,7 +1483,7 @@ void ecsact_meta_get_system_execution_batch(
 	}
 }
 
-ecsact_system_like_id ecsact_meta_check_execution_batches(
+ecsact_system_like_id ecsact_check_execution_batches(
 	ecsact_package_id package_id
 ) {
 	auto& pkg = package_defs.at(package_id);
@@ -1513,7 +1513,7 @@ ecsact_system_like_id ecsact_meta_check_execution_batches(
 	return result.value_or((ecsact_system_like_id)-1);
 }
 
-ecsact_system_like_id ecsact_meta_check_system_execution_batches(
+ecsact_system_like_id ecsact_check_system_execution_batches(
 	ecsact_system_like_id system_id
 ) {
 	auto& sys_def = get_system_like(system_id);
@@ -1545,7 +1545,7 @@ bool ecsact_meta_is_action(ecsact_system_like_id system_id) {
 	return act_defs.contains(static_cast<ecsact_action_id>(system_id));
 }
 
-void ecsact_meta_add_cluster(
+void ecsact_add_cluster(
 	ecsact_package_id package_id,
 	const char*       cluster_name,
 	int32_t           cluster_name_len
@@ -1556,7 +1556,7 @@ void ecsact_meta_add_cluster(
 	);
 }
 
-void ecsact_meta_add_system_cluster(
+void ecsact_add_system_cluster(
 	ecsact_system_like_id parent_system_id,
 	const char*           cluster_name,
 	int32_t               cluster_name_len
@@ -1567,14 +1567,14 @@ void ecsact_meta_add_system_cluster(
 	);
 }
 
-void ecsact_meta_end_cluster(ecsact_package_id package_id) {
+void ecsact_end_cluster(ecsact_package_id package_id) {
 	auto& pkg = package_defs.at(package_id);
 	pkg.explicit_cluster_ends.push_back(
 		static_cast<int32_t>(pkg.top_level_systems.size())
 	);
 }
 
-void ecsact_meta_end_system_cluster(ecsact_system_like_id parent_system_id) {
+void ecsact_end_system_cluster(ecsact_system_like_id parent_system_id) {
 	auto& sys = get_system_like(parent_system_id);
 	sys.explicit_cluster_ends.push_back(
 		static_cast<int32_t>(sys.nested_systems.size())
