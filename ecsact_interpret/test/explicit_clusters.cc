@@ -29,7 +29,7 @@ TEST(EcsactInterpret, ExplicitClusters) {
 	ASSERT_NE(package_id, (ecsact_package_id)-1);
 
 	auto batch_count = ecsact_meta_count_execution_batches(package_id);
-	ASSERT_EQ(batch_count, 3);
+	ASSERT_EQ(batch_count, 4);
 
 	// Batch 0: SysA
 	{
@@ -92,5 +92,15 @@ TEST(EcsactInterpret, ExplicitClusters) {
 			ASSERT_EQ(sys_systems_count, 1);
 			EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(sys_systems[0])), "ChildB");
 		}
+	}
+
+	// Batch 3: SysC, SysD (Mutually Exclusive)
+	{
+		int32_t systems_count = 0;
+		std::vector<ecsact_system_like_id> systems(10);
+		ecsact_meta_get_execution_batch(package_id, 3, 10, systems.data(), &systems_count);
+		ASSERT_EQ(systems_count, 2);
+		EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])), "SysC");
+		EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[1])), "SysD");
 	}
 }

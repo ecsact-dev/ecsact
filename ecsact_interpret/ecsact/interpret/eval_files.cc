@@ -7,6 +7,8 @@
 #include <utility>
 #include "ecsact/parse.h"
 #include "ecsact/interpret/eval.h"
+#include "ecsact/runtime/meta.h"
+#include "ecsact/runtime/meta.hh"
 
 #include "./detail/check_set.hh"
 #include "./detail/fixed_stack.hh"
@@ -17,6 +19,42 @@
 
 namespace fs = std::filesystem;
 using ecsact::parse_eval_error;
+using namespace ecsact::detail;
+
+static void check_batches(
+	int32_t                        source_index,
+	eval_parse_state<std::ifstream>& file_state,
+	std::vector<ecsact::parse_eval_error>& errors
+) {
+	auto package_id = *file_state.package_id;
+	auto invalid_sys_id = ecsact_meta_check_execution_batches(package_id);
+	if(invalid_sys_id != (ecsact_system_like_id)-1) {
+		errors.push_back(ecsact::parse_eval_error{
+			.eval_error = ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
+			.source_index = source_index,
+			.line = file_state.reader.current_line,
+			.character = file_state.reader.current_character,
+			.error_message =
+				"System '" + std::string(ecsact_meta_system_name(static_cast<ecsact_system_id>(invalid_sys_id))) + "' cannot be part of the explicit cluster it is in",
+		});
+	}
+
+	for(auto sys_id : ecsact::meta::get_system_ids(package_id)) {
+		auto invalid_nested_sys_id = ecsact_meta_check_system_execution_batches(
+			static_cast<ecsact_system_like_id>(sys_id)
+		);
+		if(invalid_nested_sys_id != (ecsact_system_like_id)-1) {
+			errors.push_back(ecsact::parse_eval_error{
+				.eval_error = ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
+				.source_index = source_index,
+				.line = file_state.reader.current_line,
+				.character = file_state.reader.current_character,
+				.error_message =
+					"System '" + std::string(ecsact_meta_system_name(static_cast<ecsact_system_id>(invalid_nested_sys_id))) + "' cannot be part of the explicit cluster it is in",
+			});
+		}
+	}
+}
 
 std::vector<parse_eval_error> ecsact::eval_files(std::vector<fs::path> files) {
 	using ecsact::detail::check_cyclic_imports;
@@ -78,6 +116,11 @@ std::vector<parse_eval_error> ecsact::eval_files(std::vector<fs::path> files) {
 		}
 
 		parse_eval_declarations(source_index, file_state, errors);
+		if(!errors.empty()) {
+			return errors;
+		}
+
+		check_batches(source_index, file_state, errors);
 		if(!errors.empty()) {
 			return errors;
 		}

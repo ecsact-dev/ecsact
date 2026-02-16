@@ -1198,7 +1198,7 @@ static bool collect_all_caps(
 	return independent;
 }
 
-static void calculate_execution_batches(
+static std::optional<ecsact_system_like_id> calculate_execution_batches(
 	const std::vector<ecsact_system_like_id>&        systems,
 	const std::vector<int32_t>&                      explicit_starts,
 	const std::vector<int32_t>&                      explicit_ends,
@@ -1239,27 +1239,73 @@ static void calculate_execution_batches(
 		}
 	};
 
+	auto are_mutually_exclusive = [&](ecsact_system_like_id a, ecsact_system_like_id b) {
+		std::unordered_map<ecsact_component_like_id, ecsact_system_capability> a_caps;
+		std::unordered_map<ecsact_component_like_id, ecsact_system_capability> b_caps;
+		collect_all_caps(a, a_caps);
+		collect_all_caps(b, b_caps);
+
+		for(auto const& [comp_id, a_cap] : a_caps) {
+			if(!b_caps.contains(comp_id)) {
+				continue;
+			}
+			auto b_cap = b_caps.at(comp_id);
+
+			bool a_inc = (a_cap & ECSACT_SYS_CAP_INCLUDE) != 0;
+			bool a_exc = (a_cap & ECSACT_SYS_CAP_EXCLUDE) != 0;
+			bool b_inc = (b_cap & ECSACT_SYS_CAP_INCLUDE) != 0;
+			bool b_exc = (b_cap & ECSACT_SYS_CAP_EXCLUDE) != 0;
+
+			if((a_inc && b_exc) || (a_exc && b_inc)) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	int32_t current_explicit_cluster_start = -1;
+
 	for(int32_t i = 0; static_cast<int32_t>(systems.size()) > i; ++i) {
 		auto sys_id = systems[i];
 		if(std::ranges::find(explicit_starts, i) != explicit_starts.end()) {
 			finalize_batch();
+			current_explicit_cluster_start = i;
 		}
 
 		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
-				 all_caps;
+			all_caps;
 		bool independent = collect_all_caps(sys_id, all_caps);
 
 		bool conflict = independent;
 		if(!conflict) {
 			for(auto const& [comp_id, cap] : all_caps) {
+				bool comp_conflict = false;
 				if(is_exclusive(cap)) {
 					if(batch_readers.contains(comp_id) || batch_writers.contains(comp_id)) {
-						conflict = true;
-						break;
+						comp_conflict = true;
 					}
 				}
 				if(is_reader(cap)) {
 					if(batch_writers.contains(comp_id)) {
+						comp_conflict = true;
+					}
+				}
+
+				if(comp_conflict) {
+					// Check if this system is mutually exclusive with EVERYTHING in the
+					// current batch that touched this component.
+					// For simplicity, we just check if it's mutually exclusive with
+					// ALL systems in the current batch.
+					bool all_exclusive = true;
+					for(auto other_sys_id : current_batch) {
+						if(!are_mutually_exclusive(sys_id, other_sys_id)) {
+							all_exclusive = false;
+							break;
+						}
+					}
+
+					if(!all_exclusive) {
 						conflict = true;
 						break;
 					}
@@ -1268,6 +1314,9 @@ static void calculate_execution_batches(
 		}
 
 		if(conflict) {
+			if(current_explicit_cluster_start != -1) {
+				return sys_id;
+			}
 			finalize_batch();
 		}
 
@@ -1282,15 +1331,26 @@ static void calculate_execution_batches(
 		}
 
 		if(independent) {
+			if(current_explicit_cluster_start != -1) {
+				// Independent systems always end their batch. If we're in an explicit
+				// cluster, then this system would be forced to be alone, which means
+				// the cluster is invalid if there are other systems.
+				// Wait - if the independent system is the FIRST in the cluster it's ok
+				if(current_explicit_cluster_start != i) {
+					return sys_id;
+				}
+			}
 			finalize_batch();
 		}
 
 		if(std::ranges::find(explicit_ends, i + 1) != explicit_ends.end()) {
 			finalize_batch();
+			current_explicit_cluster_start = -1;
 		}
 	}
 
 	finalize_batch();
+	return std::nullopt;
 }
 
 int32_t ecsact_meta_count_execution_batches(ecsact_package_id package_id) {
@@ -1411,6 +1471,60 @@ void ecsact_meta_get_system_execution_batch(
 	if(out_systems_count != nullptr) {
 		*out_systems_count = static_cast<int32_t>(batch.size());
 	}
+}
+
+ecsact_system_like_id ecsact_meta_check_execution_batches(
+	ecsact_package_id package_id
+) {
+	auto& pkg = package_defs.at(package_id);
+	std::vector<ecsact_system_like_id> all_systems;
+	for(auto dep_id : pkg.dependencies) {
+		auto& dep_pkg = package_defs.at(dep_id);
+		for(auto sys_id : dep_pkg.top_level_systems) {
+			all_systems.push_back(sys_id);
+		}
+	}
+	for(auto sys_id : pkg.top_level_systems) {
+		all_systems.push_back(sys_id);
+	}
+
+	if(all_systems.empty()) {
+		return (ecsact_system_like_id)-1;
+	}
+
+	std::vector<std::vector<ecsact_system_like_id>> batches;
+	auto result = calculate_execution_batches(
+		all_systems,
+		pkg.explicit_cluster_starts,
+		pkg.explicit_cluster_ends,
+		batches
+	);
+
+	return result.value_or((ecsact_system_like_id)-1);
+}
+
+ecsact_system_like_id ecsact_meta_check_system_execution_batches(
+	ecsact_system_like_id system_id
+) {
+	auto& sys_def = get_system_like(system_id);
+	if(sys_def.nested_systems.empty()) {
+		return (ecsact_system_like_id)-1;
+	}
+
+	std::vector<ecsact_system_like_id> nested_systems;
+	for(auto id : sys_def.nested_systems) {
+		nested_systems.push_back(ecsact_id_cast<ecsact_system_like_id>(id));
+	}
+
+	std::vector<std::vector<ecsact_system_like_id>> batches;
+	auto result = calculate_execution_batches(
+		nested_systems,
+		sys_def.explicit_cluster_starts,
+		sys_def.explicit_cluster_ends,
+		batches
+	);
+
+	return result.value_or((ecsact_system_like_id)-1);
 }
 
 bool ecsact_meta_is_system(ecsact_system_like_id system_id) {

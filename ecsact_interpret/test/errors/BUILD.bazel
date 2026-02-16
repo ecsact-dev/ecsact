@@ -3,6 +3,7 @@ load("//bazel:copts.bzl", "copts")
 
 # buildifier: keep sorted
 _TESTS = [
+    "cluster_invalid_conflict",
     "cluster_invalid_context",
     "cluster_invalid_statement",
     "duplicate_notice_components",

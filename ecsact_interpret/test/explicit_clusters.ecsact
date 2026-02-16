@@ -27,3 +27,17 @@ system ParentSys {
 	}
 }
 
+component CompB;
+
+cluster {
+	system SysC {
+		readonly CompA;
+		include CompB;
+	}
+	system SysD {
+		readwrite CompA;
+		exclude CompB;
+	}
+}
+
+

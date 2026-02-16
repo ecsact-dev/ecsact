@@ -20,7 +20,7 @@
 template<>
 struct magic_enum::customize::enum_range<ecsact_eval_error_code> {
 	static constexpr int min = 0;
-	static constexpr int max = 2000;
+	static constexpr int max = 2001;
 };
 
 namespace ecsact::detail {
