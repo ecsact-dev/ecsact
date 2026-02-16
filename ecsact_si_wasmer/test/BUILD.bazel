@@ -1,5 +1,5 @@
 load("@emsdk//emscripten_toolchain:wasm_rules.bzl", "wasm_cc_binary")
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel:copts.bzl", "copts", "linkopts")
 load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")
 

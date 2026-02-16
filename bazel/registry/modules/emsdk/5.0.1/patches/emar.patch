@@ -1,0 +1,15 @@
+--- emscripten_toolchain/emar.bat
++++ emscripten_toolchain/emar.bat
+@@ -5,1 +5,11 @@
+-py -3 %EMSCRIPTEN%\emar.py %*
++set PYTHON_EXE=python
++if exist "%~dp0\..\..\rules_python++python+python_3_11_x86_64-pc-windows-msvc\python.exe" (
++    set PYTHON_EXE="%~dp0\..\..\rules_python++python+python_3_11_x86_64-pc-windows-msvc\python.exe"
++) else (
++    where.exe /q python
++    if %ERRORLEVEL% equ 0 set PYTHON_EXE=python
++    where.exe /q py
++    if %ERRORLEVEL% equ 0 set PYTHON_EXE=py -3
++)
++
++%PYTHON_EXE% %EMSCRIPTEN%\emar.py %*

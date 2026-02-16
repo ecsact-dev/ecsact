@@ -1,0 +1,11 @@
+{
+    "homepage": "https://emscripten.org",
+    "maintainers": [],
+    "repository": [
+        "github:emscripten-core/emsdk"
+    ],
+    "versions": [
+        "5.0.1"
+    ],
+    "yanked_versions": {}
+}
