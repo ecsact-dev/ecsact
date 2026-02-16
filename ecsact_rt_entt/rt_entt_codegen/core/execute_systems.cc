@@ -88,23 +88,8 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 
 	ctx.write("\n");
 
-	std::vector<system_like_id_variant> system_like_variants;
-
-	for(const auto sys_like_id : details.top_execution_order) {
-		if(details.is_system(sys_like_id)) {
-			system_like_variants.push_back(static_cast<ecsact_system_id>(sys_like_id)
-			);
-		} else if(details.is_action(sys_like_id)) {
-			system_like_variants.push_back(static_cast<ecsact_action_id>(sys_like_id)
-			);
-		}
-	}
-
 	auto parallel_system_cluster =
-		ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
-			ctx,
-			system_like_variants
-		);
+		ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(ctx);
 
 	ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(
 		ctx,

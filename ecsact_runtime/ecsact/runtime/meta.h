@@ -537,6 +537,30 @@ ECSACT_META_API_FN(void, ecsact_meta_get_execution_batch)
 	int32_t*               out_systems_count
 );
 
+ECSACT_META_API_FN(int32_t, ecsact_meta_count_system_execution_batches)
+( //
+	ecsact_system_like_id system_id
+);
+
+ECSACT_META_API_FN(void, ecsact_meta_get_system_execution_batch)
+( //
+	ecsact_system_like_id  system_id,
+	int32_t                batch_index,
+	int32_t                max_systems_count,
+	ecsact_system_like_id* out_systems,
+	int32_t*               out_systems_count
+);
+
+ECSACT_META_API_FN(bool, ecsact_meta_is_system)
+( //
+	ecsact_system_like_id system_id
+);
+
+ECSACT_META_API_FN(bool, ecsact_meta_is_action)
+( //
+	ecsact_system_like_id system_id
+);
+
 // # BEGIN FOR_EACH_ECSACT_META_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL
 #	define FOR_EACH_ECSACT_META_API_FN(fn, ...) ECSACT_MSVC_TRADITIONAL_ERROR()
@@ -604,7 +628,11 @@ ECSACT_META_API_FN(void, ecsact_meta_get_execution_batch)
 		fn(ecsact_meta_system_notify_settings, __VA_ARGS__);                \
 		fn(ecsact_meta_component_type, __VA_ARGS__);                        \
 		fn(ecsact_meta_count_execution_batches, __VA_ARGS__);               \
-		fn(ecsact_meta_get_execution_batch, __VA_ARGS__)
+		fn(ecsact_meta_get_execution_batch, __VA_ARGS__);                  \
+		fn(ecsact_meta_count_system_execution_batches, __VA_ARGS__);        \
+		fn(ecsact_meta_get_system_execution_batch, __VA_ARGS__);            \
+		fn(ecsact_meta_is_system, __VA_ARGS__);                             \
+		fn(ecsact_meta_is_action, __VA_ARGS__)
 #endif
 
 #endif // ECSACT_RUNTIME_META_H

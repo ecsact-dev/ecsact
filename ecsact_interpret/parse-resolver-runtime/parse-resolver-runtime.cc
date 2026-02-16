@@ -78,6 +78,8 @@ struct system_like {
 	std::vector<ecsact_system_id> nested_systems;
 
 	ecsact_parallel_execution parallel_execution = {};
+
+	std::vector<std::vector<ecsact_system_like_id>> execution_batches;
 };
 
 struct action_def : composite, system_like {
@@ -1184,8 +1186,11 @@ static void collect_all_caps(
 	}
 }
 
-static void calculate_execution_batches(package_def& pkg) {
-	pkg.execution_batches.clear();
+static void calculate_execution_batches(
+	const std::vector<ecsact_system_like_id>&       systems,
+	std::vector<std::vector<ecsact_system_like_id>>& out_batches
+) {
+	out_batches.clear();
 
 	std::vector<ecsact_system_like_id> current_batch;
 	std::unordered_set<ecsact_component_like_id> batch_writers;
@@ -1213,14 +1218,14 @@ static void calculate_execution_batches(package_def& pkg) {
 
 	auto finalize_batch = [&]() {
 		if(!current_batch.empty()) {
-			pkg.execution_batches.push_back(std::move(current_batch));
+			out_batches.push_back(std::move(current_batch));
 			current_batch = {};
 			batch_writers.clear();
 			batch_readers.clear();
 		}
 	};
 
-	for(auto sys_id : pkg.top_level_systems) {
+	for(auto sys_id : systems) {
 		auto& sys_def = get_system_like(sys_id);
 
 		// Independent systems (e.g. generators) always start a new batch
@@ -1273,8 +1278,21 @@ static void calculate_execution_batches(package_def& pkg) {
 
 int32_t ecsact_meta_count_execution_batches(ecsact_package_id package_id) {
 	auto& pkg = package_defs.at(package_id);
-	if(pkg.execution_batches.empty() && !pkg.top_level_systems.empty()) {
-		calculate_execution_batches(pkg);
+	if(pkg.execution_batches.empty()) {
+		std::vector<ecsact_system_like_id> all_systems;
+		for(auto dep_id : pkg.dependencies) {
+			auto& dep_pkg = package_defs.at(dep_id);
+			for(auto sys_id : dep_pkg.top_level_systems) {
+				all_systems.push_back(sys_id);
+			}
+		}
+		for(auto sys_id : pkg.top_level_systems) {
+			all_systems.push_back(sys_id);
+		}
+
+		if(!all_systems.empty()) {
+			calculate_execution_batches(all_systems, pkg.execution_batches);
+		}
 	}
 	return static_cast<int32_t>(pkg.execution_batches.size());
 }
@@ -1287,8 +1305,21 @@ void ecsact_meta_get_execution_batch(
 	int32_t*               out_systems_count
 ) {
 	auto& pkg = package_defs.at(package_id);
-	if(pkg.execution_batches.empty() && !pkg.top_level_systems.empty()) {
-		calculate_execution_batches(pkg);
+	if(pkg.execution_batches.empty()) {
+		std::vector<ecsact_system_like_id> all_systems;
+		for(auto dep_id : pkg.dependencies) {
+			auto& dep_pkg = package_defs.at(dep_id);
+			for(auto sys_id : dep_pkg.top_level_systems) {
+				all_systems.push_back(sys_id);
+			}
+		}
+		for(auto sys_id : pkg.top_level_systems) {
+			all_systems.push_back(sys_id);
+		}
+
+		if(!all_systems.empty()) {
+			calculate_execution_batches(all_systems, pkg.execution_batches);
+		}
 	}
 
 	auto& batch = pkg.execution_batches.at(batch_index);
@@ -1301,6 +1332,56 @@ void ecsact_meta_get_execution_batch(
 	if(out_systems_count != nullptr) {
 		*out_systems_count = static_cast<int32_t>(batch.size());
 	}
+}
+
+int32_t ecsact_meta_count_system_execution_batches(
+	ecsact_system_like_id system_id
+) {
+	auto& sys_def = get_system_like(system_id);
+	if(sys_def.execution_batches.empty() && !sys_def.nested_systems.empty()) {
+		std::vector<ecsact_system_like_id> nested_systems;
+		for(auto id : sys_def.nested_systems) {
+			nested_systems.push_back(ecsact_id_cast<ecsact_system_like_id>(id));
+		}
+		calculate_execution_batches(nested_systems, sys_def.execution_batches);
+	}
+	return static_cast<int32_t>(sys_def.execution_batches.size());
+}
+
+void ecsact_meta_get_system_execution_batch(
+	ecsact_system_like_id  system_id,
+	int32_t                batch_index,
+	int32_t                max_systems_count,
+	ecsact_system_like_id* out_systems,
+	int32_t*               out_systems_count
+) {
+	auto& sys_def = get_system_like(system_id);
+	if(sys_def.execution_batches.empty() && !sys_def.nested_systems.empty()) {
+		std::vector<ecsact_system_like_id> nested_systems;
+		for(auto id : sys_def.nested_systems) {
+			nested_systems.push_back(ecsact_id_cast<ecsact_system_like_id>(id));
+		}
+		calculate_execution_batches(nested_systems, sys_def.execution_batches);
+	}
+
+	auto& batch = sys_def.execution_batches.at(batch_index);
+	auto  count = std::min(max_systems_count, static_cast<int32_t>(batch.size()));
+
+	for(int32_t i = 0; count > i; ++i) {
+		out_systems[i] = batch[i];
+	}
+
+	if(out_systems_count != nullptr) {
+		*out_systems_count = static_cast<int32_t>(batch.size());
+	}
+}
+
+bool ecsact_meta_is_system(ecsact_system_like_id system_id) {
+	return sys_defs.contains(static_cast<ecsact_system_id>(system_id));
+}
+
+bool ecsact_meta_is_action(ecsact_system_like_id system_id) {
+	return act_defs.contains(static_cast<ecsact_action_id>(system_id));
 }
 
 auto ecsact_set_component_type( //

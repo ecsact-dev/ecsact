@@ -10,19 +10,51 @@
 
 using ecsact::rt_entt_codegen::system_like_id_variant;
 
-auto ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
-	ecsact::codegen_plugin_context&     ctx,
-	std::vector<system_like_id_variant> system_list,
-	std::string                         parent_context
+auto ecsact::rt_entt_codegen::parallel::get_system_parallel_execution_cluster(
+	ecsact_system_like_id system_id
 ) -> std::vector<std::vector<system_like_id_variant>> {
 	auto parallel_system_cluster =
 		std::vector<std::vector<system_like_id_variant>>{};
 
-	auto package_id = ctx.package_id();
+	auto batch_count = ecsact_meta_count_system_execution_batches(system_id);
+
+	for(int32_t i = 0; batch_count > i; ++i) {
+		auto&   batch = parallel_system_cluster.emplace_back();
+		int32_t systems_count = 0;
+		ecsact_meta_get_system_execution_batch(system_id, i, 0, nullptr, &systems_count);
+		std::vector<ecsact_system_like_id> batch_systems(systems_count);
+		ecsact_meta_get_system_execution_batch(
+			system_id,
+			i,
+			systems_count,
+			batch_systems.data(),
+			nullptr
+		);
+
+		for(auto sys_id : batch_systems) {
+			if(ecsact_meta_is_system(sys_id)) {
+				batch.push_back(static_cast<ecsact_system_id>(sys_id));
+			} else if(ecsact_meta_is_action(sys_id)) {
+				batch.push_back(static_cast<ecsact_action_id>(sys_id));
+			}
+		}
+	}
+
+	return parallel_system_cluster;
+}
+
+auto ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
+	ecsact::codegen_plugin_context& ctx,
+	std::string                     parent_context
+) -> std::vector<std::vector<system_like_id_variant>> {
+	auto parallel_system_cluster =
+		std::vector<std::vector<system_like_id_variant>>{};
+
+	auto package_id = ctx.package_id;
 	auto batch_count = ecsact_meta_count_execution_batches(package_id);
 
 	for(int32_t i = 0; batch_count > i; ++i) {
-		auto& batch = parallel_system_cluster.emplace_back();
+		auto&   batch = parallel_system_cluster.emplace_back();
 		int32_t systems_count = 0;
 		ecsact_meta_get_execution_batch(package_id, i, 0, nullptr, &systems_count);
 		std::vector<ecsact_system_like_id> batch_systems(systems_count);
@@ -35,7 +67,11 @@ auto ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
 		);
 
 		for(auto sys_id : batch_systems) {
-			batch.push_back(sys_id);
+			if(ecsact_meta_is_system(sys_id)) {
+				batch.push_back(static_cast<ecsact_system_id>(sys_id));
+			} else if(ecsact_meta_is_action(sys_id)) {
+				batch.push_back(static_cast<ecsact_action_id>(sys_id));
+			}
 		}
 	}
 
