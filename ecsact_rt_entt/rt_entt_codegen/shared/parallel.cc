@@ -10,12 +10,6 @@
 
 using ecsact::rt_entt_codegen::system_like_id_variant;
 
-static auto loop_iterator(
-	const std::vector<system_like_id_variant>&          system_list,
-	const std::vector<system_like_id_variant>::iterator begin,
-	std::vector<std::vector<system_like_id_variant>>&   parallel_system_cluster
-) -> void;
-
 auto ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
 	ecsact::codegen_plugin_context&     ctx,
 	std::vector<system_like_id_variant> system_list,
@@ -24,7 +18,26 @@ auto ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(
 	auto parallel_system_cluster =
 		std::vector<std::vector<system_like_id_variant>>{};
 
-	loop_iterator(system_list, system_list.begin(), parallel_system_cluster);
+	auto package_id = ctx.package_id();
+	auto batch_count = ecsact_meta_count_execution_batches(package_id);
+
+	for(int32_t i = 0; batch_count > i; ++i) {
+		auto& batch = parallel_system_cluster.emplace_back();
+		int32_t systems_count = 0;
+		ecsact_meta_get_execution_batch(package_id, i, 0, nullptr, &systems_count);
+		std::vector<ecsact_system_like_id> batch_systems(systems_count);
+		ecsact_meta_get_execution_batch(
+			package_id,
+			i,
+			systems_count,
+			batch_systems.data(),
+			nullptr
+		);
+
+		for(auto sys_id : batch_systems) {
+			batch.push_back(sys_id);
+		}
+	}
 
 	return parallel_system_cluster;
 }
@@ -185,131 +198,4 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 	return true;
 }
 
-/**
- * Quick check to see if a system should run independently regardless of it's
- * system capbilities.
- */
-static auto should_run_independently(ecsact_system_like_id id) -> bool {
-	// User has explicitly marked a system as not parallel; respect that.
-	if(ecsact_meta_get_system_parallel_execution(id) == ECSACT_PAR_EXEC_DENY) {
-		return true;
-	}
 
-	// Generator systems increase storage so they may not run in parallel with
-	// other systems.
-	if(!ecsact::meta::get_system_generates_ids(id).empty()) {
-		return true;
-	}
-
-	return false;
-}
-
-static auto loop_iterator(
-	const std::vector<system_like_id_variant>&          system_list,
-	const std::vector<system_like_id_variant>::iterator begin,
-	std::vector<std::vector<system_like_id_variant>>&   parallel_system_cluster
-) -> void {
-	std::vector<system_like_id_variant> parallel_system_list;
-	auto unsafe_comps = std::set<ecsact_component_like_id>{};
-	auto safe_ro_comps = std::set<ecsact_component_like_id>{};
-
-	using ecsact::meta::decl_full_name;
-
-	for(auto iterator = begin; iterator != system_list.end(); iterator++) {
-		auto sys_like_id = *iterator;
-
-		if(should_run_independently(sys_like_id)) {
-			if(!parallel_system_list.empty()) {
-				parallel_system_cluster.push_back(parallel_system_list);
-			}
-
-			parallel_system_cluster.push_back(
-				std::vector<system_like_id_variant>{sys_like_id}
-			);
-			loop_iterator(
-				system_list,
-				std::next(iterator, 1),
-				parallel_system_cluster
-			);
-			return;
-		}
-
-		auto capabilities = ecsact::meta::system_capabilities(sys_like_id);
-
-		auto child_unsafe_comps = std::set<ecsact_component_like_id>{};
-		auto child_safe_ro_comps = std::set<ecsact_component_like_id>{};
-		auto child_systems = ecsact::meta::get_child_system_ids(sys_like_id);
-
-		for(auto child_sys_id : child_systems) {
-			auto cpp_system_name = decl_full_name(child_sys_id);
-			auto child_capabilities = ecsact::meta::system_capabilities(child_sys_id);
-			for(auto const [child_comp_id, child_capability] : child_capabilities) {
-				if(unsafe_comps.contains(child_comp_id)) {
-					if(child_capability == ECSACT_SYS_CAP_READONLY ||
-						 child_capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
-						parallel_system_cluster.push_back(parallel_system_list);
-						loop_iterator(system_list, iterator, parallel_system_cluster);
-						return;
-					}
-				}
-
-				if(!is_capability_safe(child_capability)) {
-					if(unsafe_comps.contains(child_comp_id)) {
-						parallel_system_cluster.push_back(parallel_system_list);
-						loop_iterator(system_list, iterator, parallel_system_cluster);
-						return;
-					} else {
-						child_unsafe_comps.insert(child_comp_id);
-					}
-				} else {
-					if(child_capability == ECSACT_SYS_CAP_READONLY ||
-						 child_capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
-						child_safe_ro_comps.insert(child_comp_id);
-					}
-				}
-			}
-		}
-
-		for(const auto [comp_id, capability] : capabilities) {
-			auto cpp_name = decl_full_name(comp_id);
-
-			if(!is_capability_safe(capability)) {
-				if(!unsafe_comps.contains(comp_id)) {
-					unsafe_comps.insert(comp_id);
-				} else {
-					parallel_system_cluster.push_back(parallel_system_list);
-					loop_iterator(system_list, iterator, parallel_system_cluster);
-					return;
-				}
-			} else {
-				if(capability == ECSACT_SYS_CAP_READONLY ||
-					 capability == ECSACT_SYS_CAP_OPTIONAL_READONLY) {
-					safe_ro_comps.insert(comp_id);
-				}
-			}
-
-			if(unsafe_comps.contains(comp_id) && safe_ro_comps.contains(comp_id)) {
-				parallel_system_cluster.push_back(parallel_system_list);
-				loop_iterator(system_list, iterator, parallel_system_cluster);
-				return;
-			}
-		}
-
-		for(auto child_safe_ro_comp : child_safe_ro_comps) {
-			if(!safe_ro_comps.contains(child_safe_ro_comp)) {
-				safe_ro_comps.insert(child_safe_ro_comp);
-			}
-		}
-
-		for(auto child_unsafe_comp : child_unsafe_comps) {
-			if(!unsafe_comps.contains(child_unsafe_comp)) {
-				unsafe_comps.insert(child_unsafe_comp);
-			}
-		}
-
-		parallel_system_list.push_back(sys_like_id);
-	}
-	if(!parallel_system_list.empty()) {
-		parallel_system_cluster.push_back(parallel_system_list);
-	}
-}

@@ -9,8 +9,10 @@
 #include <variant>
 #include <cassert>
 #include <optional>
+#include <algorithm>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
 using ecsact::interpret::details::trigger_on_destroy;
@@ -120,6 +122,8 @@ struct package_def {
 
 	/** in execution order */
 	std::vector<ecsact_system_like_id> top_level_systems;
+
+	std::vector<std::vector<ecsact_system_like_id>> execution_batches;
 };
 
 static std::atomic_int32_t                                   last_id = 0;
@@ -1158,6 +1162,145 @@ auto ecsact_meta_component_type( //
 	}
 
 	return comp_def->second.comp_type;
+}
+
+static void collect_all_caps(
+	ecsact_system_like_id system_id,
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>& out_caps
+) {
+	auto& sys_def = get_system_like(system_id);
+	for(auto const& [comp_id, cap_entry] : sys_def.caps) {
+		out_caps[comp_id] = static_cast<ecsact_system_capability>(
+			static_cast<uint32_t>(out_caps[comp_id]) |
+			static_cast<uint32_t>(cap_entry.cap)
+		);
+	}
+
+	for(auto child_sys_id : sys_def.nested_systems) {
+		collect_all_caps(
+			ecsact_id_cast<ecsact_system_like_id>(child_sys_id),
+			out_caps
+		);
+	}
+}
+
+static void calculate_execution_batches(package_def& pkg) {
+	pkg.execution_batches.clear();
+
+	std::vector<ecsact_system_like_id> current_batch;
+	std::unordered_set<ecsact_component_like_id> batch_writers;
+	std::unordered_set<ecsact_component_like_id> batch_readers;
+
+	auto is_exclusive = [](ecsact_system_capability cap) -> bool {
+		if((cap & ECSACT_SYS_CAP_WRITEONLY) != 0) {
+			return true;
+		}
+		if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
+			return true;
+		}
+		if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
+			return true;
+		}
+		if((cap & ECSACT_SYS_CAP_STREAM_TOGGLE) != 0) {
+			return true;
+		}
+		return false;
+	};
+
+	auto is_reader = [](ecsact_system_capability cap) -> bool {
+		return (cap & ECSACT_SYS_CAP_READONLY) != 0;
+	};
+
+	auto finalize_batch = [&]() {
+		if(!current_batch.empty()) {
+			pkg.execution_batches.push_back(std::move(current_batch));
+			current_batch = {};
+			batch_writers.clear();
+			batch_readers.clear();
+		}
+	};
+
+	for(auto sys_id : pkg.top_level_systems) {
+		auto& sys_def = get_system_like(sys_id);
+
+		// Independent systems (e.g. generators) always start a new batch
+		bool independent = !sys_def.generates.empty() ||
+			sys_def.parallel_execution == ECSACT_PAR_EXEC_DENY;
+
+		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+			all_caps;
+		collect_all_caps(sys_id, all_caps);
+
+		bool conflict = independent;
+		if(!conflict) {
+			for(auto const& [comp_id, cap] : all_caps) {
+				if(is_exclusive(cap)) {
+					if(batch_readers.contains(comp_id) || batch_writers.contains(comp_id)) {
+						conflict = true;
+						break;
+					}
+				}
+				if(is_reader(cap)) {
+					if(batch_writers.contains(comp_id)) {
+						conflict = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if(conflict) {
+			finalize_batch();
+		}
+
+		current_batch.push_back(sys_id);
+		for(auto const& [comp_id, cap] : all_caps) {
+			if(is_exclusive(cap)) {
+				batch_writers.insert(comp_id);
+			}
+			if(is_reader(cap)) {
+				batch_readers.insert(comp_id);
+			}
+		}
+
+		if(independent) {
+			finalize_batch();
+		}
+	}
+
+	finalize_batch();
+}
+
+int32_t ecsact_meta_count_execution_batches(ecsact_package_id package_id) {
+	auto& pkg = package_defs.at(package_id);
+	if(pkg.execution_batches.empty() && !pkg.top_level_systems.empty()) {
+		calculate_execution_batches(pkg);
+	}
+	return static_cast<int32_t>(pkg.execution_batches.size());
+}
+
+void ecsact_meta_get_execution_batch(
+	ecsact_package_id      package_id,
+	int32_t                batch_index,
+	int32_t                max_systems_count,
+	ecsact_system_like_id* out_systems,
+	int32_t*               out_systems_count
+) {
+	auto& pkg = package_defs.at(package_id);
+	if(pkg.execution_batches.empty() && !pkg.top_level_systems.empty()) {
+		calculate_execution_batches(pkg);
+	}
+
+	auto& batch = pkg.execution_batches.at(batch_index);
+	auto  count = std::min(max_systems_count, static_cast<int32_t>(batch.size()));
+
+	for(int32_t i = 0; count > i; ++i) {
+		out_systems[i] = batch[i];
+	}
+
+	if(out_systems_count != nullptr) {
+		*out_systems_count = static_cast<int32_t>(batch.size());
+	}
 }
 
 auto ecsact_set_component_type( //
