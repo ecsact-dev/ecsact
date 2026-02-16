@@ -544,28 +544,24 @@ ECSACT_DYNAMIC_API_FN(void, ecsact_set_component_type)
 	ecsact_component_type component_type
 );
 
-ECSACT_DYNAMIC_API_FN(void, ecsact_add_cluster)
+ECSACT_DYNAMIC_API_FN(ecsact_cluster_id, ecsact_create_cluster)
 ( //
 	ecsact_package_id package_id,
 	const char*       cluster_name,
 	int32_t           cluster_name_len
 );
 
-ECSACT_DYNAMIC_API_FN(void, ecsact_add_system_cluster)
+ECSACT_DYNAMIC_API_FN(ecsact_cluster_id, ecsact_create_system_cluster)
 ( //
 	ecsact_system_like_id parent_system_id,
 	const char*           cluster_name,
 	int32_t               cluster_name_len
 );
 
-ECSACT_DYNAMIC_API_FN(void, ecsact_end_cluster)
+ECSACT_DYNAMIC_API_FN(void, ecsact_add_system_to_cluster)
 ( //
-	ecsact_package_id package_id
-);
-
-ECSACT_DYNAMIC_API_FN(void, ecsact_end_system_cluster)
-( //
-	ecsact_system_like_id parent_system_id
+	ecsact_cluster_id     cluster_id,
+	ecsact_system_like_id system_id
 );
 
 /**
@@ -651,10 +647,9 @@ ECSACT_DYNAMIC_API_FN(
 		fn(ecsact_set_system_parallel_execution, __VA_ARGS__);          \
 		fn(ecsact_set_system_notify_component_setting, __VA_ARGS__);    \
 		fn(ecsact_set_component_type, __VA_ARGS__);                     \
-		fn(ecsact_add_cluster, __VA_ARGS__);                            \
-		fn(ecsact_add_system_cluster, __VA_ARGS__);                     \
-		fn(ecsact_end_cluster, __VA_ARGS__);                            \
-		fn(ecsact_end_system_cluster, __VA_ARGS__);                     \
+		fn(ecsact_create_cluster, __VA_ARGS__);                         \
+		fn(ecsact_create_system_cluster, __VA_ARGS__);                  \
+		fn(ecsact_add_system_to_cluster, __VA_ARGS__);                  \
 		fn(ecsact_check_execution_batches, __VA_ARGS__);                \
 		fn(ecsact_check_system_execution_batches, __VA_ARGS__)
 #endif

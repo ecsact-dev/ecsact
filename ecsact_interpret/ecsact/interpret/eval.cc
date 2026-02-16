@@ -920,6 +920,13 @@ static ecsact_eval_error eval_system_statement(
 		ecsact_add_child_system(*parent_sys_like_id, sys_id);
 	}
 
+	if(context != nullptr && context->type == ECSACT_STATEMENT_CLUSTER) {
+		ecsact_add_system_to_cluster(
+			static_cast<ecsact_cluster_id>(context->id),
+			static_cast<ecsact_system_like_id>(sys_id)
+		);
+	}
+
 	if(lazy_value > 0) {
 		ecsact_set_system_lazy_iteration_rate(sys_id, lazy_value);
 	}
@@ -980,6 +987,13 @@ static ecsact_eval_error eval_action_statement(
 	);
 
 	statement.id = static_cast<int32_t>(act_id);
+
+	if(context != nullptr && context->type == ECSACT_STATEMENT_CLUSTER) {
+		ecsact_add_system_to_cluster(
+			static_cast<ecsact_cluster_id>(context->id),
+			static_cast<ecsact_system_like_id>(act_id)
+		);
+	}
 
 	auto parallel = parallel_param(statement);
 	if(auto err_code = std::get_if<ecsact_eval_error_code>(&parallel)) {
@@ -1991,16 +2005,17 @@ static ecsact_eval_error eval_entity_constraint_statement(
 static ecsact_eval_error eval_cluster_statement(
 	ecsact_package_id                 package_id,
 	std::span<const ecsact_statement> context_statements,
-	const ecsact_statement&           statement
+	ecsact_statement&                 statement
 ) {
 	auto& cluster_statement = statement.data.cluster_statement;
 
 	if(context_statements.empty()) {
-		ecsact_add_cluster(
+		auto id = ecsact_create_cluster(
 			package_id,
 			cluster_statement.cluster_name.data,
 			cluster_statement.cluster_name.length
 		);
+		statement.id = static_cast<int32_t>(id);
 	} else {
 		auto parent_ctx = &context_statements.back();
 		auto parent_sys_like_id =
@@ -2014,11 +2029,12 @@ static ecsact_eval_error eval_cluster_statement(
 			};
 		}
 
-		ecsact_add_system_cluster(
+		auto id = ecsact_create_system_cluster(
 			*parent_sys_like_id,
 			cluster_statement.cluster_name.data,
 			cluster_statement.cluster_name.length
 		);
+		statement.id = static_cast<int32_t>(id);
 	}
 
 	return {ECSACT_EVAL_OK};
@@ -2209,18 +2225,6 @@ void ecsact::detail::check_file_eval_error(
 					.data = source.c_str(),
 					.length = static_cast<int32_t>(source.size()),
 				};
-			}
-		}
-
-		if(block_start.type == ECSACT_STATEMENT_CLUSTER) {
-			std::span context_stack(statement_stack.data(), statement_stack.size() - 2);
-			auto     parent_sys_like_id =
-				find_parent_system_like_id(package_id, context_stack);
-
-			if(parent_sys_like_id) {
-				ecsact_end_system_cluster(*parent_sys_like_id);
-			} else {
-				ecsact_end_cluster(package_id);
 			}
 		}
 	}

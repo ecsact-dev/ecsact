@@ -71,6 +71,7 @@ ECSACT_TYPED_ID(ecsact_placeholder_entity_id);
 ECSACT_TYPED_ID(ecsact_system_generates_id);
 ECSACT_TYPED_ID(ecsact_async_session_id);
 ECSACT_TYPED_ID(ecsact_async_request_id);
+ECSACT_TYPED_ID(ecsact_cluster_id);
 
 ECSACT_TYPED_ID(ecsact_decl_id);
 ECSACT_TYPED_ID(ecsact_composite_id);
@@ -135,6 +136,8 @@ ECSACT_CAST_ID_FN(ecsact_variant_id, ecsact_decl_id)
 ECSACT_CAST_ID_FN(ecsact_system_like_id, ecsact_decl_id)
 ECSACT_CAST_ID_FN(ecsact_composite_id, ecsact_decl_id)
 ECSACT_CAST_ID_FN(ecsact_component_like_id, ecsact_decl_id)
+ECSACT_CAST_ID_FN(ecsact_cluster_id, ecsact_decl_id)
+ECSACT_CAST_ID_FN(ecsact_enum_id, ecsact_decl_id)
 
 ECSACT_CAST_ID_FN(ecsact_component_id, ecsact_component_like_id)
 ECSACT_CAST_ID_FN(ecsact_transient_id, ecsact_component_like_id)
