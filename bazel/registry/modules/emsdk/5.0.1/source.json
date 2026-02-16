@@ -1,0 +1,12 @@
+{
+    "integrity": "sha256-cQS+Mo+HRb+38VNw716XEMjb1nSvLhgbbwI++3aW9Jg=",
+    "overlay": {},
+    "patch_strip": 0,
+    "patches": {
+        "emar.patch": "sha256-fIvVi6zcJ1rHHuJJIkffjO5KpCGLtnI7A3r/p0HLSWU=",
+        "emcc.patch": "sha256-UCMldkeJxxFZS94yejBEwRNQOaIaqqQm1x3knES+Wio=",
+        "emcc_link.patch": "sha256-RXtnn/PKGqkF/m6YHNEb/7TAxpwtELsu6HiQS40ad4w="
+    },
+    "strip_prefix": "emsdk-14c18b569f55138fe4963924162244251f454fb0/bazel",
+    "url": "https://github.com/emscripten-core/emsdk/archive/14c18b569f55138fe4963924162244251f454fb0.tar.gz"
+}

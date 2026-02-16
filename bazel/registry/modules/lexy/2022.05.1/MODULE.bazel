@@ -3,4 +3,4 @@ module(
     version = "2022.05.1",
 )
 
-bazel_dep(name = "rules_cc", version = "0.0.10")
+bazel_dep(name = "rules_cc", version = "0.0.17")

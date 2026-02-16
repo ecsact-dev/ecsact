@@ -2,3 +2,5 @@ module(
     name = "entt",
     version = "3.12.2",
 )
+
+bazel_dep(name = "rules_cc", version = "0.0.17")

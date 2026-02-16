@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 load("//bazel:copts.bzl", "copts")
 load("//bazel/rules:defs.bzl", "ecsact_codegen")
 load("//ecsact_rt_entt/runtime:index.bzl", "ecsact_entt_runtime")

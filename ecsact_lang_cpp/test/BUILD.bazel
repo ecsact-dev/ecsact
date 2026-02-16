@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("//bazel:copts.bzl", "copts")
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/rules:defs.bzl", "ecsact_codegen")
 load("//bazel/rules:toolchain.bzl", "ecsact_toolchain")
 
