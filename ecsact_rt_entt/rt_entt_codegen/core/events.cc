@@ -93,9 +93,9 @@ auto ecsact::rt_entt_codegen::core::print_trigger_ecsact_events_all( //
 	for(auto component_id : details.all_components) {
 		auto type_name = cpp_identifier(decl_full_name(component_id));
 
-		auto count =
-			ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(component_id)
-			);
+		auto count = ecsact_meta_count_fields(
+			ecsact_id_cast<ecsact_composite_id>(component_id)
+		);
 
 		if(count > 0) {
 			print_trigger_event_fn_call(ctx, "update", type_name);

@@ -36,7 +36,9 @@ auto get_execution_context_memory( //
 	// wasm memory is always allocated right before the execution context
 	return ecsact::wasm::detail::call_mem_read<wasm_memory_t*>(
 		val.of.i32 -
-		sizeof(ecsact_system_execution_context*) // NOLINT(bugprone-sizeof-expression)
+		sizeof(
+			ecsact_system_execution_context*
+		) // NOLINT(bugprone-sizeof-expression)
 	);
 }
 

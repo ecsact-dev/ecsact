@@ -104,7 +104,8 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_component_id> get_component_ids(
 	return component_ids;
 }
 
-ECSACT_ALWAYS_INLINE std::string component_name(ecsact_component_id component_id
+ECSACT_ALWAYS_INLINE std::string component_name(
+	ecsact_component_id component_id
 ) {
 	auto comp_name = ecsact_meta_component_name(component_id);
 	if(comp_name == nullptr) {
@@ -143,7 +144,8 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_transient_id> get_transient_ids(
 	return transient_ids;
 }
 
-ECSACT_ALWAYS_INLINE std::string transient_name(ecsact_transient_id transient_id
+ECSACT_ALWAYS_INLINE std::string transient_name(
+	ecsact_transient_id transient_id
 ) {
 	auto comp_name = ecsact_meta_transient_name(transient_id);
 	if(comp_name == nullptr) {
@@ -153,7 +155,8 @@ ECSACT_ALWAYS_INLINE std::string transient_name(ecsact_transient_id transient_id
 }
 
 template<typename CompositeID>
-ECSACT_ALWAYS_INLINE std::vector<ecsact_field_id> get_field_ids(CompositeID id
+ECSACT_ALWAYS_INLINE std::vector<ecsact_field_id> get_field_ids(
+	CompositeID id
 ) {
 	std::vector<ecsact_field_id> field_ids;
 	auto compo_id = ecsact_id_cast<ecsact_composite_id>(id);
@@ -396,7 +399,8 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_system_like_id> get_top_level_systems(
 	return top_sys_like_ids;
 }
 
-ECSACT_ALWAYS_INLINE auto get_all_system_like_ids(ecsact_package_id package_id
+ECSACT_ALWAYS_INLINE auto get_all_system_like_ids(
+	ecsact_package_id package_id
 ) {
 	std::vector<ecsact_system_like_id> result;
 	auto                               sys_ids = get_system_ids(package_id);

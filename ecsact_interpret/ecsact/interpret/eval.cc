@@ -189,8 +189,8 @@ auto statement_param( //
 	return std::nullopt;
 }
 
-static auto parallel_param(const ecsact_statement& statement
-) -> std::variant<ecsact_parallel_execution, ecsact_eval_error_code> {
+static auto parallel_param(const ecsact_statement& statement)
+	-> std::variant<ecsact_parallel_execution, ecsact_eval_error_code> {
 	using result_t =
 		std::variant<ecsact_parallel_execution, ecsact_eval_error_code>;
 
@@ -667,13 +667,19 @@ std::optional<ecsact_system_like_id> find_by_statement(
 	return {};
 }
 
-static ecsact_eval_error
-eval_none_statement(ecsact_package_id, std::span<const ecsact_statement>&, const ecsact_statement&) {
+static ecsact_eval_error eval_none_statement(
+	ecsact_package_id,
+	std::span<const ecsact_statement>&,
+	const ecsact_statement&
+) {
 	return {};
 }
 
-static ecsact_eval_error
-eval_unknown_statement(ecsact_package_id, std::span<const ecsact_statement>&, const ecsact_statement&) {
+static ecsact_eval_error eval_unknown_statement(
+	ecsact_package_id,
+	std::span<const ecsact_statement>&,
+	const ecsact_statement&
+) {
 	return {};
 }
 

@@ -86,15 +86,12 @@ TEST(EcsactParseRuntimeInterop, Simple) {
 				ASSERT_EQ(type.length, 1);
 			}
 		),
-		std::make_pair(
-			"test_entity",
-			[&](ecsact_field_id field_id) {
-				auto type = ecsact_meta_field_type(compo_id, field_id);
-				ASSERT_EQ(type.kind, ECSACT_TYPE_KIND_BUILTIN);
-				ASSERT_EQ(type.type.builtin, ECSACT_ENTITY_TYPE);
-				ASSERT_EQ(type.length, 1);
-			}
-		)
+		std::make_pair("test_entity", [&](ecsact_field_id field_id) {
+			auto type = ecsact_meta_field_type(compo_id, field_id);
+			ASSERT_EQ(type.kind, ECSACT_TYPE_KIND_BUILTIN);
+			ASSERT_EQ(type.type.builtin, ECSACT_ENTITY_TYPE);
+			ASSERT_EQ(type.length, 1);
+		})
 	);
 
 	// Here we're creating a function for each system in our test file to make

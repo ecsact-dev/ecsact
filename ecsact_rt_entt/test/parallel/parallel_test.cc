@@ -40,7 +40,8 @@ void parallel_test::NestedSystemNoConflict::NestedSystemNoConflictB::impl(
 void parallel_test::ReadParallelA::impl(context& ctx) {
 }
 
-void parallel_test::ReadParallelA::ReadParallelAChildSystem::impl(context& ctx
+void parallel_test::ReadParallelA::ReadParallelAChildSystem::impl(
+	context& ctx
 ) {
 }
 
@@ -79,13 +80,15 @@ TEST(Parallel, RunEntitiesinParallel) {
 	auto entity_b = reg.create_entity();
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(parallel_test::ReadWriteParallelA::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			parallel_test::ReadWriteParallelA::id
 		),
 		parallel_test__ReadWriteParallelA
 	);
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(parallel_test::ReadWriteParallelB::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			parallel_test::ReadWriteParallelB::id
 		),
 		parallel_test__ReadWriteParallelB
 	);
@@ -102,13 +105,15 @@ TEST(Parallel, RunEntitiesinParallel) {
 	ASSERT_EQ(comp_b.val, 1000);
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(parallel_test::ReadWriteParallelA::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			parallel_test::ReadWriteParallelA::id
 		),
 		nullptr
 	);
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(parallel_test::ReadWriteParallelB::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			parallel_test::ReadWriteParallelB::id
 		),
 		nullptr
 	);

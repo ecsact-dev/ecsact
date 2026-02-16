@@ -21,7 +21,13 @@ auto ecsact::rt_entt_codegen::parallel::get_system_parallel_execution_cluster(
 	for(int32_t i = 0; batch_count > i; ++i) {
 		auto&   batch = parallel_system_cluster.emplace_back();
 		int32_t systems_count = 0;
-		ecsact_meta_get_system_execution_batch(system_id, i, 0, nullptr, &systems_count);
+		ecsact_meta_get_system_execution_batch(
+			system_id,
+			i,
+			0,
+			nullptr,
+			&systems_count
+		);
 		std::vector<ecsact_system_like_id> batch_systems(systems_count);
 		ecsact_meta_get_system_execution_batch(
 			system_id,
@@ -233,5 +239,3 @@ auto ecsact::rt_entt_codegen::parallel::can_entities_parallel(
 	}
 	return true;
 }
-
-

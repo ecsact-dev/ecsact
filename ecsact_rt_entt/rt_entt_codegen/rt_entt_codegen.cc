@@ -333,7 +333,8 @@ void ecsact_codegen_plugin(
 			[&] {
 				ctx.write("using type = ::", cpp_comp_name, ";\n");
 				ctx.write("static constexpr bool in_place_delete = true;\n");
-				ctx.write("static constexpr std::size_t page_size = ENTT_PACKED_PAGE;\n"
+				ctx.write(
+					"static constexpr std::size_t page_size = ENTT_PACKED_PAGE;\n"
 				);
 			}
 		);

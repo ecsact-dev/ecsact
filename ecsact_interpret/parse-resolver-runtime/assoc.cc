@@ -83,15 +83,17 @@ ecsact_system_assoc_id ecsact_add_system_assoc( //
 	info->id = gen_next_id<ecsact_system_assoc_id>();
 	info->comp_id = component_id;
 
-	info->event_refs
-		.emplace_back(on_destroy(system_id, [system_id, assoc_id = info->id]() {
+	info->event_refs.emplace_back(
+		on_destroy(system_id, [system_id, assoc_id = info->id]() {
 			ecsact_remove_system_assoc(system_id, assoc_id);
-		}));
+		})
+	);
 
-	info->event_refs
-		.emplace_back(on_destroy(component_id, [system_id, assoc_id = info->id]() {
+	info->event_refs.emplace_back(
+		on_destroy(component_id, [system_id, assoc_id = info->id]() {
 			ecsact_remove_system_assoc(system_id, assoc_id);
-		}));
+		})
+	);
 
 	return info->id;
 }

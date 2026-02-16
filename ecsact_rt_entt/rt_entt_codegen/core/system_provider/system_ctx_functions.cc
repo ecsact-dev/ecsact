@@ -134,11 +134,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 		);
 		return;
 	}
-	ctx.write(std::format(
-		"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, const void*, {}_t&);\n",
-		view_type_name
-	));
+	ctx.write(
+		std::format(
+			"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
+			"ecsact_component_like_id, const void*, {}_t&);\n",
+			view_type_name
+		)
+	);
 
 	ctx.write("static const auto remove_fns = []()\n");
 
@@ -161,7 +163,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 		ctx.write("return result;\n");
 	});
 	ctx.write("();\n");
-	ctx.write("remove_fns.at(component_id)(this, component_id, nullptr, *view);\n"
+	ctx.write(
+		"remove_fns.at(component_id)(this, component_id, nullptr, *view);\n"
 	);
 }
 
@@ -217,11 +220,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 		return;
 	}
 
-	ctx.write(std::format(
-		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, void *, const void*, {}_t&);\n",
-		view_type_name
-	));
+	ctx.write(
+		std::format(
+			"using get_fn_t = void (*)(ecsact_system_execution_context*, "
+			"ecsact_component_like_id, void *, const void*, {}_t&);\n",
+			view_type_name
+		)
+	);
 
 	ctx.write("static const auto get_fns = []()\n");
 
@@ -287,11 +292,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 		return;
 	}
 
-	ctx.write(std::format(
-		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
-		"ecsact_component_like_id, const void *, const void*, {}_t&);\n",
-		view_type_name
-	));
+	ctx.write(
+		std::format(
+			"using update_fn_t = void (*)(ecsact_system_execution_context*, "
+			"ecsact_component_like_id, const void *, const void*, {}_t&);\n",
+			view_type_name
+		)
+	);
 
 	ctx.write("static const auto update_fns = []()\n");
 

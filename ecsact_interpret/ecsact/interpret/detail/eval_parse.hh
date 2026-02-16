@@ -242,14 +242,17 @@ void parse_package_statements(
 			}
 
 			if(statement.type != ECSACT_STATEMENT_PACKAGE) {
-				out_errors.push_back(parse_eval_error{
-					.eval_error = ECSACT_EVAL_ERR_EXPECTED_PACKAGE_STATEMENT,
-					.source_index = source_index,
-					.line = state.reader.current_line,
-					.character = state.reader.current_character,
-					.error_message = "Must have package statement as first statement in "
-													 "file.",
-				});
+				out_errors.push_back(
+					parse_eval_error{
+						.eval_error = ECSACT_EVAL_ERR_EXPECTED_PACKAGE_STATEMENT,
+						.source_index = source_index,
+						.line = state.reader.current_line,
+						.character = state.reader.current_character,
+						.error_message = "Must have package statement as first statement "
+														 "in "
+														 "file.",
+					}
+				);
 			} else {
 				state.main_package = statement.data.package_statement.main;
 				state.package_name = std::string(
@@ -288,10 +291,12 @@ void parse_imports(
 					state.reader.pop_rewind();
 					break;
 				}
-				state.imports.push_back(std::string(
-					statement.data.import_statement.import_package_name.data,
-					statement.data.import_statement.import_package_name.length
-				));
+				state.imports.push_back(
+					std::string(
+						statement.data.import_statement.import_package_name.data,
+						statement.data.import_statement.import_package_name.length
+					)
+				);
 
 				state.reader.pump_status_code();
 			}
@@ -423,7 +428,8 @@ void parse_eval_declarations(
 		file_state.reader.read_next();
 
 		if(ecsact_is_error_parse_status_code(file_state.reader.status.code)) {
-			out_errors.push_back(to_parse_eval_error(source_index, file_state.reader)
+			out_errors.push_back(
+				to_parse_eval_error(source_index, file_state.reader)
 			);
 			continue;
 		}

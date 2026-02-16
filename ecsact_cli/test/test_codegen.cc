@@ -36,13 +36,15 @@ TEST(Codegen, Success) {
 
 #if _WIN32
 	// TODO: this doesn't work on linux
-	auto exit_code = codegen_command(std::vector{
-		"ecsact"s,
-		"codegen"s,
-		std::string{test_ecsact_file_path},
-		std::format("--plugin={}", test_codegen_plugin_path),
-		"--outdir=_test_codegen_outdir"s,
-	});
+	auto exit_code = codegen_command(
+		std::vector{
+			"ecsact"s,
+			"codegen"s,
+			std::string{test_ecsact_file_path},
+			std::format("--plugin={}", test_codegen_plugin_path),
+			"--outdir=_test_codegen_outdir"s,
+		}
+	);
 #else
 	auto cmd = std::format(
 		"{} codegen {} --plugin={} --outdir=_test_codegen_outdir",

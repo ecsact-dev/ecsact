@@ -405,7 +405,8 @@ TEST(Core, MultiPkgUpdate) {
 	));
 
 	ASSERT_TRUE(ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(imported::test_pkg::ImportedSystem::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			imported::test_pkg::ImportedSystem::id
 		),
 		&imported__test_pkg__ImportedSystem
 	));
@@ -875,7 +876,8 @@ TEST(Core, NotifyOnInitSelective) {
 	exec_options.add_component(entity, &notify_comp_c);
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::InitNotifySelective::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::InitNotifySelective::id
 		),
 		runtime_test__InitNotifySelective
 	);
@@ -902,7 +904,8 @@ TEST(Core, NotifyOnInitSelective) {
 	ASSERT_EQ(updated_comp_a.val, 2);
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::InitNotifySelective::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::InitNotifySelective::id
 		),
 		nullptr
 	);
@@ -972,7 +975,8 @@ TEST(Core, NotifyOnSystemUpdate) {
 	exec_options.add_component(entity, &trigger_tag);
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::TriggerUpdateNotify::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::TriggerUpdateNotify::id
 		),
 		runtime_test__TriggerUpdateNotify
 	);
@@ -1001,7 +1005,8 @@ TEST(Core, NotifyOnSystemUpdate) {
 	EXPECT_TRUE(event_happened) << "Init event did not happen";
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(runtime_test::TriggerUpdateNotify::id
+		ecsact_id_cast<ecsact_system_like_id>(
+			runtime_test::TriggerUpdateNotify::id
 		),
 		nullptr
 	);

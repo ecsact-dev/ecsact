@@ -58,8 +58,8 @@ inline auto get_source_range(
 	return r;
 }
 
-inline auto pretty_statement_type_name(ecsact_statement_type type
-) -> std::string {
+inline auto pretty_statement_type_name(ecsact_statement_type type)
+	-> std::string {
 	switch(type) {
 		case ECSACT_STATEMENT_NONE:
 			return "none";
@@ -202,11 +202,13 @@ class workspace_manager {
 						.length = static_cast<int32_t>(current_parse_view.length()),
 					};
 					auto r = get_source_range(doc.full_text, loc);
-					diagnostics.push_back(diagnostic{
-						.range = r,
-						.severity = diagnostic_severity::error,
-						.message{"Unknown statement"},
-					});
+					diagnostics.push_back(
+						diagnostic{
+							.range = r,
+							.severity = diagnostic_severity::error,
+							.message{"Unknown statement"},
+						}
+					);
 				}
 			}
 		}
@@ -215,11 +217,13 @@ class workspace_manager {
 			if(ecsact_is_error_parse_status_code(status.code)) {
 				auto r = get_source_range(doc.full_text, status.error_location);
 
-				diagnostics.push_back(diagnostic{
-					.range = r,
-					.severity = diagnostic_severity::error,
-					.message{magic_enum::enum_name(status.code)},
-				});
+				diagnostics.push_back(
+					diagnostic{
+						.range = r,
+						.severity = diagnostic_severity::error,
+						.message{magic_enum::enum_name(status.code)},
+					}
+				);
 			}
 		}
 
@@ -256,11 +260,13 @@ class workspace_manager {
 		auto& package_statement = package_parse_stack.front();
 
 		if(package_statement.type != ECSACT_STATEMENT_PACKAGE) {
-			diagnostics.push_back(diagnostic{
-				.range{},
-				.severity = diagnostic_severity::warning,
-				.message = "First statement must be a package statement",
-			});
+			diagnostics.push_back(
+				diagnostic{
+					.range{},
+					.severity = diagnostic_severity::warning,
+					.message = "First statement must be a package statement",
+				}
+			);
 		} else {
 			doc.package_id = ecsact_eval_package_statement( //
 				&package_statement.data.package_statement

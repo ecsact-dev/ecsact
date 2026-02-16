@@ -21,9 +21,9 @@
 #include "entt/entity/registry.hpp" // IWYU pragma: keep
 
 // default assign some global vars for the sake of compiling only
-#define MOCK_DEF_GLOBAL(Name)                  \
-	decltype(ecsact::entt::detail::globals::Name \
-	) ecsact::entt::detail::globals::Name = {}
+#define MOCK_DEF_GLOBAL(Name)                   \
+	decltype(ecsact::entt::detail::globals::Name) \
+		ecsact::entt::detail::globals::Name = {}
 MOCK_DEF_GLOBAL(registries);
 MOCK_DEF_GLOBAL(last_registry_id);
 MOCK_DEF_GLOBAL(system_impls);

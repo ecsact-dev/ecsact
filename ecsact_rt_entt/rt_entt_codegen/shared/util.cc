@@ -28,13 +28,15 @@ static auto all_pkg_ids() -> std::unordered_set<ecsact_package_id> {
 
 template<typename ID>
 constexpr auto default_id_min() -> ID {
-	return static_cast<ID>(std::numeric_limits<std::underlying_type_t<ID>>::max()
+	return static_cast<ID>(
+		std::numeric_limits<std::underlying_type_t<ID>>::max()
 	);
 }
 
 template<typename ID>
 constexpr auto default_id_max() -> ID {
-	return static_cast<ID>(std::numeric_limits<std::underlying_type_t<ID>>::min()
+	return static_cast<ID>(
+		std::numeric_limits<std::underlying_type_t<ID>>::min()
 	);
 }
 
@@ -89,8 +91,9 @@ auto ecsact::rt_entt_codegen::util::ecsact_id_min_max<ecsact_transient_id>()
 }
 
 template<>
-auto ecsact::rt_entt_codegen::util::ecsact_id_min_max<ecsact_component_like_id>(
-) -> std::tuple<ecsact_component_like_id, ecsact_component_like_id> {
+auto ecsact::rt_entt_codegen::util::ecsact_id_min_max<
+	ecsact_component_like_id>()
+	-> std::tuple<ecsact_component_like_id, ecsact_component_like_id> {
 	auto [transient_min, transient_max] =
 		ecsact_id_min_max<ecsact_transient_id>();
 	auto [component_min, component_max] =

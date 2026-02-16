@@ -140,8 +140,8 @@ auto main(int argc, char* argv[]) -> int {
 			ev["textDocument"].get<ecsact_lsp::versioned_text_document_identifier>();
 		auto content_changes =
 			ev["contentChanges"]
-				.get<std::vector<ecsact_lsp::full_text_document_content_change_event>>(
-				);
+				.get<
+					std::vector<ecsact_lsp::full_text_document_content_change_event>>();
 
 		if(content_changes.size() != 1) {
 			return;

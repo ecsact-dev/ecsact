@@ -10,8 +10,9 @@ auto apply_component_stream_data(
 	::entt::registry& main_reg,
 	::entt::registry& stream_reg
 ) -> void {
-	auto view = main_reg.template view<
-		C>(::entt::exclude<ecsact::entt::detail::run_on_stream<C>>);
+	auto view = main_reg.template view<C>(
+		::entt::exclude<ecsact::entt::detail::run_on_stream<C>>
+	);
 
 	for(auto entity : view) {
 		if(!stream_reg.any_of<C>(entity)) {

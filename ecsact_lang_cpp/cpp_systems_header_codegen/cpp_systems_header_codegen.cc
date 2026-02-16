@@ -511,10 +511,12 @@ static auto write_context_stream_toggle_specialize(
 			cpp_full_name
 		),
 		[&] {
-			ctx.write(std::format(
-				"return _ctx.stream_toggle<{}>(enable_stream);\n",
-				cpp_full_name
-			));
+			ctx.write(
+				std::format(
+					"return _ctx.stream_toggle<{}>(enable_stream);\n",
+					cpp_full_name
+				)
+			);
 		}
 	);
 

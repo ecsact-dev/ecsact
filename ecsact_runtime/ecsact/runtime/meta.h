@@ -628,7 +628,7 @@ ECSACT_META_API_FN(bool, ecsact_meta_is_action)
 		fn(ecsact_meta_system_notify_settings, __VA_ARGS__);                \
 		fn(ecsact_meta_component_type, __VA_ARGS__);                        \
 		fn(ecsact_meta_count_execution_batches, __VA_ARGS__);               \
-		fn(ecsact_meta_get_execution_batch, __VA_ARGS__);                  \
+		fn(ecsact_meta_get_execution_batch, __VA_ARGS__);                   \
 		fn(ecsact_meta_count_system_execution_batches, __VA_ARGS__);        \
 		fn(ecsact_meta_get_system_execution_batch, __VA_ARGS__);            \
 		fn(ecsact_meta_is_system, __VA_ARGS__);                             \

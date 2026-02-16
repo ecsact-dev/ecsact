@@ -44,11 +44,14 @@ auto ecsact::rt_entt_codegen::core::print_update_all_beforechange_storage(
 		);
 
 		block(ctx, std::format("for(auto entity: {})", view_name), [&]() {
-			ctx.write(std::format(
-				"ecsact::entt::wrapper::core::update_exec_itr_beforechange<{}>(entity, "
-				"reg);\n",
-				cpp_comp_name
-			));
+			ctx.write(
+				std::format(
+					"ecsact::entt::wrapper::core::update_exec_itr_beforechange<{}>("
+					"entity, "
+					"reg);\n",
+					cpp_comp_name
+				)
+			);
 		});
 	}
 }

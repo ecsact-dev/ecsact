@@ -13,8 +13,11 @@ template<
 	template<class R, class... Args> typename CallbackContainer = std::function>
 class async_events_collector {
 public:
-	using async_error_callback_t = CallbackContainer<
-		void(ecsact_async_session_id, ecsact_async_error, std::span<ecsact_async_request_id>)>;
+	using async_error_callback_t = CallbackContainer<void(
+		ecsact_async_session_id,
+		ecsact_async_error,
+		std::span<ecsact_async_request_id>
+	)>;
 
 	using async_requests_done_callback_t = CallbackContainer<
 		void(ecsact_async_session_id, std::span<ecsact_async_request_id>)>;

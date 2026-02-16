@@ -251,17 +251,21 @@ static auto print_last_error_if_available(
 	stdout_json_benchmark_reporter& reporter
 ) -> bool {
 	if(!runtime.has("ecsactsi_wasm_last_error_message")) {
-		reporter.report(warning_message{
-			"Cannot get wasm error message because "
-			"'ecsactsi_wasm_last_error_message' is missing",
-		});
+		reporter.report(
+			warning_message{
+				"Cannot get wasm error message because "
+				"'ecsactsi_wasm_last_error_message' is missing",
+			}
+		);
 		return false;
 	}
 	if(!runtime.has("ecsactsi_wasm_last_error_message_length")) {
-		reporter.report(warning_message{
-			"Cannot get wasm error message because "
-			"'ecsactsi_wasm_last_error_message_length' is missing",
-		});
+		reporter.report(
+			warning_message{
+				"Cannot get wasm error message because "
+				"'ecsactsi_wasm_last_error_message_length' is missing",
+			}
+		);
 		return false;
 	}
 
@@ -406,9 +410,11 @@ auto start_async_benchmark(
 	async_evc.system_error_callback = //
 		[](ecsact_execute_systems_error err, void* user_data) {
 			auto vars_ptr = static_cast<decltype(&vars)>(user_data);
-			vars_ptr->reporter.report(error_message{
-				"System Execution Error: " + std::string(magic_enum::enum_name(err)),
-			});
+			vars_ptr->reporter.report(
+				error_message{
+					"System Execution Error: " + std::string(magic_enum::enum_name(err)),
+				}
+			);
 		};
 
 	async_evc.async_error_callback_user_data = &vars;
@@ -424,14 +430,19 @@ auto start_async_benchmark(
 
 			for(auto& req_id : req_ids) {
 				if(req_id == vars_ptr->connect_req_id) {
-					vars_ptr->reporter.report(error_message{
-						"Async connect failed: "s + std::string(magic_enum::enum_name(err)),
-					});
+					vars_ptr->reporter.report(
+						error_message{
+							"Async connect failed: "s +
+								std::string(magic_enum::enum_name(err)),
+						}
+					);
 				} else {
-					vars_ptr->reporter.report(error_message{
-						"Async error (req="s + std::to_string(static_cast<int>(req_id)) +
-							"): "s + std::string(magic_enum::enum_name(err)),
-					});
+					vars_ptr->reporter.report(
+						error_message{
+							"Async error (req="s + std::to_string(static_cast<int>(req_id)) +
+								"): "s + std::string(magic_enum::enum_name(err)),
+						}
+					);
 				}
 			}
 
@@ -450,9 +461,11 @@ auto start_async_benchmark(
 			for(auto req_id : req_ids) {
 				if(req_id == vars_ptr->connect_req_id) {
 					vars_ptr->connected = true;
-					vars_ptr->reporter.report(info_message{
-						"Async successfully connected",
-					});
+					vars_ptr->reporter.report(
+						info_message{
+							"Async successfully connected",
+						}
+					);
 				}
 			}
 		};
@@ -503,9 +516,11 @@ auto start_async_benchmark(
 		}
 
 		if(tick >= options.iterations) {
-			options.reporter.report(info_message{
-				"Async benchmark ended at tick " + std::to_string(tick),
-			});
+			options.reporter.report(
+				info_message{
+					"Async benchmark ended at tick " + std::to_string(tick),
+				}
+			);
 			break;
 		}
 	}

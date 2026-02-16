@@ -1168,7 +1168,8 @@ auto ecsact_meta_component_type( //
 
 static bool collect_all_caps(
 	ecsact_system_like_id system_id,
-	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>& out_caps
+	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>&
+		out_caps
 ) {
 	auto& sys_def = get_system_like(system_id);
 	bool  independent = !sys_def.generates.empty() ||
@@ -1194,12 +1195,12 @@ static bool collect_all_caps(
 }
 
 static void calculate_execution_batches(
-	const std::vector<ecsact_system_like_id>&       systems,
+	const std::vector<ecsact_system_like_id>&        systems,
 	std::vector<std::vector<ecsact_system_like_id>>& out_batches
 ) {
 	out_batches.clear();
 
-	std::vector<ecsact_system_like_id> current_batch;
+	std::vector<ecsact_system_like_id>           current_batch;
 	std::unordered_set<ecsact_component_like_id> batch_writers;
 	std::unordered_set<ecsact_component_like_id> batch_readers;
 
@@ -1234,14 +1235,15 @@ static void calculate_execution_batches(
 
 	for(auto sys_id : systems) {
 		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
-			all_caps;
+				 all_caps;
 		bool independent = collect_all_caps(sys_id, all_caps);
 
 		bool conflict = independent;
 		if(!conflict) {
 			for(auto const& [comp_id, cap] : all_caps) {
 				if(is_exclusive(cap)) {
-					if(batch_readers.contains(comp_id) || batch_writers.contains(comp_id)) {
+					if(batch_readers.contains(comp_id) ||
+						 batch_writers.contains(comp_id)) {
 						conflict = true;
 						break;
 					}
