@@ -1251,9 +1251,19 @@ static std::optional<ecsact_system_like_id> calculate_execution_batches(
 			}
 			auto b_cap = b_caps.at(comp_id);
 
-			bool a_inc = (a_cap & ECSACT_SYS_CAP_INCLUDE) != 0;
+			auto is_inc = [](ecsact_system_capability cap) -> bool {
+				if((cap & ECSACT_SYS_CAP_INCLUDE) != 0) {
+					return true;
+				}
+				if((cap & ECSACT_SYS_CAP_OPTIONAL) != 0) {
+					return false;
+				}
+				return (cap & (ECSACT_SYS_CAP_READONLY | ECSACT_SYS_CAP_WRITEONLY)) != 0;
+			};
+
+			bool a_inc = is_inc(a_cap);
 			bool a_exc = (a_cap & ECSACT_SYS_CAP_EXCLUDE) != 0;
-			bool b_inc = (b_cap & ECSACT_SYS_CAP_INCLUDE) != 0;
+			bool b_inc = is_inc(b_cap);
 			bool b_exc = (b_cap & ECSACT_SYS_CAP_EXCLUDE) != 0;
 
 			if((a_inc && b_exc) || (a_exc && b_inc)) {
