@@ -29,7 +29,7 @@ TEST(EcsactInterpret, ExecutionBatches) {
 	ASSERT_NE(package_id, (ecsact_package_id)-1);
 
 	auto batch_count = ecsact_meta_count_execution_batches(package_id);
-	ASSERT_EQ(batch_count, 6);
+	ASSERT_EQ(batch_count, 8);
 
 	// Batch 0: SysA, SysB, MultiSys1
 	{
@@ -91,6 +91,24 @@ TEST(EcsactInterpret, ExecutionBatches) {
 		ASSERT_EQ(systems_count, 3);
 		EXPECT_STREQ(ecsact_meta_system_name(ecsact_id_cast<ecsact_system_id>(systems[0])), "ConflictGenerates");
 		EXPECT_STREQ(ecsact_meta_system_name(ecsact_id_cast<ecsact_system_id>(systems[1])), "MultiSys4");
-		EXPECT_STREQ(ecsact_meta_system_name(ecsact_id_cast<ecsact_system_id>(systems[2])), "FinalSys");
+		EXPECT_STREQ(ecsact_meta_system_name(ecsact_id_cast<ecsact_system_id>(systems[2])), "LastSys");
+	}
+
+	// Batch 6: ParentGenerates
+	{
+		int32_t systems_count = 0;
+		std::vector<ecsact_system_like_id> systems(10);
+		ecsact_meta_get_execution_batch(package_id, 6, 10, systems.data(), &systems_count);
+		ASSERT_EQ(systems_count, 1);
+		EXPECT_STREQ(ecsact_meta_system_name(ecsact_id_cast<ecsact_system_id>(systems[0])), "ParentGenerates");
+	}
+
+	// Batch 7: AfterParent
+	{
+		int32_t systems_count = 0;
+		std::vector<ecsact_system_like_id> systems(10);
+		ecsact_meta_get_execution_batch(package_id, 7, 10, systems.data(), &systems_count);
+		ASSERT_EQ(systems_count, 1);
+		EXPECT_STREQ(ecsact_meta_system_name(ecsact_id_cast<ecsact_system_id>(systems[0])), "AfterParent");
 	}
 }

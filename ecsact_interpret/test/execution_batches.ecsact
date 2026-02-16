@@ -32,7 +32,7 @@ system SysD { readonly CompB; }
 
 system ParentSys {
 	readonly CompA;
-	system {
+	system ParentSysChild {
 		readwrite CompA;
 	}
 }
@@ -61,4 +61,15 @@ system MultiSys4 {
 	readonly CompJ;
 }
 
-system FinalSys { readonly CompJ; }
+system LastSys { readonly CompJ; }
+
+system ParentGenerates {
+	system ParentGeneratesChild {
+		generates { required CompF; }
+	}
+}
+
+system AfterParent {
+	readonly CompA;
+}
+

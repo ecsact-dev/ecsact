@@ -1166,11 +1166,14 @@ auto ecsact_meta_component_type( //
 	return comp_def->second.comp_type;
 }
 
-static void collect_all_caps(
+static bool collect_all_caps(
 	ecsact_system_like_id system_id,
 	std::unordered_map<ecsact_component_like_id, ecsact_system_capability>& out_caps
 ) {
 	auto& sys_def = get_system_like(system_id);
+	bool  independent = !sys_def.generates.empty() ||
+		sys_def.parallel_execution == ECSACT_PAR_EXEC_DENY;
+
 	for(auto const& [comp_id, cap_entry] : sys_def.caps) {
 		out_caps[comp_id] = static_cast<ecsact_system_capability>(
 			static_cast<uint32_t>(out_caps[comp_id]) |
@@ -1179,11 +1182,15 @@ static void collect_all_caps(
 	}
 
 	for(auto child_sys_id : sys_def.nested_systems) {
-		collect_all_caps(
-			ecsact_id_cast<ecsact_system_like_id>(child_sys_id),
-			out_caps
-		);
+		if(collect_all_caps(
+				 ecsact_id_cast<ecsact_system_like_id>(child_sys_id),
+				 out_caps
+			 )) {
+			independent = true;
+		}
 	}
+
+	return independent;
 }
 
 static void calculate_execution_batches(
@@ -1226,15 +1233,9 @@ static void calculate_execution_batches(
 	};
 
 	for(auto sys_id : systems) {
-		auto& sys_def = get_system_like(sys_id);
-
-		// Independent systems (e.g. generators) always start a new batch
-		bool independent = !sys_def.generates.empty() ||
-			sys_def.parallel_execution == ECSACT_PAR_EXEC_DENY;
-
 		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
 			all_caps;
-		collect_all_caps(sys_id, all_caps);
+		bool independent = collect_all_caps(sys_id, all_caps);
 
 		bool conflict = independent;
 		if(!conflict) {
