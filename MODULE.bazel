@@ -7,6 +7,8 @@ bazel_dep(name = "emsdk", version = "5.0.1", dev_dependency = True)
 bazel_dep(name = "rules_python", version = "0.36.0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
+# only needed for emsdk and version 3.11 is hardcoded in the patch files so if
+# you change the version here you must also update the emsdk patch files
 python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
 python.toolchain(
     is_default = True,
