@@ -387,6 +387,35 @@ struct system_statement {
 	);
 };
 
+struct cluster_statement {
+	static constexpr auto name() {
+		return "cluster statement";
+	}
+
+	struct cluster_keyword : lexy::transparent_production {
+		static constexpr auto rule = LEXY_LIT("cluster");
+		static constexpr auto value = lexy::noop;
+	};
+
+	static constexpr auto rule = lexy::dsl::p<cluster_keyword> >>
+		lexy::dsl::opt(lexy::dsl::p<type_name_decl>);
+
+	static constexpr auto value = lexy::callback<ecsact_statement>(
+		[](std::optional<std::string_view> cluster_name) {
+			return ecsact_statement{
+				.type = ECSACT_STATEMENT_CLUSTER,
+				.data{.cluster_statement{
+					.cluster_name{
+						.data = cluster_name ? cluster_name->data() : nullptr,
+						.length =
+							cluster_name ? static_cast<int>(cluster_name->size()) : 0,
+					},
+				}},
+			};
+		}
+	);
+};
+
 struct action_statement {
 	static constexpr auto name() {
 		return "action statement";
@@ -988,6 +1017,7 @@ constexpr char top_level_statement_expected_message[] =
 using top_level_statement = statement<
 	top_level_statement_name,
 	top_level_statement_expected_message,
+	cluster_statement,
 	package_statement,
 	import_statement,
 	component_statement,
@@ -1035,10 +1065,20 @@ constexpr char system_level_statement_expected_message[] =
 using system_level_statement = statement<
 	system_level_statement_name,
 	system_level_statement_expected_message,
+	cluster_statement,
 	system_notify_statement,
 	system_component_statement,
 	generates_statement,
 	system_statement>;
+
+constexpr char cluster_level_statement_name[] = "cluster level statement";
+constexpr char cluster_level_statement_expected_message[] =
+	"expected cluster level statement";
+using cluster_level_statement = statement<
+	cluster_level_statement_name,
+	cluster_level_statement_expected_message,
+	system_statement,
+	action_statement>;
 
 constexpr char action_level_statement_name[] = "action level statement";
 constexpr char action_level_statement_expected_message[] =
@@ -1046,6 +1086,7 @@ constexpr char action_level_statement_expected_message[] =
 using action_level_statement = statement<
 	action_level_statement_name,
 	action_level_statement_expected_message,
+	cluster_statement,
 	system_notify_statement,
 	field_statement,
 	system_component_statement,

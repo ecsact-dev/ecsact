@@ -29,6 +29,7 @@ typedef enum {
 	ECSACT_STATEMENT_ENTITY_CONSTRAINT,
 	ECSACT_STATEMENT_SYSTEM_NOTIFY,
 	ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT,
+	ECSACT_STATEMENT_CLUSTER,
 } ecsact_statement_type;
 
 typedef struct {
@@ -136,6 +137,10 @@ typedef struct {
 	ecsact_statement_sv component_name;
 } ecsact_system_notify_component_statement;
 
+typedef struct {
+	ecsact_statement_sv cluster_name;
+} ecsact_cluster_statement;
+
 typedef union {
 	ecsact_package_statement                 package_statement;
 	ecsact_import_statement                  import_statement;
@@ -152,6 +157,7 @@ typedef union {
 	ecsact_entity_constraint_statement       entity_constraint_statement;
 	ecsact_system_notify_statement           system_notify_statement;
 	ecsact_system_notify_component_statement system_notify_component_statement;
+	ecsact_cluster_statement                 cluster_statement;
 } ecsact_statement_data;
 
 typedef struct ecsact_statement {

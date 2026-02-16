@@ -121,3 +121,18 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+
+cc_test(
+    name = "explicit_clusters",
+    srcs = ["explicit_clusters.cc"],
+    copts = copts,
+    data = ["explicit_clusters.ecsact"],
+    deps = [
+        ":test_lib",
+        "//ecsact_interpret",
+        "//bazel/runfiles",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
