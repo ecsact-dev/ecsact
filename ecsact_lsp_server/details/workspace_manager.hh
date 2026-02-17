@@ -70,16 +70,17 @@ inline auto pretty_statement_type_name(ecsact_statement_type type)
 		case ECSACT_STATEMENT_IMPORT:
 			return "import";
 		case ECSACT_STATEMENT_COMPONENT:
-			return "transient";
+			return "component";
 		case ECSACT_STATEMENT_TRANSIENT:
-			return "system";
+			return "transient";
 		case ECSACT_STATEMENT_SYSTEM:
-			return "action";
+			return "system";
 		case ECSACT_STATEMENT_ACTION:
-			return "enum";
+			return "action";
 		case ECSACT_STATEMENT_ENUM:
-			return "enum value";
+			return "enum";
 		case ECSACT_STATEMENT_ENUM_VALUE:
+			return "enum value";
 		case ECSACT_STATEMENT_BUILTIN_TYPE_FIELD:
 		case ECSACT_STATEMENT_USER_TYPE_FIELD:
 		case ECSACT_STATEMENT_ENTITY_FIELD:
@@ -92,6 +93,12 @@ inline auto pretty_statement_type_name(ecsact_statement_type type)
 			return "with";
 		case ECSACT_STATEMENT_ENTITY_CONSTRAINT:
 			return "entity constraint";
+		case ECSACT_STATEMENT_SYSTEM_NOTIFY:
+			return "system notify";
+		case ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT:
+			return "system notify component";
+		case ECSACT_STATEMENT_CLUSTER:
+			return "cluster";
 	}
 
 	return std::string{magic_enum::enum_name(type)};
@@ -188,6 +195,11 @@ class workspace_manager {
 				stack = doc.parse_stacks[doc.parse_stacks.size() - 2];
 				if(last_status.code == ECSACT_PARSE_STATUS_OK) {
 					stack.pop_back();
+				} else if(last_status.code == ECSACT_PARSE_STATUS_BLOCK_END) {
+					stack.pop_back();
+					if(!stack.empty()) {
+						stack.pop_back();
+					}
 				}
 			}
 
