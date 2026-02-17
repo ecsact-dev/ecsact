@@ -1690,8 +1690,6 @@ void ecsact_add_system_to_cluster(
 	ecsact_cluster_id     cluster_id,
 	ecsact_system_like_id system_id
 ) {
-	std::cout << "Add system " << (int)system_id << " to cluster "
-						<< (int)cluster_id << "\n";
 	auto def_itr = cluster_defs.find(cluster_id);
 	if(def_itr == cluster_defs.end()) {
 		return;
