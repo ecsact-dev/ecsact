@@ -123,6 +123,31 @@ enum class diagnostic_severity {
 	hint = 4,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+	diagnostic_severity,
+	{
+		{diagnostic_severity::error, 1},
+		{diagnostic_severity::warning, 2},
+		{diagnostic_severity::information, 3},
+		{diagnostic_severity::hint, 4},
+	}
+)
+
+enum class trace_value {
+	off,
+	messages,
+	verbose,
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+	trace_value,
+	{
+		{trace_value::off, "off"},
+		{trace_value::messages, "messages"},
+		{trace_value::verbose, "verbose"},
+	}
+)
+
 /**
  * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic

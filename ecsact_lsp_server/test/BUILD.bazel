@@ -1,0 +1,12 @@
+load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//bazel:copts.bzl", "copts")
+
+cc_test(
+    name = "workspace_manager_test",
+    srcs = ["workspace_manager_test.cc"],
+    copts = copts,
+    deps = [
+        "//ecsact_lsp_server:ecsact_lsp_server_lib",
+        "@googletest//:gtest_main",
+    ],
+)

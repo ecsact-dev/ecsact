@@ -37,7 +37,7 @@ auto as_sv(ecsact_statement_sv sv) -> std::string_view {
 }
 
 static auto expect_context(
-	std::span<const ecsact_statement>& context_stack,
+	std::span<const ecsact_statement>  context_stack,
 	std::vector<ecsact_statement_type> context_types
 ) -> std::tuple<const ecsact_statement*, ecsact_eval_error> {
 	if(context_stack.empty()) {
@@ -671,7 +671,7 @@ std::optional<ecsact_system_like_id> find_by_statement(
 
 static ecsact_eval_error eval_none_statement(
 	ecsact_package_id,
-	std::span<const ecsact_statement>&,
+	std::span<const ecsact_statement>,
 	const ecsact_statement&
 ) {
 	return {};
@@ -679,16 +679,16 @@ static ecsact_eval_error eval_none_statement(
 
 static ecsact_eval_error eval_unknown_statement(
 	ecsact_package_id,
-	std::span<const ecsact_statement>&,
+	std::span<const ecsact_statement>,
 	const ecsact_statement&
 ) {
 	return {};
 }
 
 static ecsact_eval_error eval_import_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.import_statement;
 	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_NONE});
@@ -723,9 +723,9 @@ static ecsact_eval_error eval_import_statement(
 }
 
 static ecsact_eval_error eval_component_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.component_statement;
 	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_NONE});
@@ -796,9 +796,9 @@ static ecsact_eval_error eval_component_statement(
 }
 
 static ecsact_eval_error eval_transient_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.transient_statement;
 	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_NONE});
@@ -844,9 +844,9 @@ static std::optional<ecsact_system_like_id> find_parent_system_like_id(
 }
 
 static ecsact_eval_error eval_system_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	ecsact_statement&                  statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	ecsact_statement&                 statement
 ) {
 	auto& data = statement.data.system_statement;
 	auto  parent_sys_like_id = std::optional<ecsact_system_like_id>{};
@@ -948,9 +948,9 @@ static ecsact_eval_error eval_system_statement(
 }
 
 static ecsact_eval_error eval_action_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	ecsact_statement&                  statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	ecsact_statement&                 statement
 ) {
 	auto& data = statement.data.action_statement;
 	auto [context, err] = expect_context(
@@ -1012,9 +1012,9 @@ static ecsact_eval_error eval_action_statement(
 }
 
 static ecsact_eval_error eval_enum_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.enum_statement;
 	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_NONE});
@@ -1043,9 +1043,9 @@ static ecsact_eval_error eval_enum_statement(
 }
 
 static ecsact_eval_error eval_enum_value_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.enum_value_statement;
 	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_ENUM});
@@ -1076,9 +1076,9 @@ static ecsact_eval_error eval_enum_value_statement(
 }
 
 static ecsact_eval_error eval_builtin_type_field_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.field_statement;
 	auto [context, err] = expect_context(
@@ -1133,9 +1133,9 @@ static ecsact_eval_error eval_builtin_type_field_statement(
 }
 
 static ecsact_eval_error eval_user_type_field_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto& data = statement.data.user_type_field_statement;
 	auto [context, err] = expect_context(
@@ -1215,9 +1215,9 @@ static ecsact_eval_error eval_user_type_field_statement(
 }
 
 static ecsact_eval_error eval_entity_field_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	return eval_builtin_type_field_statement(
 		package_id,
@@ -1390,9 +1390,9 @@ static auto find_assoc_ids_with_fields( //
 }
 
 static ecsact_eval_error eval_system_component_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto [context, err] = expect_context(
 		context_stack,
@@ -1637,9 +1637,9 @@ static ecsact_eval_error eval_system_component_statement(
 }
 
 static ecsact_eval_error eval_system_generates_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	auto [context, err] = expect_context(
 		context_stack,
@@ -1681,9 +1681,9 @@ static ecsact_eval_error eval_system_generates_statement(
 }
 
 static ecsact_eval_error eval_system_with_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	if(context_stack.size() < 2) {
 		return ecsact_eval_error{
@@ -1767,9 +1767,9 @@ static auto get_notify_setting_from_string( //
 }
 
 static auto eval_system_notify_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) -> ecsact_eval_error {
 	auto [context, err] = expect_context(
 		context_stack,
@@ -1829,9 +1829,9 @@ static auto eval_system_notify_statement(
 }
 
 static auto eval_system_notify_component_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) -> ecsact_eval_error {
 	if(context_stack.size() < 2) {
 		return ecsact_eval_error{
@@ -1922,9 +1922,9 @@ static auto eval_system_notify_component_statement(
 }
 
 static ecsact_eval_error eval_entity_constraint_statement(
-	ecsact_package_id                  package_id,
-	std::span<const ecsact_statement>& context_stack,
-	const ecsact_statement&            statement
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
 ) {
 	if(context_stack.size() < 2) {
 		return ecsact_eval_error{
@@ -2050,10 +2050,7 @@ ecsact_eval_error ecsact_eval_statement(
 	}
 
 	auto&     statement = statement_stack[statement_stack_size - 1];
-	std::span context_statements(
-		const_cast<const ecsact_statement*>(statement_stack),
-		statement_stack_size - 1
-	);
+	std::span context_statements(statement_stack, statement_stack_size - 1);
 
 	auto err = [&]() -> std::optional<ecsact_eval_error> {
 		switch(statement.type) {

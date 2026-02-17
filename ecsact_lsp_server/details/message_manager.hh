@@ -33,6 +33,8 @@ class message_manager {
 		std::unordered_map<std::string, std::function<json(json)>>;
 	request_handlers_t _request_handlers;
 
+	trace_value _trace = trace_value::off;
+
 	auto _pop_req_callback(int req_id) {
 		auto lk = std::unique_lock(_req_callbacks_mutex);
 		auto callback = std::move(_req_callbacks.at(req_id));
@@ -213,6 +215,16 @@ public:
 		params["type"] = static_cast<int>(type);
 		params["message"] = message;
 		send_notification("window/logMessage", std::move(params));
+	}
+
+	auto set_trace(trace_value v) {
+		_trace = v;
+	}
+
+	auto trace_log(std::string message) {
+		if(_trace == trace_value::verbose) {
+			log_message(message_type::log, message);
+		}
 	}
 
 	auto add_notification_listener(

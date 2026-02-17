@@ -1,0 +1,213 @@
+#include <gtest/gtest.h>
+#include <vector>
+#include <string>
+#include <functional>
+#include <optional>
+#include "ecsact_lsp_server/details/workspace_manager.hh"
+
+struct mock_sender {
+	void send_request(
+		std::string                         method,
+		nlohmann::json                      params,
+		std::function<void(nlohmann::json)> callback
+	) {
+	}
+
+	void send_notification(std::string method, nlohmann::json params) {
+		if(method == "textDocument/publishDiagnostics") {
+			last_diagnostics = params;
+		}
+	}
+
+	void show_message(ecsact_lsp::message_type type, std::string message) {
+	}
+
+	void show_message(
+		ecsact_lsp::message_type                                            type,
+		std::string                                                         message,
+		std::vector<ecsact_lsp::message_action_item>                        actions,
+		std::function<void(std::optional<ecsact_lsp::message_action_item>)> callback
+	) {
+	}
+
+	void log_message(ecsact_lsp::message_type type, std::string message) {
+		last_log_message = message;
+	}
+
+	void trace_log(std::string message) {
+		if(trace == ecsact_lsp::trace_value::verbose) {
+			log_message(ecsact_lsp::message_type::log, message);
+		}
+	}
+
+	nlohmann::json          last_diagnostics;
+	std::string             last_log_message;
+	ecsact_lsp::trace_value trace = ecsact_lsp::trace_value::off;
+};
+
+static void expect_no_errors(const nlohmann::json& publish_diagnostics) {
+	if(publish_diagnostics.is_null() ||
+		 !publish_diagnostics.contains("diagnostics")) {
+		return;
+	}
+	auto diagnostics = publish_diagnostics["diagnostics"];
+	for(auto& diag : diagnostics) {
+		EXPECT_NE(diag["severity"], 1) << "Error: " << diag["message"];
+	}
+}
+
+TEST(WorkspaceManager, ClusterCrashRepro) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+cluster {
+	system Foo;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+	expect_no_errors(sender.last_diagnostics);
+}
+
+TEST(WorkspaceManager, EmptyCluster) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test_empty.ecsact";
+	std::string text = R"(
+main package test_empty;
+cluster {}
+)";
+
+	manager.add_document(uri, 1, text);
+	expect_no_errors(sender.last_diagnostics);
+}
+
+TEST(WorkspaceManager, MultipleClusters) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test_multiple.ecsact";
+	std::string text = R"(
+main package test_multiple;
+cluster A {}
+cluster B {}
+)";
+
+	manager.add_document(uri, 1, text);
+	expect_no_errors(sender.last_diagnostics);
+}
+
+TEST(WorkspaceManager, InvalidClusterContext) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test_invalid_ctx.ecsact";
+	std::string text = R"(
+main package test_invalid_ctx;
+component Foo {
+	cluster Bar {}
+}
+)";
+
+	manager.add_document(uri, 1, text);
+	// We EXPECT an error here
+	auto diagnostics = sender.last_diagnostics["diagnostics"];
+	bool found_error = false;
+	for(auto& diag : diagnostics) {
+		if(diag["severity"] == 1) {
+			found_error = true;
+		}
+	}
+	EXPECT_TRUE(found_error) << "Expected an error for invalid cluster context";
+}
+
+TEST(WorkspaceManager, SyntaxErrorInCluster) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test_syntax_err.ecsact";
+	std::string text = R"(
+main package test_syntax_err;
+cluster {
+	asdf
+}
+)";
+
+	manager.add_document(uri, 1, text);
+	// We EXPECT an error here
+	auto diagnostics = sender.last_diagnostics["diagnostics"];
+	bool found_error = false;
+	for(auto& diag : diagnostics) {
+		if(diag["severity"] == 1) {
+			found_error = true;
+		}
+	}
+	EXPECT_TRUE(found_error) << "Expected an error for syntax error in cluster";
+}
+
+TEST(WorkspaceManager, StackManagement) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test_stack.ecsact";
+	std::string text = R"(
+main package test_stack;
+cluster A {}
+component C {}
+)";
+
+	manager.add_document(uri, 1, text);
+	expect_no_errors(sender.last_diagnostics);
+}
+
+TEST(WorkspaceManager, ActionNoCapabilities) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///action_no_caps.ecsact";
+	std::string text = R"(
+main package action_no_caps;
+action Foo {}
+)";
+
+	manager.add_document(uri, 1, text);
+	auto diagnostics = sender.last_diagnostics["diagnostics"];
+	bool found_error = false;
+	for(auto& diag : diagnostics) {
+		if(diag["message"] == "Action must have at least one capability") {
+			found_error = true;
+		}
+	}
+	EXPECT_TRUE(found_error) << "Expected error for action without capabilities";
+}
+
+TEST(WorkspaceManager, ClusterConflict) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///cluster_conflict.ecsact";
+	std::string text = R"(
+main package cluster_conflict;
+component CompA { i32 a; }
+cluster {
+	system SysA { readonly CompA; }
+	system SysB { readwrite CompA; }
+}
+)";
+
+	manager.add_document(uri, 1, text);
+	auto diagnostics = sender.last_diagnostics["diagnostics"];
+	bool found_error = false;
+	for(auto& diag : diagnostics) {
+		if(diag["message"].get<std::string>().find(
+				 "cannot be part of the explicit cluster"
+			 ) != std::string::npos) {
+			found_error = true;
+		}
+	}
+	EXPECT_TRUE(found_error) << "Expected error for cluster conflict";
+}

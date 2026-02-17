@@ -65,6 +65,10 @@ auto main(int argc, char* argv[]) -> int {
 	ecsact_lsp::workspace_manager workspace_manager(manager);
 
 	manager.set_request_handler("initialize", [&](json params) -> json {
+		if(params.contains("trace")) {
+			manager.set_trace(params["trace"].get<ecsact_lsp::trace_value>());
+		}
+
 		return nlohmann::json{
 			{
 				"capabilities",
@@ -100,6 +104,12 @@ auto main(int argc, char* argv[]) -> int {
 
 	manager.add_notification_listener("initialized", [&](json) {
 
+	});
+
+	manager.add_notification_listener("$/setTrace", [&](json params) {
+		if(params.contains("value")) {
+			manager.set_trace(params["value"].get<ecsact_lsp::trace_value>());
+		}
 	});
 
 	bool shutdown_requested = false;

@@ -11,6 +11,8 @@
 #include "ecsact/parse/statements.h"
 #include "ecsact/interpret/eval.h"
 #include "ecsact/runtime/dynamic.h"
+#include "ecsact/runtime/meta.h"
+#include "ecsact/runtime/meta.hh"
 #include <magic_enum/magic_enum.hpp>
 
 #include "./messages.hh"
@@ -40,6 +42,11 @@ inline auto get_source_range(
 	auto index = 0;
 	auto cptr = full_text.data();
 
+	if(loc.data < full_text.data() ||
+		 loc.data >= full_text.data() + full_text.size()) {
+		return r;
+	}
+
 	while(index < full_text.size() && cptr != loc.data) {
 		if(*cptr == '\n') {
 			r.start.line += 1;
@@ -58,6 +65,14 @@ inline auto get_source_range(
 	return r;
 }
 
+template<typename E>
+inline auto enum_name_safe(E value, std::string fallback) -> std::string {
+	if(magic_enum::enum_cast<E>(value)) {
+		return std::string{magic_enum::enum_name(value)};
+	}
+	return fallback + " (" + std::to_string(static_cast<int>(value)) + ")";
+}
+
 inline auto pretty_statement_type_name(ecsact_statement_type type)
 	-> std::string {
 	switch(type) {
@@ -70,16 +85,17 @@ inline auto pretty_statement_type_name(ecsact_statement_type type)
 		case ECSACT_STATEMENT_IMPORT:
 			return "import";
 		case ECSACT_STATEMENT_COMPONENT:
-			return "transient";
+			return "component";
 		case ECSACT_STATEMENT_TRANSIENT:
-			return "system";
+			return "transient";
 		case ECSACT_STATEMENT_SYSTEM:
-			return "action";
+			return "system";
 		case ECSACT_STATEMENT_ACTION:
-			return "enum";
+			return "action";
 		case ECSACT_STATEMENT_ENUM:
-			return "enum value";
+			return "enum";
 		case ECSACT_STATEMENT_ENUM_VALUE:
+			return "enum value";
 		case ECSACT_STATEMENT_BUILTIN_TYPE_FIELD:
 		case ECSACT_STATEMENT_USER_TYPE_FIELD:
 		case ECSACT_STATEMENT_ENTITY_FIELD:
@@ -92,9 +108,15 @@ inline auto pretty_statement_type_name(ecsact_statement_type type)
 			return "with";
 		case ECSACT_STATEMENT_ENTITY_CONSTRAINT:
 			return "entity constraint";
+		case ECSACT_STATEMENT_SYSTEM_NOTIFY:
+			return "system notify";
+		case ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT:
+			return "system notify component";
+		case ECSACT_STATEMENT_CLUSTER:
+			return "cluster";
 	}
 
-	return std::string{magic_enum::enum_name(type)};
+	return enum_name_safe(type, "unknown statement");
 }
 
 inline auto parse_stack(
@@ -147,7 +169,7 @@ static inline auto create_eval_error_diagnostics(
 		};
 	} else if(err.code != ECSACT_EVAL_OK) {
 		auto r = get_source_range(doc.full_text, err.relevant_content);
-		auto message = std::string{magic_enum::enum_name(err.code)};
+		auto message = enum_name_safe(err.code, "unknown eval error");
 		if(err.relevant_content.length > 0) {
 			message += " ";
 			message += std::string_view{
@@ -174,6 +196,7 @@ class workspace_manager {
 	Send&&                                           send;
 
 	auto _parse_document(std::string uri, int version, document_state& doc) {
+		send.trace_log("Parsing document: " + uri);
 		doc.parse_stacks.clear();
 		doc.parse_statuses.clear();
 
@@ -188,6 +211,11 @@ class workspace_manager {
 				stack = doc.parse_stacks[doc.parse_stacks.size() - 2];
 				if(last_status.code == ECSACT_PARSE_STATUS_OK) {
 					stack.pop_back();
+				} else if(last_status.code == ECSACT_PARSE_STATUS_BLOCK_END) {
+					stack.pop_back();
+					if(!stack.empty()) {
+						stack.pop_back();
+					}
 				}
 			}
 
@@ -213,6 +241,10 @@ class workspace_manager {
 			}
 		}
 
+		send.trace_log(
+			"Parsed " + std::to_string(doc.parse_stacks.size()) + " statements"
+		);
+
 		for(auto& status : doc.parse_statuses) {
 			if(ecsact_is_error_parse_status_code(status.code)) {
 				auto r = get_source_range(doc.full_text, status.error_location);
@@ -221,7 +253,7 @@ class workspace_manager {
 					diagnostic{
 						.range = r,
 						.severity = diagnostic_severity::error,
-						.message{magic_enum::enum_name(status.code)},
+						.message{enum_name_safe(status.code, "unknown parse error")},
 					}
 				);
 			}
@@ -240,6 +272,8 @@ class workspace_manager {
 	auto _interpret_document(std::string uri, int version, document_state& doc) {
 		using std::views::drop;
 		using namespace std::string_literals;
+
+		send.trace_log("Interpreting document: " + uri);
 
 		if(doc.parse_stacks.empty()) {
 			return;
@@ -274,16 +308,37 @@ class workspace_manager {
 		}
 
 		if(doc.package_id) {
+			send.trace_log("Evaluating statements in package");
 			auto eval_statement_tracker = std::set<int32_t>{};
+			auto parser_to_runtime_id = std::unordered_map<int32_t, int32_t>{};
+			auto system_ranges = std::unordered_map<ecsact_system_like_id, range>{};
 
 			// Evaluate all statements in stacks except first (package)
-			for(auto& parse_stack : doc.parse_stacks | drop(1)) {
+			for(size_t stack_idx = 1; stack_idx < doc.parse_stacks.size();
+					++stack_idx) {
+				auto& parse_stack = doc.parse_stacks[stack_idx];
+				auto& status = doc.parse_statuses[stack_idx];
+
 				for(auto idx = 0; parse_stack.size() > idx; ++idx) {
-					auto& statement = parse_stack[idx];
-					if(eval_statement_tracker.contains(statement.id)) {
+					auto&      statement = parse_stack[idx];
+					auto       original_id = statement.id;
+					const auto runtime_id_itr = parser_to_runtime_id.find(original_id);
+
+					if(runtime_id_itr != parser_to_runtime_id.end()) {
+						statement.id = runtime_id_itr->second;
 						continue;
 					}
-					eval_statement_tracker.insert(statement.id);
+
+					if(eval_statement_tracker.contains(original_id)) {
+						continue;
+					}
+
+					eval_statement_tracker.insert(original_id);
+
+					send.trace_log(
+						"Evaluating statement " + std::to_string(original_id) + " (" +
+						pretty_statement_type_name(statement.type) + ")"
+					);
 
 					auto eval_err = ecsact_eval_statement(
 						*doc.package_id,
@@ -295,10 +350,81 @@ class workspace_manager {
 						diagnostics.push_back(
 							create_eval_error_diagnostics(doc, statement, eval_err)
 						);
+					} else {
+						parser_to_runtime_id[original_id] = statement.id;
+						if(statement.type == ECSACT_STATEMENT_SYSTEM) {
+							system_ranges[static_cast<ecsact_system_like_id>(statement.id)] =
+								get_source_range(
+									doc.full_text,
+									statement.data.system_statement.system_name
+								);
+						} else if(statement.type == ECSACT_STATEMENT_ACTION) {
+							system_ranges[static_cast<ecsact_system_like_id>(statement.id)] =
+								get_source_range(
+									doc.full_text,
+									statement.data.action_statement.action_name
+								);
+						}
+					}
+				}
+
+				if(status.code == ECSACT_PARSE_STATUS_BLOCK_END) {
+					if(parse_stack.size() >= 2) {
+						auto& block_start = parse_stack[parse_stack.size() - 2];
+						if(block_start.type == ECSACT_STATEMENT_ACTION) {
+							auto& data = block_start.data.action_statement;
+							auto  act_id = static_cast<ecsact_action_id>(block_start.id);
+
+							if(ecsact::meta::system_capabilities(act_id).empty()) {
+								diagnostics.push_back(
+									diagnostic{
+										.range = get_source_range(doc.full_text, data.action_name),
+										.severity = diagnostic_severity::error,
+										.message = "Action must have at least one capability",
+									}
+								);
+							}
+						}
 					}
 				}
 			}
+
+			auto invalid_sys_id = ecsact_check_execution_batches(*doc.package_id);
+			if(invalid_sys_id != (ecsact_system_like_id)-1) {
+				diagnostics.push_back(
+					diagnostic{
+						.range = system_ranges[invalid_sys_id],
+						.severity = diagnostic_severity::error,
+						.message = "System '" +
+							std::string(ecsact_meta_system_name(
+								static_cast<ecsact_system_id>(invalid_sys_id)
+							)) +
+							"' cannot be part of the explicit cluster it is in",
+					}
+				);
+			}
+
+			for(auto sys_id : ecsact::meta::get_system_ids(*doc.package_id)) {
+				auto invalid_nested_sys_id = ecsact_check_system_execution_batches(
+					static_cast<ecsact_system_like_id>(sys_id)
+				);
+				if(invalid_nested_sys_id != (ecsact_system_like_id)-1) {
+					diagnostics.push_back(
+						diagnostic{
+							.range = system_ranges[invalid_nested_sys_id],
+							.severity = diagnostic_severity::error,
+							.message = "System '" +
+								std::string(ecsact_meta_system_name(
+									static_cast<ecsact_system_id>(invalid_nested_sys_id)
+								)) +
+								"' cannot be part of the explicit cluster it is in",
+						}
+					);
+				}
+			}
 		}
+
+		send.trace_log("Interpretation complete for " + uri);
 
 		if(!diagnostics.empty()) {
 			send.send_notification(
@@ -326,7 +452,8 @@ public:
 
 	auto add_document(std::string uri, int initial_version, std::string text)
 		-> void {
-		auto& doc = (_documents[uri] = {});
+		_documents[uri] = document_state{};
+		auto& doc = _documents[uri];
 		doc.full_text = std::move(text);
 		doc.next_parse_view = doc.full_text;
 		_parse_document(uri, initial_version, doc);
@@ -334,7 +461,8 @@ public:
 	}
 
 	auto update_document(std::string uri, int version, std::string text) -> void {
-		auto& doc = (_documents[uri] = {});
+		_documents[uri] = document_state{};
+		auto& doc = _documents[uri];
 		doc.full_text = std::move(text);
 		doc.next_parse_view = doc.full_text;
 		_parse_document(uri, version, doc);

@@ -1,25 +1,36 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel:copts.bzl", "copts")
 
 package(default_visibility = ["//visibility:public"])
 
-cc_binary(
-    name = "ecsact_lsp_server",
+cc_library(
+    name = "ecsact_lsp_server_lib",
     srcs = [
-        "details/interfaces.hh",
         "details/jsonrpc_stream.hh",
         "details/message_manager.hh",
         "details/message_receiver.hh",
         "details/message_sender.hh",
+    ],
+    hdrs = [
+        "details/interfaces.hh",
         "details/messages.hh",
         "details/workspace_manager.hh",
-        "ecsact_lsp_server.cc",
     ],
     copts = copts,
     deps = [
-        "@docopt.cpp//:docopt",
         "//ecsact_interpret",
         "//ecsact_parse",
+        "@magic_enum",
         "@nlohmann_json//:json",
+    ],
+)
+
+cc_binary(
+    name = "ecsact_lsp_server",
+    srcs = ["ecsact_lsp_server.cc"],
+    copts = copts,
+    deps = [
+        ":ecsact_lsp_server_lib",
+        "@docopt.cpp//:docopt",
     ],
 )
