@@ -40,7 +40,8 @@ inline auto get_source_range(
 	auto index = 0;
 	auto cptr = full_text.data();
 
-	if(loc.data < full_text.data() || loc.data >= full_text.data() + full_text.size()) {
+	if(loc.data < full_text.data() ||
+		 loc.data >= full_text.data() + full_text.size()) {
 		return r;
 	}
 

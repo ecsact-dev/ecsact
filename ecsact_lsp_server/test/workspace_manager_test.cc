@@ -40,13 +40,14 @@ struct mock_sender {
 		}
 	}
 
-	nlohmann::json           last_diagnostics;
-	std::string              last_log_message;
+	nlohmann::json          last_diagnostics;
+	std::string             last_log_message;
 	ecsact_lsp::trace_value trace = ecsact_lsp::trace_value::off;
 };
 
 static void expect_no_errors(const nlohmann::json& publish_diagnostics) {
-	if(publish_diagnostics.is_null() || !publish_diagnostics.contains("diagnostics")) {
+	if(publish_diagnostics.is_null() ||
+		 !publish_diagnostics.contains("diagnostics")) {
 		return;
 	}
 	auto diagnostics = publish_diagnostics["diagnostics"];
@@ -149,7 +150,7 @@ cluster {
 }
 
 TEST(WorkspaceManager, StackManagement) {
-	mock_sender                sender;
+	mock_sender                   sender;
 	ecsact_lsp::workspace_manager manager(std::move(sender));
 
 	std::string uri = "file:///test_stack.ecsact";
@@ -164,7 +165,7 @@ component C {}
 }
 
 TEST(WorkspaceManager, ZCPXRepro) {
-	mock_sender                sender;
+	mock_sender                   sender;
 	ecsact_lsp::workspace_manager manager(std::move(sender));
 
 	std::string uri = "file:///zcpx.ecsact";
@@ -304,4 +305,3 @@ system LocalPlayerTracker(parallel: false) {
 
 	manager.add_document(uri, 1, text);
 }
-
