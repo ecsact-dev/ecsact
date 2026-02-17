@@ -305,3 +305,51 @@ system LocalPlayerTracker(parallel: false) {
 
 	manager.add_document(uri, 1, text);
 }
+
+TEST(WorkspaceManager, ActionNoCapabilities) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///action_no_caps.ecsact";
+	std::string text = R"(
+main package action_no_caps;
+action Foo {}
+)";
+
+	manager.add_document(uri, 1, text);
+	auto diagnostics = sender.last_diagnostics["diagnostics"];
+	bool found_error = false;
+	for(auto& diag : diagnostics) {
+		if(diag["message"] == "Action must have at least one capability") {
+			found_error = true;
+		}
+	}
+	EXPECT_TRUE(found_error) << "Expected error for action without capabilities";
+}
+
+TEST(WorkspaceManager, ClusterConflict) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///cluster_conflict.ecsact";
+	std::string text = R"(
+main package cluster_conflict;
+component CompA { i32 a; }
+cluster {
+	system SysA { readonly CompA; }
+	system SysB { readwrite CompA; }
+}
+)";
+
+	manager.add_document(uri, 1, text);
+	auto diagnostics = sender.last_diagnostics["diagnostics"];
+	bool found_error = false;
+	for(auto& diag : diagnostics) {
+		if(diag["message"].get<std::string>().find(
+				 "cannot be part of the explicit cluster"
+			 ) != std::string::npos) {
+			found_error = true;
+		}
+	}
+	EXPECT_TRUE(found_error) << "Expected error for cluster conflict";
+}
