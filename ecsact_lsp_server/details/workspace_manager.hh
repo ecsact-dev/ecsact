@@ -40,6 +40,10 @@ inline auto get_source_range(
 	auto index = 0;
 	auto cptr = full_text.data();
 
+	if(loc.data < full_text.data() || loc.data >= full_text.data() + full_text.size()) {
+		return r;
+	}
+
 	while(index < full_text.size() && cptr != loc.data) {
 		if(*cptr == '\n') {
 			r.start.line += 1;
@@ -56,6 +60,14 @@ inline auto get_source_range(
 	r.end.character += loc.length;
 
 	return r;
+}
+
+template<typename E>
+inline auto enum_name_safe(E value, std::string fallback) -> std::string {
+	if(magic_enum::enum_cast<E>(value)) {
+		return std::string{magic_enum::enum_name(value)};
+	}
+	return fallback + " (" + std::to_string(static_cast<int>(value)) + ")";
 }
 
 inline auto pretty_statement_type_name(ecsact_statement_type type)
@@ -101,7 +113,7 @@ inline auto pretty_statement_type_name(ecsact_statement_type type)
 			return "cluster";
 	}
 
-	return std::string{magic_enum::enum_name(type)};
+	return enum_name_safe(type, "unknown statement");
 }
 
 inline auto parse_stack(
@@ -154,7 +166,7 @@ static inline auto create_eval_error_diagnostics(
 		};
 	} else if(err.code != ECSACT_EVAL_OK) {
 		auto r = get_source_range(doc.full_text, err.relevant_content);
-		auto message = std::string{magic_enum::enum_name(err.code)};
+		auto message = enum_name_safe(err.code, "unknown eval error");
 		if(err.relevant_content.length > 0) {
 			message += " ";
 			message += std::string_view{
@@ -181,6 +193,7 @@ class workspace_manager {
 	Send&&                                           send;
 
 	auto _parse_document(std::string uri, int version, document_state& doc) {
+		send.trace_log("Parsing document: " + uri);
 		doc.parse_stacks.clear();
 		doc.parse_statuses.clear();
 
@@ -225,6 +238,10 @@ class workspace_manager {
 			}
 		}
 
+		send.trace_log(
+			"Parsed " + std::to_string(doc.parse_stacks.size()) + " statements"
+		);
+
 		for(auto& status : doc.parse_statuses) {
 			if(ecsact_is_error_parse_status_code(status.code)) {
 				auto r = get_source_range(doc.full_text, status.error_location);
@@ -233,7 +250,7 @@ class workspace_manager {
 					diagnostic{
 						.range = r,
 						.severity = diagnostic_severity::error,
-						.message{magic_enum::enum_name(status.code)},
+						.message{enum_name_safe(status.code, "unknown parse error")},
 					}
 				);
 			}
@@ -252,6 +269,8 @@ class workspace_manager {
 	auto _interpret_document(std::string uri, int version, document_state& doc) {
 		using std::views::drop;
 		using namespace std::string_literals;
+
+		send.trace_log("Interpreting document: " + uri);
 
 		if(doc.parse_stacks.empty()) {
 			return;
@@ -286,6 +305,7 @@ class workspace_manager {
 		}
 
 		if(doc.package_id) {
+			send.trace_log("Evaluating statements in package");
 			auto eval_statement_tracker = std::set<int32_t>{};
 
 			// Evaluate all statements in stacks except first (package)
@@ -296,6 +316,11 @@ class workspace_manager {
 						continue;
 					}
 					eval_statement_tracker.insert(statement.id);
+
+					send.trace_log(
+						"Evaluating statement " + std::to_string(statement.id) + " (" +
+						pretty_statement_type_name(statement.type) + ")"
+					);
 
 					auto eval_err = ecsact_eval_statement(
 						*doc.package_id,
@@ -311,6 +336,8 @@ class workspace_manager {
 				}
 			}
 		}
+
+		send.trace_log("Interpretation complete for " + uri);
 
 		if(!diagnostics.empty()) {
 			send.send_notification(
@@ -338,7 +365,8 @@ public:
 
 	auto add_document(std::string uri, int initial_version, std::string text)
 		-> void {
-		auto& doc = (_documents[uri] = {});
+		_documents[uri] = document_state{};
+		auto& doc = _documents[uri];
 		doc.full_text = std::move(text);
 		doc.next_parse_view = doc.full_text;
 		_parse_document(uri, initial_version, doc);
@@ -346,7 +374,8 @@ public:
 	}
 
 	auto update_document(std::string uri, int version, std::string text) -> void {
-		auto& doc = (_documents[uri] = {});
+		_documents[uri] = document_state{};
+		auto& doc = _documents[uri];
 		doc.full_text = std::move(text);
 		doc.next_parse_view = doc.full_text;
 		_parse_document(uri, version, doc);

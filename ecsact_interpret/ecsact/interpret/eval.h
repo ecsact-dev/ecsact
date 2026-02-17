@@ -27,9 +27,9 @@ ecsact_package_id ecsact_eval_package_statement(
  * @returns error details
  */
 ecsact_eval_error ecsact_eval_statement(
-	ecsact_package_id package_id,
-	int32_t           statement_stack_size,
-	ecsact_statement* statement_stack
+	ecsact_package_id       package_id,
+	int32_t                 statement_stack_size,
+	const ecsact_statement* statement_stack
 );
 
 ECSACT_DEPRECATED("unneeded since interpreter does not hold state")

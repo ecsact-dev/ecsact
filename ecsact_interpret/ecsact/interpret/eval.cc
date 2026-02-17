@@ -846,7 +846,7 @@ static std::optional<ecsact_system_like_id> find_parent_system_like_id(
 static ecsact_eval_error eval_system_statement(
 	ecsact_package_id                  package_id,
 	std::span<const ecsact_statement>& context_stack,
-	ecsact_statement&                  statement
+	const ecsact_statement&            statement
 ) {
 	auto& data = statement.data.system_statement;
 	auto  parent_sys_like_id = std::optional<ecsact_system_like_id>{};
@@ -914,8 +914,6 @@ static ecsact_eval_error eval_system_statement(
 		data.system_name.length
 	);
 
-	statement.id = static_cast<int32_t>(sys_id);
-
 	if(parent_sys_like_id) {
 		ecsact_add_child_system(*parent_sys_like_id, sys_id);
 	}
@@ -950,7 +948,7 @@ static ecsact_eval_error eval_system_statement(
 static ecsact_eval_error eval_action_statement(
 	ecsact_package_id                  package_id,
 	std::span<const ecsact_statement>& context_stack,
-	ecsact_statement&                  statement
+	const ecsact_statement&            statement
 ) {
 	auto& data = statement.data.action_statement;
 	auto [context, err] = expect_context(
@@ -985,8 +983,6 @@ static ecsact_eval_error eval_action_statement(
 		data.action_name.data,
 		data.action_name.length
 	);
-
-	statement.id = static_cast<int32_t>(act_id);
 
 	if(context != nullptr && context->type == ECSACT_STATEMENT_CLUSTER) {
 		ecsact_add_system_to_cluster(
@@ -2005,17 +2001,16 @@ static ecsact_eval_error eval_entity_constraint_statement(
 static ecsact_eval_error eval_cluster_statement(
 	ecsact_package_id                 package_id,
 	std::span<const ecsact_statement> context_statements,
-	ecsact_statement&                 statement
+	const ecsact_statement&           statement
 ) {
 	auto& cluster_statement = statement.data.cluster_statement;
 
 	if(context_statements.empty()) {
-		auto id = ecsact_create_cluster(
+		ecsact_create_cluster(
 			package_id,
 			cluster_statement.cluster_name.data,
 			cluster_statement.cluster_name.length
 		);
-		statement.id = static_cast<int32_t>(id);
 	} else {
 		auto parent_ctx = &context_statements.back();
 		auto parent_sys_like_id =
@@ -2029,31 +2024,27 @@ static ecsact_eval_error eval_cluster_statement(
 			};
 		}
 
-		auto id = ecsact_create_system_cluster(
+		ecsact_create_system_cluster(
 			*parent_sys_like_id,
 			cluster_statement.cluster_name.data,
 			cluster_statement.cluster_name.length
 		);
-		statement.id = static_cast<int32_t>(id);
 	}
 
 	return {ECSACT_EVAL_OK};
 }
 
 ecsact_eval_error ecsact_eval_statement(
-	ecsact_package_id package_id,
-	int32_t           statement_stack_size,
-	ecsact_statement* statement_stack
+	ecsact_package_id       package_id,
+	int32_t                 statement_stack_size,
+	const ecsact_statement* statement_stack
 ) {
 	if(statement_stack_size == 0) {
 		return {};
 	}
 
-	auto&     statement = statement_stack[statement_stack_size - 1];
-	std::span context_statements(
-		const_cast<const ecsact_statement*>(statement_stack),
-		statement_stack_size - 1
-	);
+	const auto& statement = statement_stack[statement_stack_size - 1];
+	std::span   context_statements(statement_stack, statement_stack_size - 1);
 
 	auto err = [&]() -> std::optional<ecsact_eval_error> {
 		switch(statement.type) {
