@@ -420,7 +420,7 @@ class workspace_manager {
 				);
 			};
 
-			auto err = ecsact_check_execution_batches_v2(*doc.package_id);
+			auto err = ecsact_check_execution_batches(*doc.package_id);
 			if(static_cast<int32_t>(err.system_id) != -1) {
 				diagnostics.push_back(
 					diagnostic{
@@ -432,7 +432,7 @@ class workspace_manager {
 			}
 
 			for(auto sys_id : ecsact::meta::get_system_ids(*doc.package_id)) {
-				auto nested_err = ecsact_check_system_execution_batches_v2(
+				auto nested_err = ecsact_check_system_execution_batches(
 					static_cast<ecsact_system_like_id>(sys_id)
 				);
 				if(static_cast<int32_t>(nested_err.system_id) != -1) {

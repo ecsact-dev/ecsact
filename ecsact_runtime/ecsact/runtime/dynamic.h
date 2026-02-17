@@ -574,17 +574,11 @@ typedef struct ecsact_execution_batches_error {
  * Validates the explicit clusters. If a cluster contains systems that conflict
  * then the system ID of the system that causes the conflict is returned.
  *
- * @returns invalid system ID or (ecsact_system_like_id)-1 if all clusters are
- *          valid.
+ * @returns execution batches error or no error if all clusters are valid.
  */
-ECSACT_DYNAMIC_API_FN(ecsact_system_like_id, ecsact_check_execution_batches)
-( //
-	ecsact_package_id package_id
-);
-
 ECSACT_DYNAMIC_API_FN(
 	ecsact_execution_batches_error,
-	ecsact_check_execution_batches_v2
+	ecsact_check_execution_batches
 )
 ( //
 	ecsact_package_id package_id
@@ -596,16 +590,8 @@ ECSACT_DYNAMIC_API_FN(
  * @see ecsact_check_execution_batches
  */
 ECSACT_DYNAMIC_API_FN(
-	ecsact_system_like_id,
-	ecsact_check_system_execution_batches
-)
-( //
-	ecsact_system_like_id system_id
-);
-
-ECSACT_DYNAMIC_API_FN(
 	ecsact_execution_batches_error,
-	ecsact_check_system_execution_batches_v2
+	ecsact_check_system_execution_batches
 )
 ( //
 	ecsact_system_like_id system_id
@@ -673,9 +659,7 @@ ECSACT_DYNAMIC_API_FN(
 		fn(ecsact_create_system_cluster, __VA_ARGS__);                  \
 		fn(ecsact_add_system_to_cluster, __VA_ARGS__);                  \
 		fn(ecsact_check_execution_batches, __VA_ARGS__);                \
-		fn(ecsact_check_execution_batches_v2, __VA_ARGS__);             \
-		fn(ecsact_check_system_execution_batches, __VA_ARGS__);         \
-		fn(ecsact_check_system_execution_batches_v2, __VA_ARGS__)
+		fn(ecsact_check_system_execution_batches, __VA_ARGS__)
 #endif
 
 #endif // ECSACT_RUNTIME_DYNAMIC_H

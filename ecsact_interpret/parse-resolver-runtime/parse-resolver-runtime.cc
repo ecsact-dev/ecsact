@@ -1330,13 +1330,7 @@ void ecsact_meta_get_system_execution_batch(
 	}
 }
 
-ecsact_system_like_id ecsact_check_execution_batches(
-	ecsact_package_id package_id
-) {
-	return ecsact_check_execution_batches_v2(package_id).system_id;
-}
-
-ecsact_execution_batches_error ecsact_check_execution_batches_v2(
+ecsact_execution_batches_error ecsact_check_execution_batches(
 	ecsact_package_id package_id
 ) {
 	auto pkg_itr = package_defs.find(package_id);
@@ -1387,13 +1381,7 @@ ecsact_execution_batches_error ecsact_check_execution_batches_v2(
 	};
 }
 
-ecsact_system_like_id ecsact_check_system_execution_batches(
-	ecsact_system_like_id system_id
-) {
-	return ecsact_check_system_execution_batches_v2(system_id).system_id;
-}
-
-ecsact_execution_batches_error ecsact_check_system_execution_batches_v2(
+ecsact_execution_batches_error ecsact_check_system_execution_batches(
 	ecsact_system_like_id system_id
 ) {
 	auto& sys_def = get_system_like(system_id);
