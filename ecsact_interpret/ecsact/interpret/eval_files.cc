@@ -1,5 +1,6 @@
 #include "ecsact/interpret/eval.hh"
 
+#include <format>
 #include <filesystem>
 #include <vector>
 #include <array>
@@ -21,45 +22,67 @@ namespace fs = std::filesystem;
 using ecsact::parse_eval_error;
 using namespace ecsact::detail;
 
+static auto make_cluster_error_message(ecsact_execution_batches_error err)
+	-> std::string {
+	auto sys_name = std::string(
+		ecsact_meta_system_name(static_cast<ecsact_system_id>(err.system_id))
+	);
+
+	if(static_cast<int32_t>(err.conflicting_system_id) == -1) {
+		return std::format(
+			"System '{}' cannot be part of the explicit cluster it is in",
+			sys_name
+		);
+	}
+
+	auto conflicting_sys_name = std::string(ecsact_meta_system_name(
+		static_cast<ecsact_system_id>(err.conflicting_system_id)
+	));
+
+	auto comp_name = std::string(ecsact_meta_component_name(
+		static_cast<ecsact_component_id>(err.component_id)
+	));
+
+	return std::format(
+		"System '{}' conflicts with system '{}' on component '{}' and cannot be "
+		"part of the same explicit cluster",
+		sys_name,
+		conflicting_sys_name,
+		comp_name
+	);
+}
+
 static void check_batches(
 	int32_t                                source_index,
 	eval_parse_state<std::ifstream>&       file_state,
 	std::vector<ecsact::parse_eval_error>& errors
 ) {
 	auto package_id = *file_state.package_id;
-	auto invalid_sys_id = ecsact_check_execution_batches(package_id);
-	if(invalid_sys_id != (ecsact_system_like_id)-1) {
+	auto err = ecsact_check_execution_batches_v2(package_id);
+	if(static_cast<int32_t>(err.system_id) != -1) {
 		errors.push_back(
 			ecsact::parse_eval_error{
 				.eval_error = ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
 				.source_index = source_index,
 				.line = file_state.reader.current_line,
 				.character = file_state.reader.current_character,
-				.error_message = "System '" +
-					std::string(ecsact_meta_system_name(
-						static_cast<ecsact_system_id>(invalid_sys_id)
-					)) +
-					"' cannot be part of the explicit cluster it is in",
+				.error_message = make_cluster_error_message(err),
 			}
 		);
 	}
 
 	for(auto sys_id : ecsact::meta::get_system_ids(package_id)) {
-		auto invalid_nested_sys_id = ecsact_check_system_execution_batches(
+		auto nested_err = ecsact_check_system_execution_batches_v2(
 			static_cast<ecsact_system_like_id>(sys_id)
 		);
-		if(invalid_nested_sys_id != (ecsact_system_like_id)-1) {
+		if(static_cast<int32_t>(nested_err.system_id) != -1) {
 			errors.push_back(
 				ecsact::parse_eval_error{
 					.eval_error = ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
 					.source_index = source_index,
 					.line = file_state.reader.current_line,
 					.character = file_state.reader.current_character,
-					.error_message = "System '" +
-						std::string(ecsact_meta_system_name(
-							static_cast<ecsact_system_id>(invalid_nested_sys_id)
-						)) +
-						"' cannot be part of the explicit cluster it is in",
+					.error_message = make_cluster_error_message(nested_err),
 				}
 			);
 		}
