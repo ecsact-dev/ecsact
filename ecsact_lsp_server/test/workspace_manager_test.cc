@@ -15,6 +15,7 @@ struct mock_sender {
 
 	void send_notification(std::string method, nlohmann::json params) {
 		if(method == "textDocument/publishDiagnostics") {
+			all_diagnostics.push_back(params);
 			last_diagnostics = params;
 		}
 	}
@@ -40,8 +41,10 @@ struct mock_sender {
 		}
 	}
 
-	nlohmann::json          last_diagnostics;
-	std::string             last_log_message;
+	nlohmann::json              last_diagnostics;
+	std::vector<nlohmann::json> all_diagnostics;
+	std::string                 last_log_message;
+
 	ecsact_lsp::trace_value trace = ecsact_lsp::trace_value::off;
 };
 
@@ -175,18 +178,21 @@ action Foo {}
 )";
 
 	manager.add_document(uri, 1, text);
-	auto diagnostics = sender.last_diagnostics["diagnostics"];
 	bool found_error = false;
-	for(auto& diag : diagnostics) {
-		if(diag["message"] == "Action must have at least one capability") {
-			found_error = true;
+	for(auto const& publish_diagnostics : sender.all_diagnostics) {
+		auto diagnostics = publish_diagnostics["diagnostics"];
+		for(auto& diag : diagnostics) {
+			if(diag["message"] == "Action must have at least one capability") {
+				found_error = true;
+			}
 		}
 	}
 	EXPECT_TRUE(found_error) << "Expected error for action without capabilities";
 }
 
 TEST(WorkspaceManager, ClusterConflict) {
-	mock_sender                   sender;
+	mock_sender sender;
+	sender.trace = ecsact_lsp::trace_value::verbose;
 	ecsact_lsp::workspace_manager manager(std::move(sender));
 
 	std::string uri = "file:///cluster_conflict.ecsact";
@@ -200,13 +206,15 @@ cluster {
 )";
 
 	manager.add_document(uri, 1, text);
-	auto diagnostics = sender.last_diagnostics["diagnostics"];
 	bool found_error = false;
-	for(auto& diag : diagnostics) {
-		if(diag["message"].get<std::string>().find(
-				 "cannot be part of the explicit cluster"
-			 ) != std::string::npos) {
-			found_error = true;
+	for(auto const& publish_diagnostics : sender.all_diagnostics) {
+		auto diagnostics = publish_diagnostics["diagnostics"];
+		for(auto& diag : diagnostics) {
+			if(diag["message"].get<std::string>().find(
+					 "cannot be part of the same explicit cluster"
+				 ) != std::string::npos) {
+				found_error = true;
+			}
 		}
 	}
 	EXPECT_TRUE(found_error) << "Expected error for cluster conflict";

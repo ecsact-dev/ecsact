@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
+#include <format>
 #include <string>
 #include <vector>
 #include <string_view>
@@ -389,35 +390,57 @@ class workspace_manager {
 				}
 			}
 
-			auto invalid_sys_id = ecsact_check_execution_batches(*doc.package_id);
-			if(invalid_sys_id != (ecsact_system_like_id)-1) {
+			auto make_cluster_error_message =
+				[&](ecsact_execution_batches_error err) -> std::string {
+				auto sys_name = std::string(
+					ecsact_meta_system_name(static_cast<ecsact_system_id>(err.system_id))
+				);
+
+				if(static_cast<int32_t>(err.conflicting_system_id) == -1) {
+					return std::format(
+						"System '{}' cannot be part of the explicit cluster it is in",
+						sys_name
+					);
+				}
+
+				auto conflicting_sys_name = std::string(ecsact_meta_system_name(
+					static_cast<ecsact_system_id>(err.conflicting_system_id)
+				));
+
+				auto comp_name = std::string(ecsact_meta_component_name(
+					static_cast<ecsact_component_id>(err.component_id)
+				));
+
+				return std::format(
+					"System '{}' conflicts with system '{}' on component '{}' and "
+					"cannot be part of the same explicit cluster",
+					sys_name,
+					conflicting_sys_name,
+					comp_name
+				);
+			};
+
+			auto err = ecsact_check_execution_batches(*doc.package_id);
+			if(static_cast<int32_t>(err.system_id) != -1) {
 				diagnostics.push_back(
 					diagnostic{
-						.range = system_ranges[invalid_sys_id],
+						.range = system_ranges[err.system_id],
 						.severity = diagnostic_severity::error,
-						.message = "System '" +
-							std::string(ecsact_meta_system_name(
-								static_cast<ecsact_system_id>(invalid_sys_id)
-							)) +
-							"' cannot be part of the explicit cluster it is in",
+						.message = make_cluster_error_message(err),
 					}
 				);
 			}
 
 			for(auto sys_id : ecsact::meta::get_system_ids(*doc.package_id)) {
-				auto invalid_nested_sys_id = ecsact_check_system_execution_batches(
+				auto nested_err = ecsact_check_system_execution_batches(
 					static_cast<ecsact_system_like_id>(sys_id)
 				);
-				if(invalid_nested_sys_id != (ecsact_system_like_id)-1) {
+				if(static_cast<int32_t>(nested_err.system_id) != -1) {
 					diagnostics.push_back(
 						diagnostic{
-							.range = system_ranges[invalid_nested_sys_id],
+							.range = system_ranges[nested_err.system_id],
 							.severity = diagnostic_severity::error,
-							.message = "System '" +
-								std::string(ecsact_meta_system_name(
-									static_cast<ecsact_system_id>(invalid_nested_sys_id)
-								)) +
-								"' cannot be part of the explicit cluster it is in",
+							.message = make_cluster_error_message(nested_err),
 						}
 					);
 				}
