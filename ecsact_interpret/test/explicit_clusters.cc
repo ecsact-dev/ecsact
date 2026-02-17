@@ -21,7 +21,8 @@ TEST(EcsactInterpret, ExplicitClusters) {
 
 	auto errors = ecsact::eval_files({test_ecsact});
 	for(auto& err : errors) {
-		std::cerr << "[ERROR] " << test_ecsact << ":" << err.line << ":" << err.character << " " << err.error_message << "\n";
+		std::cerr << "[ERROR] " << test_ecsact << ":" << err.line << ":"
+							<< err.character << " " << err.error_message << "\n";
 	}
 	ASSERT_TRUE(errors.empty());
 
@@ -33,27 +34,51 @@ TEST(EcsactInterpret, ExplicitClusters) {
 
 	// Batch 0: SysA
 	{
-		int32_t systems_count = 0;
+		int32_t                            systems_count = 0;
 		std::vector<ecsact_system_like_id> systems(10);
-		ecsact_meta_get_execution_batch(package_id, 0, 10, systems.data(), &systems_count);
+		ecsact_meta_get_execution_batch(
+			package_id,
+			0,
+			10,
+			systems.data(),
+			&systems_count
+		);
 		ASSERT_EQ(systems_count, 1);
-		EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])), "SysA");
+		EXPECT_STREQ(
+			ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])),
+			"SysA"
+		);
 	}
 
 	// Batch 1: SysB
 	{
-		int32_t systems_count = 0;
+		int32_t                            systems_count = 0;
 		std::vector<ecsact_system_like_id> systems(10);
-		ecsact_meta_get_execution_batch(package_id, 1, 10, systems.data(), &systems_count);
+		ecsact_meta_get_execution_batch(
+			package_id,
+			1,
+			10,
+			systems.data(),
+			&systems_count
+		);
 		ASSERT_EQ(systems_count, 1);
-		EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])), "SysB");
+		EXPECT_STREQ(
+			ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])),
+			"SysB"
+		);
 	}
 
 	// Batch 2: ParentSys
 	{
-		int32_t systems_count = 0;
+		int32_t                            systems_count = 0;
 		std::vector<ecsact_system_like_id> systems(10);
-		ecsact_meta_get_execution_batch(package_id, 2, 10, systems.data(), &systems_count);
+		ecsact_meta_get_execution_batch(
+			package_id,
+			2,
+			10,
+			systems.data(),
+			&systems_count
+		);
 		ASSERT_EQ(systems_count, 1);
 		auto parent_sys_id = static_cast<ecsact_system_id>(systems[0]);
 		EXPECT_STREQ(ecsact_meta_system_name(parent_sys_id), "ParentSys");
@@ -65,7 +90,7 @@ TEST(EcsactInterpret, ExplicitClusters) {
 
 		// ParentSys Batch 0: ChildA
 		{
-			int32_t           sys_systems_count = 0;
+			int32_t               sys_systems_count = 0;
 			ecsact_system_like_id sys_systems[10];
 			ecsact_meta_get_system_execution_batch(
 				static_cast<ecsact_system_like_id>(parent_sys_id),
@@ -75,12 +100,15 @@ TEST(EcsactInterpret, ExplicitClusters) {
 				&sys_systems_count
 			);
 			ASSERT_EQ(sys_systems_count, 1);
-			EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(sys_systems[0])), "ChildA");
+			EXPECT_STREQ(
+				ecsact_meta_system_name(static_cast<ecsact_system_id>(sys_systems[0])),
+				"ChildA"
+			);
 		}
 
 		// ParentSys Batch 1: ChildB
 		{
-			int32_t           sys_systems_count = 0;
+			int32_t               sys_systems_count = 0;
 			ecsact_system_like_id sys_systems[10];
 			ecsact_meta_get_system_execution_batch(
 				static_cast<ecsact_system_like_id>(parent_sys_id),
@@ -90,17 +118,32 @@ TEST(EcsactInterpret, ExplicitClusters) {
 				&sys_systems_count
 			);
 			ASSERT_EQ(sys_systems_count, 1);
-			EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(sys_systems[0])), "ChildB");
+			EXPECT_STREQ(
+				ecsact_meta_system_name(static_cast<ecsact_system_id>(sys_systems[0])),
+				"ChildB"
+			);
 		}
 	}
 
 	// Batch 3: SysC, SysD (Mutually Exclusive)
 	{
-		int32_t systems_count = 0;
+		int32_t                            systems_count = 0;
 		std::vector<ecsact_system_like_id> systems(10);
-		ecsact_meta_get_execution_batch(package_id, 3, 10, systems.data(), &systems_count);
+		ecsact_meta_get_execution_batch(
+			package_id,
+			3,
+			10,
+			systems.data(),
+			&systems_count
+		);
 		ASSERT_EQ(systems_count, 2);
-		EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])), "SysC");
-		EXPECT_STREQ(ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[1])), "SysD");
+		EXPECT_STREQ(
+			ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[0])),
+			"SysC"
+		);
+		EXPECT_STREQ(
+			ecsact_meta_system_name(static_cast<ecsact_system_id>(systems[1])),
+			"SysD"
+		);
 	}
 }

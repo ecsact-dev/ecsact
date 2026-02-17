@@ -13,15 +13,15 @@ TEST(EcsactInterpret, ZcpxRepro) {
 	auto runfiles = bazel_sundry::CreateDefaultRunfiles();
 	ASSERT_TRUE(runfiles);
 
-	auto test_ecsact = runfiles->Rlocation(
-		"ecsact/ecsact_interpret/test/zcpx_repro.ecsact"
-	);
+	auto test_ecsact =
+		runfiles->Rlocation("ecsact/ecsact_interpret/test/zcpx_repro.ecsact");
 	ASSERT_FALSE(test_ecsact.empty());
 	ASSERT_TRUE(fs::exists(test_ecsact));
 
 	auto errors = ecsact::eval_files({test_ecsact});
 	for(auto& err : errors) {
-		std::cerr << "[ERROR] " << test_ecsact << ":" << err.line << ":" << err.character << " " << err.error_message << "\n";
+		std::cerr << "[ERROR] " << test_ecsact << ":" << err.line << ":"
+							<< err.character << " " << err.error_message << "\n";
 	}
 	ASSERT_TRUE(errors.empty());
 

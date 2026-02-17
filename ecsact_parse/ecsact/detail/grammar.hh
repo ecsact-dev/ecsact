@@ -407,8 +407,7 @@ struct cluster_statement {
 				.data{.cluster_statement{
 					.cluster_name{
 						.data = cluster_name ? cluster_name->data() : nullptr,
-						.length =
-							cluster_name ? static_cast<int>(cluster_name->size()) : 0,
+						.length = cluster_name ? static_cast<int>(cluster_name->size()) : 0,
 					},
 				}},
 			};

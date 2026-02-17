@@ -14,7 +14,8 @@ TEST(EcsactInterpret, ClusterInvalidConflictError) {
 
 	auto errors = ecsact::eval_files({test_ecsact});
 	for(auto& err : errors) {
-		std::cerr << "[ERROR] " << err.error_message << " at " << err.line << ":" << err.character << "\n";
+		std::cerr << "[ERROR] " << err.error_message << " at " << err.line << ":"
+							<< err.character << "\n";
 	}
 	ASSERT_EQ(errors.size(), 1);
 	EXPECT_EQ(errors[0].eval_error, ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM);
