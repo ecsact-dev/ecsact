@@ -9,20 +9,10 @@
 using ecsact::rt_entt_codegen::ecsact_entt_details;
 using ecsact::rt_entt_codegen::ecsact_entt_system_details;
 
-static auto collect_top_level_systems( //
+static auto collect_top_level_systems(
 	ecsact_package_id    pkg_id,
 	ecsact_entt_details& details
 ) -> void {
-	auto deps = ecsact::meta::get_dependencies(pkg_id);
-	for(auto dep : deps) {
-		auto tl_sys_ids = ecsact::meta::get_top_level_systems(dep);
-		details.top_execution_order.insert(
-			details.top_execution_order.end(),
-			tl_sys_ids.begin(),
-			tl_sys_ids.end()
-		);
-	}
-
 	auto main_tl_sys_ids = ecsact::meta::get_top_level_systems(pkg_id);
 	details.top_execution_order.insert(
 		details.top_execution_order.end(),
@@ -31,19 +21,41 @@ static auto collect_top_level_systems( //
 	);
 }
 
-static auto collect_all_systems( //
+static auto collect_all_systems_recursive(
+	ecsact_system_like_id id,
+	ecsact_entt_details&  details
+) -> void {
+	if(ecsact_meta_is_system(id)) {
+		details.all_systems.insert(static_cast<ecsact_system_id>(id));
+	}
+
+	for(auto child_id : ecsact::meta::get_child_system_ids(id)) {
+		collect_all_systems_recursive(
+			static_cast<ecsact_system_like_id>(child_id),
+			details
+		);
+	}
+}
+
+static auto collect_all_systems(
 	ecsact_package_id    pkg_id,
 	ecsact_entt_details& details
 ) -> void {
 	auto deps = ecsact::meta::get_dependencies(pkg_id);
 	for(auto dep : deps) {
 		for(auto id : ecsact::meta::get_system_ids(dep)) {
-			details.all_systems.insert(id);
+			collect_all_systems_recursive(
+				static_cast<ecsact_system_like_id>(id),
+				details
+			);
 		}
 	}
 
 	for(auto id : ecsact::meta::get_system_ids(pkg_id)) {
-		details.all_systems.insert(id);
+		collect_all_systems_recursive(
+			static_cast<ecsact_system_like_id>(id),
+			details
+		);
 	}
 }
 
