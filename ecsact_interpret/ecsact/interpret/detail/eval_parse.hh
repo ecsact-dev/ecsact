@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <array>
+#include <span>
 #include <unordered_set>
 #include <cassert>
 #include <iostream> //  TODO(ZAUCY): Remove this
@@ -19,7 +20,7 @@
 template<>
 struct magic_enum::customize::enum_range<ecsact_eval_error_code> {
 	static constexpr int min = 0;
-	static constexpr int max = 2000;
+	static constexpr int max = 2001;
 };
 
 namespace ecsact::detail {
@@ -444,8 +445,11 @@ void parse_eval_declarations(
 			ecsact::detail::check_file_eval_error(
 				eval_err,
 				*file_state.package_id,
-				file_state.reader.status,
-				*file_state.reader.current_context,
+				file_state.reader.status.code,
+				std::span(
+					file_state.reader.statements.data(),
+					file_state.reader.statements.size()
+				),
 				""
 			);
 		}

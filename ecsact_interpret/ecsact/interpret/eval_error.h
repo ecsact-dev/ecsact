@@ -91,6 +91,9 @@ typedef enum ecsact_eval_error_code {
 	/// Field type is not allowed in 'with' statement
 	ECSACT_EVAL_ERR_INVALID_ASSOC_FIELD_TYPE,
 
+	/// System cannot be part of the explicit cluster it is in
+	ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
+
 	/// Internal error. Should not happen and is an indiciation of a bug.
 	ECSACT_EVAL_ERR_INTERNAL = 999,
 

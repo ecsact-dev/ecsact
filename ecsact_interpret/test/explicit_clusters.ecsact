@@ -1,0 +1,43 @@
+main package explicit_clusters_test;
+
+component CompA { i32 a; }
+
+cluster {
+	system SysA {
+		readonly CompA;
+	}
+}
+
+cluster {
+	system SysB {
+		readonly CompA;
+	}
+}
+
+system ParentSys {
+	cluster {
+		system ChildA {
+			readonly CompA;
+		}
+	}
+	cluster {
+		system ChildB {
+			readonly CompA;
+		}
+	}
+}
+
+component CompB;
+
+cluster {
+	system SysC {
+		readonly CompA;
+		include CompB;
+	}
+	system SysD {
+		readwrite CompA;
+		exclude CompB;
+	}
+}
+
+

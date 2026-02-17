@@ -1,0 +1,34 @@
+main package zcpx_repro;
+
+component MoveDirection;
+component Attacking;
+component AnimState { i32 state; }
+component Lifetime;
+component Position;
+component Velocity;
+
+cluster {
+	system AnimEvalGeneric {
+		readwrite AnimState;
+		readonly Lifetime;
+		exclude MoveDirection;
+		exclude Attacking;
+	}
+
+	system AnimEvalMovement {
+		include MoveDirection;
+		readonly Position;
+		readonly Velocity;
+		readonly Lifetime;
+		readwrite AnimState;
+		exclude Attacking;
+	}
+
+	system AnimEvalAttacking {
+		readonly Position;
+		readonly Velocity;
+		readonly Lifetime;
+		readwrite AnimState;
+		readonly Attacking;
+	}
+}

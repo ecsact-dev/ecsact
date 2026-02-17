@@ -17,37 +17,43 @@
 
 using ecsact::interpret::details::trigger_on_destroy;
 
-struct field {
-	std::string       name;
-	ecsact_field_type type;
-};
+template<typename T, typename... Ts>
+struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
 
-class composite {
-	int32_t _last_field_id = -1;
+template<typename T, typename... Ts>
+inline constexpr bool is_any_v = is_any<T, Ts...>::value;
 
-public:
+template<typename T>
+static std::atomic<int32_t> last_id_val = 0;
+
+template<typename T>
+static T next_id() {
+	return static_cast<T>(++last_id_val<int32_t>);
+}
+
+struct composite {
+	struct field {
+		std::string       name;
+		ecsact_field_type type;
+	};
+
 	std::map<ecsact_field_id, field> fields;
 
 	inline ecsact_field_id next_field_id() {
-		return static_cast<ecsact_field_id>(++_last_field_id);
+		return static_cast<ecsact_field_id>(fields.size());
 	}
 };
 
-struct component_like : composite {};
-
-struct comp_def : component_like {
+struct comp_def : composite {
 	std::string           name;
 	ecsact_component_type comp_type;
 };
 
-struct trans_def : component_like {
+struct trans_def : composite {
 	std::string name;
 };
 
 struct system_like {
-	using cap_comp_map_t =
-		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
-
 	struct cap_entry {
 		ecsact_system_capability cap;
 	};
@@ -75,11 +81,17 @@ struct system_like {
 	ecsact_system_like_id parent_system_id = (ecsact_system_like_id)-1;
 
 	/** in execution order */
-	std::vector<ecsact_system_id> nested_systems;
+	std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
+		execution_order;
 
 	ecsact_parallel_execution parallel_execution = {};
 
 	std::vector<std::vector<ecsact_system_like_id>> execution_batches;
+};
+
+struct cluster_def {
+	std::string                        name;
+	std::vector<ecsact_system_like_id> systems;
 };
 
 struct action_def : composite, system_like {
@@ -123,7 +135,8 @@ struct package_def {
 	std::vector<ecsact_enum_id>      enums;
 
 	/** in execution order */
-	std::vector<ecsact_system_like_id> top_level_systems;
+	std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
+		execution_order;
 
 	std::vector<std::vector<ecsact_system_like_id>> execution_batches;
 };
@@ -137,6 +150,7 @@ static std::unordered_map<ecsact_transient_id, trans_def>    trans_defs;
 static std::unordered_map<ecsact_system_id, system_def>      sys_defs;
 static std::unordered_map<ecsact_action_id, action_def>      act_defs;
 static std::unordered_map<ecsact_enum_id, enum_def>          enum_defs;
+static std::unordered_map<ecsact_cluster_id, cluster_def>    cluster_defs;
 static std::optional<ecsact_package_id>                      main_package_id;
 
 template<typename T>
@@ -148,51 +162,33 @@ static ecsact_package_id owner_package_id(T id) {
 	return def_owner_map.at(decl_id);
 }
 
-template<typename Callback>
-void visit_each_def_collection(Callback&& callback) {
-	callback(comp_defs);
-	callback(trans_defs);
-	callback(sys_defs);
-	callback(act_defs);
-}
-
-template<typename T>
-static void set_package_owner(T id, ecsact_package_id owner) {
-	assert(package_defs.contains(owner));
-	def_owner_map[ecsact_id_cast<ecsact_decl_id>(id)] = owner;
-}
-
-static composite& get_composite(ecsact_composite_id id) {
-	if(comp_defs.contains((ecsact_component_id)id)) {
-		return comp_defs.at((ecsact_component_id)id);
-	}
-
-	if(trans_defs.contains((ecsact_transient_id)id)) {
-		return trans_defs.at((ecsact_transient_id)id);
-	}
-
-	if(act_defs.contains((ecsact_action_id)id)) {
-		return act_defs.at((ecsact_action_id)id);
-	}
-
-	throw std::invalid_argument("Invalid composite ID");
+static void set_package_owner(ecsact_decl_id id, ecsact_package_id owner) {
+	def_owner_map[id] = owner;
 }
 
 static system_like& get_system_like(ecsact_system_like_id id) {
-	if(sys_defs.contains((ecsact_system_id)id)) {
-		return sys_defs.at((ecsact_system_id)id);
+	if(sys_defs.contains(static_cast<ecsact_system_id>(id))) {
+		return sys_defs.at(static_cast<ecsact_system_id>(id));
+	}
+	if(act_defs.contains(static_cast<ecsact_action_id>(id))) {
+		return act_defs.at(static_cast<ecsact_action_id>(id));
 	}
 
-	if(act_defs.contains((ecsact_action_id)id)) {
-		return act_defs.at((ecsact_action_id)id);
-	}
-
-	throw std::invalid_argument("Invalid system-like ID");
+	throw std::runtime_error("Invalid system_like_id");
 }
 
-template<typename T>
-static T next_id() {
-	return static_cast<T>(last_id++);
+static composite& get_composite(ecsact_composite_id id) {
+	if(comp_defs.contains(static_cast<ecsact_component_id>(id))) {
+		return comp_defs.at(static_cast<ecsact_component_id>(id));
+	}
+	if(trans_defs.contains(static_cast<ecsact_transient_id>(id))) {
+		return trans_defs.at(static_cast<ecsact_transient_id>(id));
+	}
+	if(act_defs.contains(static_cast<ecsact_action_id>(id))) {
+		return act_defs.at(static_cast<ecsact_action_id>(id));
+	}
+
+	throw std::runtime_error("Invalid composite_id");
 }
 
 ecsact_package_id ecsact_create_package(
@@ -200,48 +196,54 @@ ecsact_package_id ecsact_create_package(
 	const char* package_name,
 	int32_t     package_name_len
 ) {
-	auto  pkg_id = next_id<ecsact_package_id>();
-	auto& pkg = package_defs[pkg_id];
-	pkg.name = std::string_view(package_name, package_name_len);
+	auto id = next_id<ecsact_package_id>();
+	auto name = std::string(package_name, package_name_len);
+	package_defs[id] = {
+		.name = name,
+		.main = main_package,
+	};
+
 	if(main_package) {
-		main_package_id = pkg_id;
+		main_package_id = id;
 	}
-	return pkg_id;
+
+	return id;
 }
 
-ecsact_package_id ecsact_meta_main_package() {
-	if(main_package_id) {
-		return *main_package_id;
-	}
+void ecsact_add_dependency(
+	ecsact_package_id target,
+	ecsact_package_id dependency
+) {
+	package_defs.at(target).dependencies.push_back(dependency);
+}
 
-	return (ecsact_package_id)-1;
+void ecsact_remove_dependency(
+	ecsact_package_id target,
+	ecsact_package_id dependency
+) {
+	auto& deps = package_defs.at(target).dependencies;
+	deps.erase(std::remove(deps.begin(), deps.end(), dependency), deps.end());
 }
 
 void ecsact_destroy_package(ecsact_package_id package_id) {
-	auto itr = package_defs.find(package_id);
-	if(itr == package_defs.end()) {
-		return;
+	if(main_package_id == package_id) {
+		main_package_id = std::nullopt;
 	}
 
-	package_defs.erase(itr);
-
-	visit_each_def_collection([&](auto& defs) {
-		for(auto itr = defs.begin(); itr != defs.end();) {
-			if(owner_package_id(itr->first) != package_id) {
-				++itr;
-			} else {
-				trigger_on_destroy(itr->first);
-				itr = defs.erase(itr);
-			}
-		}
-	});
-
+	package_defs.erase(package_id);
 	auto owner_itr = def_owner_map.begin();
 	while(owner_itr != def_owner_map.end()) {
-		if(owner_itr->second != package_id) {
-			++owner_itr;
-		} else {
+		if(owner_itr->second == package_id) {
+			auto decl_id = owner_itr->first;
+			full_names.erase(decl_id);
+			comp_defs.erase(static_cast<ecsact_component_id>(decl_id));
+			trans_defs.erase(static_cast<ecsact_transient_id>(decl_id));
+			sys_defs.erase(static_cast<ecsact_system_id>(decl_id));
+			act_defs.erase(static_cast<ecsact_action_id>(decl_id));
+			enum_defs.erase(static_cast<ecsact_enum_id>(decl_id));
 			owner_itr = def_owner_map.erase(owner_itr);
+		} else {
+			++owner_itr;
 		}
 	}
 
@@ -287,9 +289,9 @@ ecsact_component_id ecsact_create_component(
 	auto  comp_id = next_id<ecsact_component_id>();
 	auto  decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	pkg_def.components.push_back(comp_id);
-	set_package_owner(comp_id, owner);
+	set_package_owner(decl_id, owner);
 	auto& def = comp_defs[comp_id];
-	def.name = std::string_view(component_name, component_name_len);
+	def.name = std::string(component_name, component_name_len);
 	def.comp_type = ECSACT_COMPONENT_TYPE_NONE;
 	full_names[decl_id] = pkg_def.name + "." + def.name;
 
@@ -305,9 +307,9 @@ ecsact_transient_id ecsact_create_transient(
 	auto  trans_id = next_id<ecsact_transient_id>();
 	auto  decl_id = ecsact_id_cast<ecsact_decl_id>(trans_id);
 	pkg_def.transients.push_back(trans_id);
-	set_package_owner(trans_id, owner);
+	set_package_owner(decl_id, owner);
 	auto& def = trans_defs[trans_id];
-	def.name = std::string_view(transient_name, transient_name_len);
+	def.name = std::string(transient_name, transient_name_len);
 	full_names[decl_id] = pkg_def.name + "." + def.name;
 
 	return trans_id;
@@ -321,12 +323,12 @@ ecsact_system_id ecsact_create_system(
 	auto&      pkg_def = package_defs.at(owner);
 	const auto sys_id = next_id<ecsact_system_id>();
 	const auto decl_id = ecsact_id_cast<ecsact_decl_id>(sys_id);
-	const auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(sys_id);
+	const auto sys_like_id = static_cast<ecsact_system_like_id>(sys_id);
 	pkg_def.systems.push_back(sys_id);
-	pkg_def.top_level_systems.push_back(sys_like_id);
-	set_package_owner(sys_id, owner);
+	pkg_def.execution_order.push_back(sys_like_id);
+	set_package_owner(decl_id, owner);
 	auto& def = sys_defs[sys_id];
-	def.name = std::string_view(system_name, system_name_len);
+	def.name = std::string(system_name, system_name_len);
 	if(def.name.empty()) {
 		full_names[decl_id] = "";
 	} else {
@@ -344,12 +346,12 @@ ecsact_action_id ecsact_create_action(
 	auto&      pkg_def = package_defs.at(owner);
 	const auto act_id = next_id<ecsact_action_id>();
 	const auto decl_id = ecsact_id_cast<ecsact_decl_id>(act_id);
-	const auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(act_id);
+	const auto sys_like_id = static_cast<ecsact_system_like_id>(act_id);
 	pkg_def.actions.push_back(act_id);
-	pkg_def.top_level_systems.push_back(sys_like_id);
-	set_package_owner(act_id, owner);
+	pkg_def.execution_order.push_back(sys_like_id);
+	set_package_owner(decl_id, owner);
 	auto& def = act_defs[act_id];
-	def.name = std::string_view(action_name, action_name_len);
+	def.name = std::string(action_name, action_name_len);
 	full_names[decl_id] = pkg_def.name + "." + def.name;
 
 	return act_id;
@@ -363,8 +365,9 @@ ecsact_enum_id ecsact_create_enum(
 	auto& pkg_def = package_defs.at(owner);
 	auto  enum_id = next_id<ecsact_enum_id>();
 	auto& def = enum_defs[enum_id];
-	def.name = std::string_view(enum_name, enum_name_len);
+	def.name = std::string(enum_name, enum_name_len);
 	pkg_def.enums.push_back(enum_id);
+	set_package_owner(ecsact_id_cast<ecsact_decl_id>(enum_id), owner);
 
 	return enum_id;
 }
@@ -395,7 +398,8 @@ void ecsact_meta_get_system_ids(
 	int32_t*          out_system_count
 ) {
 	auto& pkg_def = package_defs.at(package_id);
-	auto  itr = pkg_def.systems.begin();
+
+	auto itr = pkg_def.systems.begin();
 	for(int32_t i = 0; max_system_count > i && itr != pkg_def.systems.end();
 			++i) {
 		out_system_ids[i] = *itr;
@@ -450,7 +454,11 @@ const char* ecsact_meta_transient_name(ecsact_transient_id trans) {
 }
 
 const char* ecsact_meta_system_name(ecsact_system_id sys_id) {
-	return sys_defs.at(sys_id).name.c_str();
+	auto& name = sys_defs.at(sys_id).name;
+	if(name.empty()) {
+		return "";
+	}
+	return name.c_str();
 }
 
 const char* ecsact_meta_action_name(ecsact_action_id act_id) {
@@ -497,22 +505,24 @@ ecsact_builtin_type ecsact_meta_enum_storage_type(ecsact_enum_id enum_id) {
 		}
 	}
 
-	if(min_value < 0) {
-		if(max_value > numeric_limits<int16_t>::max()) {
-			return ECSACT_I32;
+	if(min_value >= 0) {
+		if(max_value <= numeric_limits<uint8_t>::max()) {
+			return ECSACT_U8;
 		}
-		if(max_value > numeric_limits<int8_t>::max()) {
-			return ECSACT_I16;
-		}
-		return ECSACT_I8;
-	} else {
-		if(max_value > numeric_limits<uint16_t>::max()) {
-			return ECSACT_U32;
-		}
-		if(max_value > numeric_limits<uint8_t>::max()) {
+		if(max_value <= numeric_limits<uint16_t>::max()) {
 			return ECSACT_U16;
 		}
-		return ECSACT_U8;
+		return ECSACT_U32;
+	} else {
+		if(min_value >= numeric_limits<int8_t>::min() &&
+			 max_value <= numeric_limits<int8_t>::max()) {
+			return ECSACT_I8;
+		}
+		if(min_value >= numeric_limits<int16_t>::min() &&
+			 max_value <= numeric_limits<int16_t>::max()) {
+			return ECSACT_I16;
+		}
+		return ECSACT_I32;
 	}
 }
 
@@ -523,37 +533,48 @@ int32_t ecsact_meta_count_enum_values(ecsact_enum_id enum_id) {
 
 void ecsact_meta_get_enum_value_ids(
 	ecsact_enum_id        enum_id,
-	int32_t               max_enum_value_ids,
+	int32_t               max_enum_value_count,
 	ecsact_enum_value_id* out_enum_value_ids,
-	int32_t*              out_enum_values_count
+	int32_t*              out_enum_value_count
 ) {
 	auto& def = enum_defs.at(enum_id);
 
 	auto itr = def.enum_values.begin();
-	for(int i = 0; max_enum_value_ids > i && itr != def.enum_values.end(); ++i) {
+	for(int i = 0; max_enum_value_count > i && itr != def.enum_values.end();
+			++i) {
 		out_enum_value_ids[i] = itr->first;
 		++itr;
 	}
 
-	if(out_enum_values_count) {
-		*out_enum_values_count = static_cast<int32_t>(def.enum_values.size());
+	if(out_enum_value_count) {
+		*out_enum_value_count = static_cast<int32_t>(def.enum_values.size());
 	}
+}
+
+const char* ecsact_meta_enum_name(ecsact_enum_id enum_id) {
+	return enum_defs.at(enum_id).name.c_str();
 }
 
 const char* ecsact_meta_enum_value_name(
 	ecsact_enum_id       enum_id,
 	ecsact_enum_value_id enum_value_id
 ) {
-	auto& def = enum_defs.at(enum_id);
-	return def.enum_values.at(enum_value_id).name.c_str();
+	return enum_defs.at(enum_id).enum_values.at(enum_value_id).name.c_str();
 }
 
 int32_t ecsact_meta_enum_value(
 	ecsact_enum_id       enum_id,
 	ecsact_enum_value_id enum_value_id
 ) {
-	auto& def = enum_defs.at(enum_id);
-	return def.enum_values.at(enum_value_id).value;
+	return enum_defs.at(enum_id).enum_values.at(enum_value_id).value;
+}
+
+const char* ecsact_meta_registry_name(ecsact_registry_id) {
+	return "";
+}
+
+ecsact_package_id ecsact_meta_main_package() {
+	return main_package_id.value_or((ecsact_package_id)-1);
 }
 
 void ecsact_meta_get_component_ids(
@@ -563,14 +584,15 @@ void ecsact_meta_get_component_ids(
 	int32_t*             out_component_count
 ) {
 	auto& pkg_def = package_defs.at(package_id);
-	auto  itr = pkg_def.components.begin();
-	for(int32_t i = 0; max_component_count > i && itr != pkg_def.components.end();
+
+	auto itr = pkg_def.components.begin();
+	for(int i = 0; max_component_count > i && itr != pkg_def.components.end();
 			++i) {
 		out_component_ids[i] = *itr;
 		++itr;
 	}
 
-	if(out_component_count != nullptr) {
+	if(out_component_count) {
 		*out_component_count = static_cast<int32_t>(pkg_def.components.size());
 	}
 }
@@ -582,33 +604,17 @@ void ecsact_meta_get_transient_ids(
 	int32_t*             out_transient_count
 ) {
 	auto& pkg_def = package_defs.at(package_id);
-	auto  itr = pkg_def.transients.begin();
-	for(int32_t i = 0; max_transient_count > i && itr != pkg_def.transients.end();
+
+	auto itr = pkg_def.transients.begin();
+	for(int i = 0; max_transient_count > i && itr != pkg_def.transients.end();
 			++i) {
 		out_transient_ids[i] = *itr;
 		++itr;
 	}
 
-	if(out_transient_count != nullptr) {
+	if(out_transient_count) {
 		*out_transient_count = static_cast<int32_t>(pkg_def.transients.size());
 	}
-}
-
-ecsact_field_id ecsact_add_field(
-	ecsact_composite_id composite_id,
-	ecsact_field_type   field_type,
-	const char*         field_name,
-	int32_t             field_name_len
-) {
-	auto& def = get_composite(composite_id);
-	auto  field_id = def.next_field_id();
-
-	def.fields[field_id] = {
-		.name = std::string(field_name, field_name_len),
-		.type = field_type,
-	};
-
-	return field_id;
 }
 
 int32_t ecsact_meta_count_fields(ecsact_composite_id composite_id) {
@@ -620,18 +626,18 @@ void ecsact_meta_get_field_ids(
 	ecsact_composite_id composite_id,
 	int32_t             max_field_count,
 	ecsact_field_id*    out_field_ids,
-	int32_t*            out_field_ids_count
+	int32_t*            out_field_count
 ) {
 	auto& def = get_composite(composite_id);
 
 	auto itr = def.fields.begin();
-	for(int32_t i = 0; max_field_count > i && itr != def.fields.end(); ++i) {
+	for(int i = 0; max_field_count > i && itr != def.fields.end(); ++i) {
 		out_field_ids[i] = itr->first;
 		++itr;
 	}
 
-	if(out_field_ids_count != nullptr) {
-		*out_field_ids_count = static_cast<int32_t>(def.fields.size());
+	if(out_field_count) {
+		*out_field_count = static_cast<int32_t>(def.fields.size());
 	}
 }
 
@@ -648,14 +654,13 @@ ecsact_field_type ecsact_meta_field_type(
 	ecsact_field_id     field_id
 ) {
 	auto& def = get_composite(composite_id);
-	auto& field = def.fields.at(field_id);
-
-	return field.type;
+	return def.fields.at(field_id).type;
 }
 
-static auto builtin_type_size(ecsact_builtin_type builtin_type) {
-	switch(builtin_type) {
+static int32_t builtin_type_size(ecsact_builtin_type type) {
+	switch(type) {
 		case ECSACT_BOOL:
+			return 1;
 		case ECSACT_I8:
 		case ECSACT_U8:
 			return 1;
@@ -665,35 +670,19 @@ static auto builtin_type_size(ecsact_builtin_type builtin_type) {
 		case ECSACT_I32:
 		case ECSACT_U32:
 		case ECSACT_F32:
-			return 4;
-		case ECSACT_I64:
-		case ECSACT_U64:
-		case ECSACT_F64:
-			return 8;
 		case ECSACT_ENTITY_TYPE:
 			return 4;
 	}
+	return 0;
 }
 
-static auto enum_type_size(ecsact_enum_id enum_id) {
-	return builtin_type_size(ecsact_meta_enum_storage_type(enum_id));
-}
-
-static auto field_type_size(ecsact_field_type type) -> int32_t {
-	auto base_size = 0;
-	switch(type.kind) {
-		case ECSACT_TYPE_KIND_BUILTIN:
-			base_size = builtin_type_size(type.type.builtin);
-			break;
-		case ECSACT_TYPE_KIND_ENUM:
-			base_size = enum_type_size(type.type.enum_id);
-			break;
-		case ECSACT_TYPE_KIND_FIELD_INDEX:
-			base_size = field_type_size(ecsact_meta_field_type(
-				type.type.field_index.composite_id,
-				type.type.field_index.field_id
-			));
-			break;
+static int32_t field_type_size(ecsact_field_type type) {
+	int32_t base_size = 0;
+	if(type.kind == ECSACT_TYPE_KIND_BUILTIN) {
+		base_size = builtin_type_size(type.type.builtin);
+	} else if(type.kind == ECSACT_TYPE_KIND_ENUM) {
+		base_size =
+			builtin_type_size(ecsact_meta_enum_storage_type(type.type.enum_id));
 	}
 
 	return base_size * type.length;
@@ -703,41 +692,107 @@ int32_t ecsact_meta_field_offset(
 	ecsact_composite_id composite_id,
 	ecsact_field_id     field_id
 ) {
-	auto& def = get_composite(composite_id);
-	auto  largest_field_size = 0;
-	auto  current_field_index = 0;
-	auto  field_index = 0;
-	for(auto& field : def.fields) {
-		auto size = field_type_size(field.second.type);
-		if(size > largest_field_size) {
-			largest_field_size = size;
+	auto&   def = get_composite(composite_id);
+	int32_t offset = 0;
+	for(auto const& [id, field] : def.fields) {
+		if(id == field_id) {
+			return offset;
 		}
-
-		if(field.first == field_id) {
-			field_index = current_field_index;
-		}
-
-		current_field_index += 1;
+		offset += field_type_size(field.type);
 	}
+	return -1;
+}
 
-	return static_cast<int32_t>(field_index * largest_field_size);
+ecsact_field_id ecsact_add_field(
+	ecsact_composite_id composite_id,
+	ecsact_field_type   field_type,
+	const char*         field_name,
+	int32_t             field_name_len
+) {
+	auto& def = get_composite(composite_id);
+	auto  id = def.next_field_id();
+	auto& field = def.fields[id];
+	field.name = std::string(field_name, field_name_len);
+	field.type = field_type;
+	return id;
+}
+
+void ecsact_remove_field(
+	ecsact_composite_id composite_id,
+	ecsact_field_id     field_id
+) {
+	auto& def = get_composite(composite_id);
+	def.fields.erase(field_id);
+}
+
+void ecsact_destroy_component(ecsact_component_id component_id) {
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(component_id);
+	auto owner = owner_package_id(component_id);
+	if((int32_t)owner != -1) {
+		auto& pkg = package_defs.at(owner);
+		pkg.components.erase(
+			std::remove(pkg.components.begin(), pkg.components.end(), component_id),
+			pkg.components.end()
+		);
+	}
+	comp_defs.erase(component_id);
+	def_owner_map.erase(decl_id);
+	full_names.erase(decl_id);
+}
+
+void ecsact_destroy_transient(ecsact_transient_id transient_id) {
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(transient_id);
+	auto owner = owner_package_id(transient_id);
+	if((int32_t)owner != -1) {
+		auto& pkg = package_defs.at(owner);
+		pkg.transients.erase(
+			std::remove(pkg.transients.begin(), pkg.transients.end(), transient_id),
+			pkg.transients.end()
+		);
+	}
+	trans_defs.erase(transient_id);
+	def_owner_map.erase(decl_id);
+	full_names.erase(decl_id);
+}
+
+void ecsact_destroy_enum(ecsact_enum_id enum_id) {
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(enum_id);
+	auto owner = owner_package_id(enum_id);
+	if((int32_t)owner != -1) {
+		auto& pkg = package_defs.at(owner);
+		pkg.enums.erase(
+			std::remove(pkg.enums.begin(), pkg.enums.end(), enum_id),
+			pkg.enums.end()
+		);
+	}
+	enum_defs.erase(enum_id);
+	def_owner_map.erase(decl_id);
+	full_names.erase(decl_id);
+}
+
+void ecsact_remove_enum_value(
+	ecsact_enum_id       enum_id,
+	ecsact_enum_value_id value_id
+) {
+	auto& def = enum_defs.at(enum_id);
+	def.enum_values.erase(value_id);
 }
 
 void ecsact_set_system_capability(
-	ecsact_system_like_id    sys_id,
-	ecsact_component_like_id comp_like_id,
-	ecsact_system_capability cap
+	ecsact_system_like_id    system_id,
+	ecsact_component_like_id component_id,
+	ecsact_system_capability capability
 ) {
-	auto& def = get_system_like(sys_id);
-	def.caps[comp_like_id].cap = cap;
+	auto& def = get_system_like(system_id);
+	def.caps[component_id] = {capability};
 }
 
 void ecsact_unset_system_capability(
-	ecsact_system_like_id    sys_id,
-	ecsact_component_like_id comp_like_id
+	ecsact_system_like_id    system_id,
+	ecsact_component_like_id component_id
 ) {
-	auto& def = get_system_like(sys_id);
-	def.caps.erase(comp_like_id);
+	auto& def = get_system_like(system_id);
+	def.caps.erase(component_id);
 }
 
 int32_t ecsact_meta_system_capabilities_count(ecsact_system_like_id system_id) {
@@ -780,19 +835,22 @@ void ecsact_remove_child_system(
 	}
 
 	auto& parent_def = get_system_like(parent);
-	auto  itr = std::find(
-    parent_def.nested_systems.begin(),
-    parent_def.nested_systems.end(),
-    child
+	auto  itr = std::find_if(
+    parent_def.execution_order.begin(),
+    parent_def.execution_order.end(),
+    [&](const auto& entry) {
+      auto sys_id = std::get_if<ecsact_system_like_id>(&entry);
+      return sys_id && *sys_id == static_cast<ecsact_system_like_id>(child);
+    }
   );
 
 	child_def.parent_system_id = (ecsact_system_like_id)-1;
-	if(itr != parent_def.nested_systems.end()) {
+	if(itr != parent_def.execution_order.end()) {
 		auto& pkg_def = package_defs.at(owner_package_id(parent));
-		pkg_def.top_level_systems.push_back(
-			ecsact_id_cast<ecsact_system_like_id>(*itr)
+		pkg_def.execution_order.push_back(
+			static_cast<ecsact_system_like_id>(child)
 		);
-		parent_def.nested_systems.erase(itr);
+		parent_def.execution_order.erase(itr);
 	}
 
 	if(!child_def.name.empty()) {
@@ -815,16 +873,21 @@ void ecsact_add_child_system(
 	}
 
 	child_def.parent_system_id = parent;
-	parent_def.nested_systems.push_back(child);
-
-	auto iter = std::find(
-		pkg_def.top_level_systems.begin(),
-		pkg_def.top_level_systems.end(),
-		ecsact_id_cast<ecsact_system_like_id>(child)
+	parent_def.execution_order.push_back(
+		static_cast<ecsact_system_like_id>(child)
 	);
 
-	if(iter != pkg_def.top_level_systems.end()) {
-		pkg_def.top_level_systems.erase(iter);
+	auto iter = std::find_if(
+		pkg_def.execution_order.begin(),
+		pkg_def.execution_order.end(),
+		[&](const auto& entry) {
+			auto sys_id = std::get_if<ecsact_system_like_id>(&entry);
+			return sys_id && *sys_id == static_cast<ecsact_system_like_id>(child);
+		}
+	);
+
+	if(iter != pkg_def.execution_order.end()) {
+		pkg_def.execution_order.erase(iter);
 	}
 
 	if(!child_def.name.empty()) {
@@ -858,312 +921,33 @@ const char* ecsact_meta_package_file_path(ecsact_package_id package_id) {
 	return def.source_file_path.c_str();
 }
 
-const char* ecsact_meta_enum_name(ecsact_enum_id enum_id) {
-	auto& def = enum_defs.at(enum_id);
-	return def.name.c_str();
-}
-
-const char* ecsact_meta_registry_name(ecsact_registry_id) {
-	// No registries in parse resolver tuneim
-	return "";
-}
-
 int32_t ecsact_meta_count_dependencies(ecsact_package_id package_id) {
-	auto& pkg_def = package_defs.at(package_id);
-	return static_cast<int32_t>(pkg_def.dependencies.size());
+	return static_cast<int32_t>(package_defs.at(package_id).dependencies.size());
 }
 
 void ecsact_meta_get_dependencies(
 	ecsact_package_id  package_id,
 	int32_t            max_dependency_count,
-	ecsact_package_id* out_package_ids,
-	int32_t*           out_dependencies_count
+	ecsact_package_id* out_dependencies,
+	int32_t*           out_dependency_count
 ) {
-	auto& pkg_def = package_defs.at(package_id);
-	auto  itr = pkg_def.dependencies.begin();
-	for(int i = 0; max_dependency_count > i; ++i, ++itr) {
-		if(itr == pkg_def.dependencies.end()) {
-			break;
-		}
-		out_package_ids[i] = *itr;
+	auto& pkg = package_defs.at(package_id);
+	auto  count = std::min(
+    max_dependency_count,
+    static_cast<int32_t>(pkg.dependencies.size())
+  );
+
+	for(int i = 0; count > i; ++i) {
+		out_dependencies[i] = pkg.dependencies[i];
 	}
 
-	if(out_dependencies_count) {
-		*out_dependencies_count = static_cast<int32_t>(pkg_def.dependencies.size());
-	}
-}
-
-void ecsact_add_dependency(
-	ecsact_package_id target,
-	ecsact_package_id dependency
-) {
-	auto& tgt_pkg_def = package_defs.at(target);
-	if(package_defs.contains(dependency)) {
-		tgt_pkg_def.dependencies.push_back(dependency);
+	if(out_dependency_count != nullptr) {
+		*out_dependency_count = static_cast<int32_t>(pkg.dependencies.size());
 	}
 }
 
 const char* ecsact_meta_decl_full_name(ecsact_decl_id id) {
 	return full_names.at(id).c_str();
-}
-
-int32_t ecsact_meta_count_child_systems(ecsact_system_like_id system_id) {
-	auto& def = get_system_like(system_id);
-	return static_cast<int32_t>(def.nested_systems.size());
-}
-
-void ecsact_meta_get_child_system_ids(
-	ecsact_system_like_id system_id,
-	int32_t               max_child_system_ids_count,
-	ecsact_system_id*     out_child_system_ids,
-	int32_t*              out_child_system_count
-) {
-	auto& def = get_system_like(system_id);
-
-	auto itr = def.nested_systems.begin();
-	for(int i = 0; max_child_system_ids_count > i; ++i, ++itr) {
-		if(itr == def.nested_systems.end()) {
-			break;
-		}
-		out_child_system_ids[i] = *itr;
-	}
-
-	if(out_child_system_count) {
-		*out_child_system_count = static_cast<int32_t>(def.nested_systems.size());
-	}
-}
-
-ecsact_system_like_id ecsact_meta_get_parent_system_id(
-	ecsact_system_id child_system_id
-) {
-	auto& def =
-		get_system_like(ecsact_id_cast<ecsact_system_like_id>(child_system_id));
-	return def.parent_system_id;
-}
-
-int32_t ecsact_meta_count_top_level_systems(ecsact_package_id package_id) {
-	auto& pkg_def = package_defs.at(package_id);
-	return static_cast<int32_t>(pkg_def.top_level_systems.size());
-}
-
-void ecsact_meta_get_top_level_systems(
-	ecsact_package_id      package_id,
-	int32_t                max_systems_count,
-	ecsact_system_like_id* out_systems,
-	int32_t*               out_systems_count
-) {
-	auto& pkg_def = package_defs.at(package_id);
-
-	auto itr = pkg_def.top_level_systems.begin();
-	for(int i = 0; max_systems_count > i; ++i, ++itr) {
-		if(itr == pkg_def.top_level_systems.end()) {
-			break;
-		}
-		out_systems[i] = *itr;
-	}
-
-	if(out_systems_count != nullptr) {
-		*out_systems_count = static_cast<int32_t>(pkg_def.top_level_systems.size());
-	}
-}
-
-ecsact_system_generates_id ecsact_add_system_generates(
-	ecsact_system_like_id system_id
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	auto  gen_id = next_id<ecsact_system_generates_id>();
-	sys_like_def.generates[gen_id] = {};
-	return gen_id;
-}
-
-void ecsact_remove_system_generates(
-	ecsact_system_like_id      system_id,
-	ecsact_system_generates_id generates_id
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	sys_like_def.generates.erase(generates_id);
-}
-
-void ecsact_system_generates_set_component(
-	ecsact_system_like_id      system_id,
-	ecsact_system_generates_id generates_id,
-	ecsact_component_id        component_id,
-	ecsact_system_generate     generate_flag
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	auto& gen_comps = sys_like_def.generates.at(generates_id);
-	gen_comps[component_id] = generate_flag;
-}
-
-void ecsact_system_generates_unset_component(
-	ecsact_system_like_id      system_id,
-	ecsact_system_generates_id generates_id,
-	ecsact_component_id        component_id
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	auto& gen_comps = sys_like_def.generates.at(generates_id);
-	gen_comps.erase(component_id);
-}
-
-int32_t ecsact_meta_count_system_generates_ids(
-	ecsact_system_like_id system_id
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	return static_cast<int32_t>(sys_like_def.generates.size());
-}
-
-void ecsact_meta_system_generates_ids(
-	ecsact_system_like_id       system_id,
-	int32_t                     max_generates_ids_count,
-	ecsact_system_generates_id* out_generates_ids,
-	int32_t*                    out_generates_ids_count
-) {
-	auto& sys_like_def = get_system_like(system_id);
-
-	auto itr = sys_like_def.generates.begin();
-	for(int i = 0; max_generates_ids_count > i; ++i, ++itr) {
-		if(itr == sys_like_def.generates.end()) {
-			break;
-		}
-
-		out_generates_ids[i] = itr->first;
-	}
-
-	if(out_generates_ids_count != nullptr) {
-		*out_generates_ids_count =
-			static_cast<int32_t>(sys_like_def.generates.size());
-	}
-}
-
-int32_t ecsact_meta_count_system_generates_components(
-	ecsact_system_like_id      system_id,
-	ecsact_system_generates_id generates_id
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	auto& gen_def = sys_like_def.generates.at(generates_id);
-	return static_cast<int32_t>(gen_def.size());
-}
-
-void ecsact_meta_system_generates_components(
-	ecsact_system_like_id      system_id,
-	ecsact_system_generates_id generates_id,
-	int32_t                    max_components_count,
-	ecsact_component_id*       out_component_ids,
-	ecsact_system_generate*    out_component_generate_flags,
-	int32_t*                   out_components_count
-) {
-	auto& sys_like_def = get_system_like(system_id);
-	auto& gen_def = sys_like_def.generates.at(generates_id);
-
-	auto itr = gen_def.begin();
-	for(int i = 0; max_components_count > i; ++i, ++itr) {
-		if(itr == gen_def.end()) {
-			break;
-		}
-
-		out_component_ids[i] = itr->first;
-		out_component_generate_flags[i] = itr->second;
-	}
-
-	if(out_components_count != nullptr) {
-		*out_components_count = static_cast<int32_t>(gen_def.size());
-	}
-}
-
-void ecsact_set_system_lazy_iteration_rate( //
-	ecsact_system_id system_id,
-	int32_t          iteration_rate
-) {
-	auto& def = sys_defs.at(system_id);
-	def.lazy_iteration_rate = iteration_rate;
-}
-
-int32_t ecsact_meta_get_lazy_iteration_rate( //
-	ecsact_system_id system_id
-) {
-	auto& def = sys_defs.at(system_id);
-	return def.lazy_iteration_rate;
-}
-
-void ecsact_set_system_parallel_execution( //
-	ecsact_system_like_id     system_like_id,
-	ecsact_parallel_execution parallel_execution
-) {
-	auto& def = get_system_like(system_like_id);
-	def.parallel_execution = parallel_execution;
-}
-
-ecsact_parallel_execution ecsact_meta_get_system_parallel_execution( //
-	ecsact_system_like_id system_like_id
-) {
-	auto& def = get_system_like(system_like_id);
-	return def.parallel_execution;
-}
-
-auto ecsact_meta_system_notify_settings_count(
-	ecsact_system_like_id system_like_id
-) -> int32_t {
-	auto& def = get_system_like(system_like_id);
-	return static_cast<int32_t>(def.notify_settings.size());
-}
-
-auto ecsact_meta_system_notify_settings(
-	ecsact_system_like_id         system_like_id,
-	int32_t                       max_notifies_count,
-	ecsact_component_like_id*     out_notify_component_ids,
-	ecsact_system_notify_setting* out_notify_settings,
-	int32_t*                      out_notifies_count
-) -> void {
-	auto& def = get_system_like(system_like_id);
-
-	auto itr = def.notify_settings.begin();
-	for(int i = 0; max_notifies_count > i; ++i) {
-		if(i >= def.notify_settings.size() || itr == def.notify_settings.end()) {
-			break;
-		}
-
-		out_notify_component_ids[i] = itr->first;
-		out_notify_settings[i] = itr->second;
-
-		++itr;
-	}
-
-	if(out_notifies_count != nullptr) {
-		*out_notifies_count = static_cast<int32_t>(def.notify_settings.size());
-	}
-}
-
-auto ecsact_set_system_notify_component_setting(
-	ecsact_system_like_id        system_like_id,
-	ecsact_component_like_id     component_like_id,
-	ecsact_system_notify_setting setting
-) -> void {
-	auto& def = get_system_like(system_like_id);
-	if(setting == ECSACT_SYS_NOTIFY_NONE) {
-		def.notify_settings.erase(component_like_id);
-	} else {
-		def.notify_settings[component_like_id] = setting;
-	}
-}
-
-auto ecsact_meta_component_type( //
-	ecsact_component_like_id comp_like_id
-) -> ecsact_component_type {
-	auto comp_def =
-		comp_defs.find(static_cast<ecsact_component_id>(comp_like_id));
-	if(comp_def == comp_defs.end()) {
-		// NOTE: this is temporary until we remove the transient fns and instead
-		// embrace components with transient statement params
-		auto trans_def =
-			trans_defs.find(static_cast<ecsact_transient_id>(comp_like_id));
-		if(trans_def != trans_defs.end()) {
-			return ECSACT_COMPONENT_TYPE_TRANSIENT;
-		}
-
-		return ECSACT_COMPONENT_TYPE_NONE;
-	}
-
-	return comp_def->second.comp_type;
 }
 
 static bool collect_all_caps(
@@ -1182,20 +966,20 @@ static bool collect_all_caps(
 		);
 	}
 
-	for(auto child_sys_id : sys_def.nested_systems) {
-		if(collect_all_caps(
-				 ecsact_id_cast<ecsact_system_like_id>(child_sys_id),
-				 out_caps
-			 )) {
-			independent = true;
+	for(auto& entry : sys_def.execution_order) {
+		if(auto child_sys_id = std::get_if<ecsact_system_like_id>(&entry)) {
+			if(collect_all_caps(*child_sys_id, out_caps)) {
+				independent = true;
+			}
 		}
 	}
 
 	return independent;
 }
 
-static void calculate_execution_batches(
-	const std::vector<ecsact_system_like_id>&        systems,
+static std::optional<ecsact_system_like_id> calculate_execution_batches(
+	const std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>&
+																									 execution_order,
 	std::vector<std::vector<ecsact_system_like_id>>& out_batches
 ) {
 	out_batches.clear();
@@ -1233,68 +1017,186 @@ static void calculate_execution_batches(
 		}
 	};
 
-	for(auto sys_id : systems) {
-		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
-				 all_caps;
-		bool independent = collect_all_caps(sys_id, all_caps);
+	auto are_mutually_exclusive =
+		[&](ecsact_system_like_id a, ecsact_system_like_id b) {
+			std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+				a_caps;
+			std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+				b_caps;
+			collect_all_caps(a, a_caps);
+			collect_all_caps(b, b_caps);
 
-		bool conflict = independent;
-		if(!conflict) {
+			for(auto const& [comp_id, a_cap] : a_caps) {
+				if(!b_caps.contains(comp_id)) {
+					continue;
+				}
+				auto b_cap = b_caps.at(comp_id);
+
+				auto is_inc = [](ecsact_system_capability cap) -> bool {
+					if((cap & ECSACT_SYS_CAP_INCLUDE) != 0) {
+						return true;
+					}
+					if((cap & ECSACT_SYS_CAP_OPTIONAL) != 0) {
+						return false;
+					}
+					return (cap & (ECSACT_SYS_CAP_READONLY | ECSACT_SYS_CAP_WRITEONLY)) !=
+						0;
+				};
+
+				bool a_inc = is_inc(a_cap);
+				bool a_exc = (a_cap & ECSACT_SYS_CAP_EXCLUDE) != 0;
+				bool b_inc = is_inc(b_cap);
+				bool b_exc = (b_cap & ECSACT_SYS_CAP_EXCLUDE) != 0;
+
+				if((a_inc && b_exc) || (a_exc && b_inc)) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+	for(auto const& entry : execution_order) {
+		if(auto sys_id_ptr = std::get_if<ecsact_system_like_id>(&entry)) {
+			auto sys_id = *sys_id_ptr;
+			std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+					 all_caps;
+			bool independent = collect_all_caps(sys_id, all_caps);
+
+			bool conflict = independent;
+			if(!conflict) {
+				for(auto const& [comp_id, cap] : all_caps) {
+					bool comp_conflict = false;
+					if(is_exclusive(cap)) {
+						if(batch_readers.contains(comp_id) ||
+							 batch_writers.contains(comp_id)) {
+							comp_conflict = true;
+						}
+					}
+					if(is_reader(cap)) {
+						if(batch_writers.contains(comp_id)) {
+							comp_conflict = true;
+						}
+					}
+
+					if(comp_conflict) {
+						bool all_exclusive = true;
+						for(auto other_sys_id : current_batch) {
+							if(!are_mutually_exclusive(sys_id, other_sys_id)) {
+								all_exclusive = false;
+								break;
+							}
+						}
+
+						if(!all_exclusive) {
+							conflict = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if(conflict) {
+				finalize_batch();
+			}
+
+			current_batch.push_back(sys_id);
 			for(auto const& [comp_id, cap] : all_caps) {
 				if(is_exclusive(cap)) {
-					if(batch_readers.contains(comp_id) ||
-						 batch_writers.contains(comp_id)) {
-						conflict = true;
-						break;
-					}
+					batch_writers.insert(comp_id);
 				}
 				if(is_reader(cap)) {
-					if(batch_writers.contains(comp_id)) {
-						conflict = true;
-						break;
-					}
+					batch_readers.insert(comp_id);
 				}
 			}
-		}
 
-		if(conflict) {
+			if(independent) {
+				finalize_batch();
+			}
+		} else if(auto cluster_id_ptr = std::get_if<ecsact_cluster_id>(&entry)) {
 			finalize_batch();
-		}
+			auto& cluster_def = cluster_defs.at(*cluster_id_ptr);
+			for(auto sys_id : cluster_def.systems) {
+				std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
+						 all_caps;
+				bool independent = collect_all_caps(sys_id, all_caps);
 
-		current_batch.push_back(sys_id);
-		for(auto const& [comp_id, cap] : all_caps) {
-			if(is_exclusive(cap)) {
-				batch_writers.insert(comp_id);
-			}
-			if(is_reader(cap)) {
-				batch_readers.insert(comp_id);
-			}
-		}
+				bool conflict = independent;
+				if(!conflict) {
+					for(auto const& [comp_id, cap] : all_caps) {
+						bool comp_conflict = false;
+						if(is_exclusive(cap)) {
+							if(batch_readers.contains(comp_id) ||
+								 batch_writers.contains(comp_id)) {
+								comp_conflict = true;
+							}
+						}
+						if(is_reader(cap)) {
+							if(batch_writers.contains(comp_id)) {
+								comp_conflict = true;
+							}
+						}
 
-		if(independent) {
+						if(comp_conflict) {
+							bool all_exclusive = true;
+							for(auto other_sys_id : current_batch) {
+								if(!are_mutually_exclusive(sys_id, other_sys_id)) {
+									all_exclusive = false;
+									break;
+								}
+							}
+
+							if(!all_exclusive) {
+								conflict = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if(conflict) {
+					return sys_id;
+				}
+
+				current_batch.push_back(sys_id);
+				for(auto const& [comp_id, cap] : all_caps) {
+					if(is_exclusive(cap)) {
+						batch_writers.insert(comp_id);
+					}
+					if(is_reader(cap)) {
+						batch_readers.insert(comp_id);
+					}
+				}
+
+				if(independent && &sys_id != &cluster_def.systems.back()) {
+					return sys_id;
+				}
+			}
 			finalize_batch();
 		}
 	}
 
 	finalize_batch();
+	return std::nullopt;
 }
 
 int32_t ecsact_meta_count_execution_batches(ecsact_package_id package_id) {
 	auto& pkg = package_defs.at(package_id);
 	if(pkg.execution_batches.empty()) {
-		std::vector<ecsact_system_like_id> all_systems;
+		std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
+			all_execution_order;
 		for(auto dep_id : pkg.dependencies) {
 			auto& dep_pkg = package_defs.at(dep_id);
-			for(auto sys_id : dep_pkg.top_level_systems) {
-				all_systems.push_back(sys_id);
+			for(auto& entry : dep_pkg.execution_order) {
+				all_execution_order.push_back(entry);
 			}
 		}
-		for(auto sys_id : pkg.top_level_systems) {
-			all_systems.push_back(sys_id);
+		for(auto& entry : pkg.execution_order) {
+			all_execution_order.push_back(entry);
 		}
 
-		if(!all_systems.empty()) {
-			calculate_execution_batches(all_systems, pkg.execution_batches);
+		if(!all_execution_order.empty()) {
+			calculate_execution_batches(all_execution_order, pkg.execution_batches);
 		}
 	}
 	return static_cast<int32_t>(pkg.execution_batches.size());
@@ -1309,19 +1211,20 @@ void ecsact_meta_get_execution_batch(
 ) {
 	auto& pkg = package_defs.at(package_id);
 	if(pkg.execution_batches.empty()) {
-		std::vector<ecsact_system_like_id> all_systems;
+		std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
+			all_execution_order;
 		for(auto dep_id : pkg.dependencies) {
 			auto& dep_pkg = package_defs.at(dep_id);
-			for(auto sys_id : dep_pkg.top_level_systems) {
-				all_systems.push_back(sys_id);
+			for(auto& entry : dep_pkg.execution_order) {
+				all_execution_order.push_back(entry);
 			}
 		}
-		for(auto sys_id : pkg.top_level_systems) {
-			all_systems.push_back(sys_id);
+		for(auto& entry : pkg.execution_order) {
+			all_execution_order.push_back(entry);
 		}
 
-		if(!all_systems.empty()) {
-			calculate_execution_batches(all_systems, pkg.execution_batches);
+		if(!all_execution_order.empty()) {
+			calculate_execution_batches(all_execution_order, pkg.execution_batches);
 		}
 	}
 
@@ -1341,12 +1244,11 @@ int32_t ecsact_meta_count_system_execution_batches(
 	ecsact_system_like_id system_id
 ) {
 	auto& sys_def = get_system_like(system_id);
-	if(sys_def.execution_batches.empty() && !sys_def.nested_systems.empty()) {
-		std::vector<ecsact_system_like_id> nested_systems;
-		for(auto id : sys_def.nested_systems) {
-			nested_systems.push_back(ecsact_id_cast<ecsact_system_like_id>(id));
-		}
-		calculate_execution_batches(nested_systems, sys_def.execution_batches);
+	if(sys_def.execution_batches.empty() && !sys_def.execution_order.empty()) {
+		calculate_execution_batches(
+			sys_def.execution_order,
+			sys_def.execution_batches
+		);
 	}
 	return static_cast<int32_t>(sys_def.execution_batches.size());
 }
@@ -1359,12 +1261,11 @@ void ecsact_meta_get_system_execution_batch(
 	int32_t*               out_systems_count
 ) {
 	auto& sys_def = get_system_like(system_id);
-	if(sys_def.execution_batches.empty() && !sys_def.nested_systems.empty()) {
-		std::vector<ecsact_system_like_id> nested_systems;
-		for(auto id : sys_def.nested_systems) {
-			nested_systems.push_back(ecsact_id_cast<ecsact_system_like_id>(id));
-		}
-		calculate_execution_batches(nested_systems, sys_def.execution_batches);
+	if(sys_def.execution_batches.empty() && !sys_def.execution_order.empty()) {
+		calculate_execution_batches(
+			sys_def.execution_order,
+			sys_def.execution_batches
+		);
 	}
 
 	auto& batch = sys_def.execution_batches.at(batch_index);
@@ -1379,12 +1280,374 @@ void ecsact_meta_get_system_execution_batch(
 	}
 }
 
+ecsact_system_like_id ecsact_check_execution_batches(
+	ecsact_package_id package_id
+) {
+	auto& pkg = package_defs.at(package_id);
+	std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
+		all_execution_order;
+	for(auto dep_id : pkg.dependencies) {
+		auto& dep_pkg = package_defs.at(dep_id);
+		for(auto& entry : dep_pkg.execution_order) {
+			all_execution_order.push_back(entry);
+		}
+	}
+	for(auto& entry : pkg.execution_order) {
+		all_execution_order.push_back(entry);
+	}
+
+	if(all_execution_order.empty()) {
+		return (ecsact_system_like_id)-1;
+	}
+
+	std::vector<std::vector<ecsact_system_like_id>> batches;
+	auto result = calculate_execution_batches(all_execution_order, batches);
+
+	return result.value_or((ecsact_system_like_id)-1);
+}
+
+ecsact_system_like_id ecsact_check_system_execution_batches(
+	ecsact_system_like_id system_id
+) {
+	auto& sys_def = get_system_like(system_id);
+	if(sys_def.execution_order.empty()) {
+		return (ecsact_system_like_id)-1;
+	}
+
+	std::vector<std::vector<ecsact_system_like_id>> batches;
+	auto result = calculate_execution_batches(sys_def.execution_order, batches);
+
+	return result.value_or((ecsact_system_like_id)-1);
+}
+
 bool ecsact_meta_is_system(ecsact_system_like_id system_id) {
 	return sys_defs.contains(static_cast<ecsact_system_id>(system_id));
 }
 
 bool ecsact_meta_is_action(ecsact_system_like_id system_id) {
 	return act_defs.contains(static_cast<ecsact_action_id>(system_id));
+}
+
+int32_t ecsact_meta_count_top_level_systems(ecsact_package_id package_id) {
+	auto&   pkg_def = package_defs.at(package_id);
+	int32_t count = 0;
+	for(auto& entry : pkg_def.execution_order) {
+		if(std::holds_alternative<ecsact_system_like_id>(entry)) {
+			count += 1;
+		}
+	}
+	return count;
+}
+
+void ecsact_meta_get_top_level_systems(
+	ecsact_package_id      package_id,
+	int32_t                max_systems_count,
+	ecsact_system_like_id* out_systems,
+	int32_t*               out_systems_count
+) {
+	auto&   pkg_def = package_defs.at(package_id);
+	int32_t count = 0;
+	for(auto& entry : pkg_def.execution_order) {
+		if(count >= max_systems_count) {
+			break;
+		}
+		if(auto sys_id = std::get_if<ecsact_system_like_id>(&entry)) {
+			out_systems[count++] = *sys_id;
+		}
+	}
+
+	if(out_systems_count != nullptr) {
+		*out_systems_count = count;
+	}
+}
+
+int32_t ecsact_meta_count_child_systems(ecsact_system_like_id system_id) {
+	auto&   def = get_system_like(system_id);
+	int32_t count = 0;
+	for(auto& entry : def.execution_order) {
+		if(auto inner_sys_id = std::get_if<ecsact_system_like_id>(&entry)) {
+			if(ecsact_meta_is_system(*inner_sys_id)) {
+				count += 1;
+			}
+		}
+	}
+	return count;
+}
+
+void ecsact_meta_get_child_system_ids(
+	ecsact_system_like_id system_id,
+	int32_t               max_child_system_ids_count,
+	ecsact_system_id*     out_child_system_ids,
+	int32_t*              out_child_system_count
+) {
+	auto&   def = get_system_like(system_id);
+	int32_t count = 0;
+	for(auto& entry : def.execution_order) {
+		if(count >= max_child_system_ids_count) {
+			break;
+		}
+		if(auto inner_sys_id = std::get_if<ecsact_system_like_id>(&entry)) {
+			if(ecsact_meta_is_system(*inner_sys_id)) {
+				out_child_system_ids[count++] =
+					static_cast<ecsact_system_id>(*inner_sys_id);
+			}
+		}
+	}
+
+	if(out_child_system_count) {
+		*out_child_system_count = count;
+	}
+}
+
+ecsact_system_like_id ecsact_meta_get_parent_system_id(
+	ecsact_system_id child_system_id
+) {
+	auto& def =
+		get_system_like(ecsact_id_cast<ecsact_system_like_id>(child_system_id));
+	return def.parent_system_id;
+}
+
+void ecsact_set_system_lazy_iteration_rate(
+	ecsact_system_id system_id,
+	int32_t          iteration_rate
+) {
+	auto& def = sys_defs.at(system_id);
+	def.lazy_iteration_rate = iteration_rate;
+}
+
+int32_t ecsact_meta_get_lazy_iteration_rate(ecsact_system_id system_id) {
+	auto& def = sys_defs.at(system_id);
+	return def.lazy_iteration_rate;
+}
+
+ecsact_system_generates_id ecsact_add_system_generates(
+	ecsact_system_like_id system_id
+) {
+	auto& sys_like_def = get_system_like(system_id);
+	auto  gen_id = next_id<ecsact_system_generates_id>();
+	sys_like_def.generates[gen_id] = {};
+	return gen_id;
+}
+
+void ecsact_remove_system_generates(
+	ecsact_system_like_id      system_id,
+	ecsact_system_generates_id generates_id
+) {
+	auto& sys_like_def = get_system_like(system_id);
+	sys_like_def.generates.erase(generates_id);
+}
+
+void ecsact_system_generates_set_component(
+	ecsact_system_like_id      system_id,
+	ecsact_system_generates_id generates_id,
+	ecsact_component_id        component_id,
+	ecsact_system_generate     generate_flag
+) {
+	auto& sys_like_def = get_system_like(system_id);
+	sys_like_def.generates.at(generates_id)[component_id] = generate_flag;
+}
+
+void ecsact_system_generates_unset_component(
+	ecsact_system_like_id      system_id,
+	ecsact_system_generates_id generates_id,
+	ecsact_component_id        component_id
+) {
+	auto& sys_like_def = get_system_like(system_id);
+	sys_like_def.generates.at(generates_id).erase(component_id);
+}
+
+int32_t ecsact_meta_count_system_generates_ids(
+	ecsact_system_like_id system_id
+) {
+	auto& sys_like_def = get_system_like(system_id);
+	return static_cast<int32_t>(sys_like_def.generates.size());
+}
+
+void ecsact_meta_system_generates_ids(
+	ecsact_system_like_id       system_id,
+	int32_t                     max_generates_ids_count,
+	ecsact_system_generates_id* out_generates_ids,
+	int32_t*                    out_generates_ids_count
+) {
+	auto& def = get_system_like(system_id);
+	auto  itr = def.generates.begin();
+	for(int i = 0; max_generates_ids_count > i && itr != def.generates.end();
+			++i) {
+		out_generates_ids[i] = itr->first;
+		++itr;
+	}
+
+	if(out_generates_ids_count) {
+		*out_generates_ids_count = static_cast<int32_t>(def.generates.size());
+	}
+}
+
+int32_t ecsact_meta_count_system_generates_components(
+	ecsact_system_like_id      system_id,
+	ecsact_system_generates_id generates_id
+) {
+	auto& def = get_system_like(system_id);
+	return static_cast<int32_t>(def.generates.at(generates_id).size());
+}
+
+void ecsact_meta_system_generates_components(
+	ecsact_system_like_id      system_id,
+	ecsact_system_generates_id generates_id,
+	int32_t                    max_components_count,
+	ecsact_component_id*       out_component_ids,
+	ecsact_system_generate*    out_generate_flags,
+	int32_t*                   out_components_count
+) {
+	auto& def = get_system_like(system_id);
+	auto& gens = def.generates.at(generates_id);
+	auto  itr = gens.begin();
+	for(int i = 0; max_components_count > i && itr != gens.end(); ++i) {
+		out_component_ids[i] = itr->first;
+		out_generate_flags[i] = itr->second;
+		++itr;
+	}
+
+	if(out_components_count) {
+		*out_components_count = static_cast<int32_t>(gens.size());
+	}
+}
+
+void ecsact_set_system_parallel_execution(
+	ecsact_system_like_id     system_id,
+	ecsact_parallel_execution parallel_execution
+) {
+	auto& def = get_system_like(system_id);
+	def.parallel_execution = parallel_execution;
+}
+
+ecsact_parallel_execution ecsact_meta_get_system_parallel_execution(
+	ecsact_system_like_id system_id
+) {
+	auto& def = get_system_like(system_id);
+	return def.parallel_execution;
+}
+
+void ecsact_set_system_notify_component_setting(
+	ecsact_system_like_id        system_id,
+	ecsact_component_like_id     component_id,
+	ecsact_system_notify_setting setting
+) {
+	auto& def = get_system_like(system_id);
+	if(setting == ECSACT_SYS_NOTIFY_NONE) {
+		def.notify_settings.erase(component_id);
+	} else {
+		def.notify_settings[component_id] = setting;
+	}
+}
+
+int32_t ecsact_meta_system_notify_settings_count(
+	ecsact_system_like_id system_id
+) {
+	auto& def = get_system_like(system_id);
+	return static_cast<int32_t>(def.notify_settings.size());
+}
+
+void ecsact_meta_system_notify_settings(
+	ecsact_system_like_id         system_id,
+	int32_t                       max_settings_count,
+	ecsact_component_like_id*     out_component_ids,
+	ecsact_system_notify_setting* out_notify_settings,
+	int32_t*                      out_settings_count
+) {
+	auto& def = get_system_like(system_id);
+	auto  itr = def.notify_settings.begin();
+	for(int i = 0; max_settings_count > i && itr != def.notify_settings.end();
+			++i) {
+		out_component_ids[i] = itr->first;
+		out_notify_settings[i] = itr->second;
+		++itr;
+	}
+
+	if(out_settings_count) {
+		*out_settings_count = static_cast<int32_t>(def.notify_settings.size());
+	}
+}
+
+const char* ecsact_meta_cluster_name(ecsact_cluster_id cluster_id) {
+	return cluster_defs.at(cluster_id).name.c_str();
+}
+
+int32_t ecsact_meta_count_cluster_systems(ecsact_cluster_id cluster_id) {
+	return static_cast<int32_t>(cluster_defs.at(cluster_id).systems.size());
+}
+
+void ecsact_meta_get_cluster_systems(
+	ecsact_cluster_id      cluster_id,
+	int32_t                max_systems_count,
+	ecsact_system_like_id* out_systems,
+	int32_t*               out_systems_count
+) {
+	auto& def = cluster_defs.at(cluster_id);
+	auto  count =
+		std::min(max_systems_count, static_cast<int32_t>(def.systems.size()));
+
+	for(int i = 0; count > i; ++i) {
+		out_systems[i] = def.systems[i];
+	}
+
+	if(out_systems_count != nullptr) {
+		*out_systems_count = static_cast<int32_t>(def.systems.size());
+	}
+}
+
+ecsact_cluster_id ecsact_create_cluster(
+	ecsact_package_id package_id,
+	const char*       cluster_name,
+	int32_t           cluster_name_len
+) {
+	auto& pkg = package_defs.at(package_id);
+	auto  id = next_id<ecsact_cluster_id>();
+	auto& def = cluster_defs[id];
+	def.name = std::string(cluster_name, cluster_name_len);
+	pkg.execution_order.push_back(id);
+	return id;
+}
+
+ecsact_cluster_id ecsact_create_system_cluster(
+	ecsact_system_like_id parent_system_id,
+	const char*           cluster_name,
+	int32_t               cluster_name_len
+) {
+	auto& sys = get_system_like(parent_system_id);
+	auto  id = next_id<ecsact_cluster_id>();
+	auto& def = cluster_defs[id];
+	def.name = std::string(cluster_name, cluster_name_len);
+	sys.execution_order.push_back(id);
+	return id;
+}
+
+void ecsact_add_system_to_cluster(
+	ecsact_cluster_id     cluster_id,
+	ecsact_system_like_id system_id
+) {
+	auto& def = cluster_defs.at(cluster_id);
+	def.systems.push_back(system_id);
+
+	auto owner_pkg_id = owner_package_id(system_id);
+	auto parent_sys_id =
+		ecsact_meta_get_parent_system_id(static_cast<ecsact_system_id>(system_id));
+
+	auto& execution_order = (int32_t)parent_sys_id == -1
+		? package_defs.at(owner_pkg_id).execution_order
+		: get_system_like(parent_sys_id).execution_order;
+
+	auto iter = std::find_if(
+		execution_order.begin(),
+		execution_order.end(),
+		[&](const auto& entry) {
+			auto sys_id = std::get_if<ecsact_system_like_id>(&entry);
+			return sys_id && *sys_id == system_id;
+		}
+	);
+
+	if(iter != execution_order.end()) {
+		execution_order.erase(iter);
+	}
 }
 
 auto ecsact_set_component_type( //
@@ -1397,4 +1660,14 @@ auto ecsact_set_component_type( //
 	}
 
 	comp_def->second.comp_type = comp_type;
+}
+
+ecsact_component_type ecsact_meta_component_type(
+	ecsact_component_like_id comp_like_id
+) {
+	auto comp_id = static_cast<ecsact_component_id>(comp_like_id);
+	if(!comp_defs.contains(comp_id)) {
+		return ECSACT_COMPONENT_TYPE_NONE;
+	}
+	return comp_defs.at(comp_id).comp_type;
 }

@@ -1,0 +1,7 @@
+main package cluster_invalid_context;
+
+component CompA {
+	cluster {
+		system SysA {}
+	}
+}

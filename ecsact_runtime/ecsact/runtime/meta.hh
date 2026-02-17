@@ -364,15 +364,32 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_system_id> get_child_system_ids(
 	SystemLikeID id
 ) {
 	auto system_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
-	std::vector<ecsact_system_id> child_system_ids;
-	child_system_ids.resize(ecsact_meta_count_child_systems(system_like_id));
-	ecsact_meta_get_child_system_ids(
-		system_like_id,
-		static_cast<int32_t>(child_system_ids.size()),
-		child_system_ids.data(),
-		nullptr
-	);
-	return child_system_ids;
+	std::vector<ecsact_system_id> result;
+	auto batch_count = ecsact_meta_count_system_execution_batches(system_like_id);
+	for(int32_t i = 0; batch_count > i; ++i) {
+		int32_t systems_count = 0;
+		ecsact_meta_get_system_execution_batch(
+			system_like_id,
+			i,
+			0,
+			nullptr,
+			&systems_count
+		);
+		std::vector<ecsact_system_like_id> batch_systems(systems_count);
+		ecsact_meta_get_system_execution_batch(
+			system_like_id,
+			i,
+			systems_count,
+			batch_systems.data(),
+			nullptr
+		);
+		for(auto sys_id : batch_systems) {
+			if(ecsact_meta_is_system(sys_id)) {
+				result.push_back(static_cast<ecsact_system_id>(sys_id));
+			}
+		}
+	}
+	return result;
 }
 
 ECSACT_ALWAYS_INLINE std::optional<ecsact_system_like_id> get_parent_system_id(
@@ -388,15 +405,22 @@ ECSACT_ALWAYS_INLINE std::optional<ecsact_system_like_id> get_parent_system_id(
 ECSACT_ALWAYS_INLINE std::vector<ecsact_system_like_id> get_top_level_systems(
 	ecsact_package_id package_id
 ) {
-	std::vector<ecsact_system_like_id> top_sys_like_ids;
-	top_sys_like_ids.resize(ecsact_meta_count_top_level_systems(package_id));
-	ecsact_meta_get_top_level_systems(
-		package_id,
-		static_cast<int32_t>(top_sys_like_ids.size()),
-		top_sys_like_ids.data(),
-		nullptr
-	);
-	return top_sys_like_ids;
+	std::vector<ecsact_system_like_id> result;
+	auto batch_count = ecsact_meta_count_execution_batches(package_id);
+	for(int32_t i = 0; batch_count > i; ++i) {
+		int32_t systems_count = 0;
+		ecsact_meta_get_execution_batch(package_id, i, 0, nullptr, &systems_count);
+		std::vector<ecsact_system_like_id> batch_systems(systems_count);
+		ecsact_meta_get_execution_batch(
+			package_id,
+			i,
+			systems_count,
+			batch_systems.data(),
+			nullptr
+		);
+		result.insert(result.end(), batch_systems.begin(), batch_systems.end());
+	}
+	return result;
 }
 
 ECSACT_ALWAYS_INLINE auto get_all_system_like_ids(

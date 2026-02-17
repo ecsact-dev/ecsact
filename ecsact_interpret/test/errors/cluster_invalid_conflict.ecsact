@@ -1,0 +1,12 @@
+main package cluster_invalid_conflict;
+
+component CompA { i32 a; }
+
+cluster {
+	system SysA {
+		readonly CompA;
+	}
+	system SysB {
+		readwrite CompA;
+	}
+}
