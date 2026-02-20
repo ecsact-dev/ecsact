@@ -90,6 +90,7 @@ auto main(int argc, char* argv[]) -> int {
 							},
 						},
 					},
+					{"definitionProvider", true},
 				},
 			},
 			{
@@ -100,6 +101,20 @@ auto main(int argc, char* argv[]) -> int {
 				},
 			},
 		};
+	});
+
+	manager.set_request_handler("textDocument/definition", [&](json params) -> json {
+		auto definition_params = params.get<ecsact_lsp::definition_params>();
+		auto result = workspace_manager.goto_definition(
+			definition_params.textDocument.uri,
+			definition_params.position
+		);
+
+		if(result) {
+			return *result;
+		}
+
+		return "null"_json;
 	});
 
 	manager.add_notification_listener("initialized", [&](json) {

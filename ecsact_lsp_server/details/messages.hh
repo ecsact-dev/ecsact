@@ -114,6 +114,28 @@ struct range {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
+ */
+struct location {
+	std::string       uri;
+	ecsact_lsp::range range;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(location, uri, range);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
+ */
+struct definition_params {
+	text_document_identifier textDocument;
+	position                 position;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(definition_params, textDocument, position);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity
  */
 enum class diagnostic_severity {
