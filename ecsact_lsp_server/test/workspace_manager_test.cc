@@ -219,3 +219,96 @@ cluster {
 	}
 	EXPECT_TRUE(found_error) << "Expected error for cluster conflict";
 }
+
+TEST(WorkspaceManager, GotoDefinition) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+
+component CompA {
+	i32 a;
+}
+
+system SysA {
+	readonly CompA;
+}
+
+action ActA {
+	readwrite CompA;
+}
+
+transient TransA {
+	i32 b;
+}
+
+system SysB {
+	readonly TransA;
+	generates {
+		required CompA;
+	}
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Goto definition for CompA in SysA
+	// readonly CompA; is at line 8 (0-indexed)
+	auto result = manager.goto_definition(uri, {8, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri);
+	EXPECT_EQ(result->range.start.line, 3); // component CompA { is at line 3
+
+	// Goto definition for CompA in ActA
+	// readwrite CompA; is at line 12
+	result = manager.goto_definition(uri, {12, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri);
+	EXPECT_EQ(result->range.start.line, 3);
+
+	// Goto definition for TransA in SysB
+	// readonly TransA; is at line 20
+	result = manager.goto_definition(uri, {20, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri);
+	EXPECT_EQ(result->range.start.line, 15); // transient TransA is at line 15
+
+	// Goto definition for CompA in SysB generates block
+	// required CompA; is at line 22
+	result = manager.goto_definition(uri, {22, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri);
+	EXPECT_EQ(result->range.start.line, 3);
+}
+
+TEST(WorkspaceManager, GotoDefinitionMultiFile) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package b;
+import a;
+system SysB {
+	readonly a.CompA;
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Goto definition for a.CompA in SysB
+	// readonly a.CompA; is at line 4
+	auto result = manager.goto_definition(uri_b, {4, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri_a);
+	EXPECT_EQ(result->range.start.line, 2); // component CompA is at line 2
+}

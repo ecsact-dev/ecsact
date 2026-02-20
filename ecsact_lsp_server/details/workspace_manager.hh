@@ -494,6 +494,136 @@ public:
 
 	auto remove_document(std::string uri) -> void {
 	}
+
+	auto goto_definition(std::string uri, position pos)
+		-> std::optional<location> {
+		auto doc_it = _documents.find(uri);
+		if(doc_it == _documents.end()) {
+			return std::nullopt;
+		}
+
+		auto& doc = doc_it->second;
+
+		std::string symbol_name;
+
+		for(auto& stack : doc.parse_stacks) {
+			if(stack.empty()) {
+				continue;
+			}
+
+			auto& statement = stack.back();
+
+			auto get_name_if_in_range =
+				[&](const ecsact_statement_sv& sv) -> std::string {
+				auto r = get_source_range(doc.full_text, sv);
+				if(pos.line == r.start.line && pos.character >= r.start.character &&
+					 pos.character <= r.end.character) {
+					return std::string{sv.data, static_cast<size_t>(sv.length)};
+				}
+				return "";
+			};
+
+			if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
+				symbol_name = get_name_if_in_range(
+					statement.data.system_component_statement.component_name
+				);
+			} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
+				symbol_name = get_name_if_in_range(
+					statement.data.entity_constraint_statement.constraint_component_name
+				);
+			} else if(statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
+				symbol_name = get_name_if_in_range(
+					statement.data.system_notify_component_statement.component_name
+				);
+			} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
+				symbol_name = get_name_if_in_range(
+					statement.data.user_type_field_statement.user_type_name
+				);
+			}
+
+			if(!symbol_name.empty()) {
+				break;
+			}
+		}
+
+		if(symbol_name.empty()) {
+			return std::nullopt;
+		}
+
+		auto last_dot = symbol_name.find_last_of('.');
+		auto short_name = last_dot == std::string::npos
+			? symbol_name
+			: symbol_name.substr(last_dot + 1);
+
+		for(auto& [doc_uri, doc_state] : _documents) {
+			for(auto& stack : doc_state.parse_stacks) {
+				if(stack.empty()) {
+					continue;
+				}
+				auto& statement = stack.back();
+				if(statement.type == ECSACT_STATEMENT_COMPONENT) {
+					auto& data = statement.data.component_statement;
+					if(std::string_view{
+							 data.component_name.data,
+							 static_cast<size_t>(data.component_name.length)
+						 } == short_name) {
+						return location{
+							.uri = doc_uri,
+							.range =
+								get_source_range(doc_state.full_text, data.component_name),
+						};
+					}
+				} else if(statement.type == ECSACT_STATEMENT_TRANSIENT) {
+					auto& data = statement.data.transient_statement;
+					if(std::string_view{
+							 data.transient_name.data,
+							 static_cast<size_t>(data.transient_name.length)
+						 } == short_name) {
+						return location{
+							.uri = doc_uri,
+							.range =
+								get_source_range(doc_state.full_text, data.transient_name),
+						};
+					}
+				} else if(statement.type == ECSACT_STATEMENT_SYSTEM) {
+					auto& data = statement.data.system_statement;
+					if(std::string_view{
+							 data.system_name.data,
+							 static_cast<size_t>(data.system_name.length)
+						 } == short_name) {
+						return location{
+							.uri = doc_uri,
+							.range = get_source_range(doc_state.full_text, data.system_name),
+						};
+					}
+				} else if(statement.type == ECSACT_STATEMENT_ACTION) {
+					auto& data = statement.data.action_statement;
+					if(std::string_view{
+							 data.action_name.data,
+							 static_cast<size_t>(data.action_name.length)
+						 } == short_name) {
+						return location{
+							.uri = doc_uri,
+							.range = get_source_range(doc_state.full_text, data.action_name),
+						};
+					}
+				} else if(statement.type == ECSACT_STATEMENT_ENUM) {
+					auto& data = statement.data.enum_statement;
+					if(std::string_view{
+							 data.enum_name.data,
+							 static_cast<size_t>(data.enum_name.length)
+						 } == short_name) {
+						return location{
+							.uri = doc_uri,
+							.range = get_source_range(doc_state.full_text, data.enum_name),
+						};
+					}
+				}
+			}
+		}
+
+		return std::nullopt;
+	}
 };
 
 template<send_interface Send>
