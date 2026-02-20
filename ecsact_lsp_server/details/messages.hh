@@ -136,6 +136,56 @@ struct definition_params {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markupKind
+ */
+enum class markup_kind {
+	plaintext,
+	markdown,
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+	markup_kind,
+	{
+		{markup_kind::plaintext, "plaintext"},
+		{markup_kind::markdown, "markdown"},
+	}
+)
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markupContent
+ */
+struct markup_content {
+	markup_kind kind;
+	std::string value;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(markup_content, kind, value);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hover
+ */
+struct hover {
+	markup_content    contents;
+	std::optional<range> range;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(hover, contents, range);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverParams
+ */
+struct hover_params {
+	text_document_identifier textDocument;
+	position                 position;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(hover_params, textDocument, position);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity
  */
 enum class diagnostic_severity {

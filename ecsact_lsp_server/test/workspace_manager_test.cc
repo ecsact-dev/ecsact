@@ -3,6 +3,7 @@
 #include <string>
 #include <functional>
 #include <optional>
+#include <iostream>
 #include "ecsact_lsp_server/details/workspace_manager.hh"
 
 struct mock_sender {
@@ -311,4 +312,49 @@ system SysB {
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->uri, uri_a);
 	EXPECT_EQ(result->range.start.line, 2); // component CompA is at line 2
+}
+
+TEST(WorkspaceManager, Hover) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+
+component CompA {
+	i32 a;
+}
+
+system SysA {
+	readonly CompA;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Hover over CompA definition
+	auto result = manager.get_hover(uri, {3, 12});
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->contents.value.find("component `CompA`") != std::string::npos) << result->contents.value;
+
+	// Hover over field a
+	result = manager.get_hover(uri, {4, 5});
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->contents.value.find("field `CompA.a`") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("type: `i32`") != std::string::npos) << result->contents.value;
+
+	// Hover over SysA definition
+	result = manager.get_hover(uri, {7, 8});
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->contents.value.find("system") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("SysA") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("**Execution Batch 0 systems:**") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("- **`test.SysA`** (this)") != std::string::npos) << result->contents.value;
+
+	// Hover over CompA in SysA (system capability)
+	result = manager.get_hover(uri, {8, 12});
+	ASSERT_TRUE(result.has_value());
+	// It should show info for CompA
+	ASSERT_TRUE(result->contents.value.find("component `CompA`") != std::string::npos) << result->contents.value;
 }
