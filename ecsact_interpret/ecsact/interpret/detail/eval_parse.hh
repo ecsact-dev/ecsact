@@ -441,6 +441,14 @@ void parse_eval_declarations(
 			file_state.reader.statements.data()
 		);
 
+		if(eval_err.code == ECSACT_EVAL_ERR_UNEXPECTED_STATEMENT) {
+			auto type = file_state.reader.statements.top().type;
+			if(type == ECSACT_STATEMENT_PACKAGE || type == ECSACT_STATEMENT_IMPORT) {
+				file_state.reader.pump_status_code();
+				continue;
+			}
+		}
+
 		if(eval_err.code == ECSACT_EVAL_OK) {
 			ecsact::detail::check_file_eval_error(
 				eval_err,

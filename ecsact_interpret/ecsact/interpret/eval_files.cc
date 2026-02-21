@@ -113,16 +113,26 @@ std::vector<parse_eval_error> ecsact::eval_files(std::vector<fs::path> files) {
 		file_state.reader.stream.open(file_path);
 	}
 
+	auto reset_readers = [&file_states] {
+		for(auto& state : file_states) {
+			state.reader.stream.close();
+			state.reader.stream.open(state.file_path);
+			state.reader.reset();
+		}
+	};
+
 	parse_package_statements(file_states, errors);
 	if(!errors.empty()) {
 		return errors;
 	}
 
+	reset_readers();
 	parse_imports(file_states, errors);
 	if(!errors.empty()) {
 		return errors;
 	}
 
+	reset_readers();
 	check_unknown_imports(file_states, errors);
 	if(!errors.empty()) {
 		return errors;
@@ -138,6 +148,7 @@ std::vector<parse_eval_error> ecsact::eval_files(std::vector<fs::path> files) {
 		return errors;
 	}
 
+	reset_readers();
 	auto sorted_file_states = get_sorted_states(file_states);
 	auto source_index = 0;
 	for(auto& file_state_ref : sorted_file_states) {

@@ -1034,6 +1034,39 @@ static bool collect_all_caps(
 		}
 	}
 
+	auto assoc_count = ecsact_meta_system_assoc_count(system_id);
+	if(assoc_count > 0) {
+		std::vector<ecsact_system_assoc_id> assoc_ids(assoc_count);
+		ecsact_meta_system_assoc_ids(
+			system_id,
+			assoc_count,
+			assoc_ids.data(),
+			nullptr
+		);
+
+		for(auto assoc_id : assoc_ids) {
+			auto cap_count =
+				ecsact_meta_system_assoc_capabilities_count(system_id, assoc_id);
+			std::vector<ecsact_component_like_id> comp_ids(cap_count);
+			std::vector<ecsact_system_capability> caps(cap_count);
+			ecsact_meta_system_assoc_capabilities(
+				system_id,
+				assoc_id,
+				cap_count,
+				comp_ids.data(),
+				caps.data(),
+				nullptr
+			);
+
+			for(int i = 0; i < cap_count; ++i) {
+				out_caps[comp_ids[i]] = static_cast<ecsact_system_capability>(
+					static_cast<uint32_t>(out_caps[comp_ids[i]]) |
+					static_cast<uint32_t>(caps[i])
+				);
+			}
+		}
+	}
+
 	return independent;
 }
 
@@ -1066,6 +1099,19 @@ static ecsact_execution_batches_error calculate_execution_batches(
 
 	auto is_reader = [](ecsact_system_capability cap) -> bool {
 		return (cap & ECSACT_SYS_CAP_READONLY) != 0;
+	};
+
+	auto is_structural = [](ecsact_system_capability cap) -> bool {
+		if((cap & ECSACT_SYS_CAP_ADDS) == ECSACT_SYS_CAP_ADDS) {
+			return true;
+		}
+		if((cap & ECSACT_SYS_CAP_REMOVES) == ECSACT_SYS_CAP_REMOVES) {
+			return true;
+		}
+		if((cap & ECSACT_SYS_CAP_STREAM_TOGGLE) != 0) {
+			return true;
+		}
+		return false;
 	};
 
 	auto finalize_batch = [&]() {
@@ -1125,6 +1171,7 @@ static ecsact_execution_batches_error calculate_execution_batches(
 		for(auto const& [comp_id, cap] : all_caps) {
 			ecsact_system_like_id conflicting_sys_id =
 				static_cast<ecsact_system_like_id>(-1);
+			ecsact_system_capability conflicting_sys_cap = ECSACT_SYS_CAP_NONE;
 
 			if(is_exclusive(cap)) {
 				if(batch_readers.contains(comp_id) || batch_writers.contains(comp_id)) {
@@ -1136,6 +1183,7 @@ static ecsact_execution_batches_error calculate_execution_batches(
 							auto other_cap = other_caps.at(comp_id);
 							if(is_reader(other_cap) || is_exclusive(other_cap)) {
 								conflicting_sys_id = other_sys_id;
+								conflicting_sys_cap = other_cap;
 								break;
 							}
 						}
@@ -1151,6 +1199,7 @@ static ecsact_execution_batches_error calculate_execution_batches(
 							auto other_cap = other_caps.at(comp_id);
 							if(is_exclusive(other_cap)) {
 								conflicting_sys_id = other_sys_id;
+								conflicting_sys_cap = other_cap;
 								break;
 							}
 						}
@@ -1159,7 +1208,9 @@ static ecsact_execution_batches_error calculate_execution_batches(
 			}
 
 			if(static_cast<int32_t>(conflicting_sys_id) != -1) {
-				if(!are_mutually_exclusive(system_id, conflicting_sys_id)) {
+				bool structural =
+					is_structural(cap) || is_structural(conflicting_sys_cap);
+				if(structural || !are_mutually_exclusive(system_id, conflicting_sys_id)) {
 					return {
 						.system_id = system_id,
 						.conflicting_system_id = conflicting_sys_id,
