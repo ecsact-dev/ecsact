@@ -99,7 +99,13 @@ auto main(int argc, char* argv[]) -> int {
 					},
 					{"definitionProvider", true},
 					{"hoverProvider", true},
-					{"completionProvider", {{"resolveProvider", false}}},
+					{
+						"completionProvider",
+						{
+							{"resolveProvider", false},
+							{"triggerCharacters", {"."}},
+						},
+					},
 				},
 			},
 			{

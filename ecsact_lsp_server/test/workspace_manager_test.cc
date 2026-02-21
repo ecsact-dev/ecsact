@@ -480,3 +480,36 @@ system SysB {
 	EXPECT_TRUE(found_comp_a);
 	EXPECT_TRUE(found_full_comp_a);
 }
+
+TEST(WorkspaceManager, DotCompletion) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package package_a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package package_b;
+import package_a;
+system SysB {
+	readonly package_a.
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Completion for 'readonly package_a.'
+	// line 4, character 20 (after the dot)
+	auto result = manager.get_completions(uri_b, {4, 20});
+	ASSERT_TRUE(result.has_value());
+	bool found_comp_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "CompA") found_comp_a = true;
+	}
+	EXPECT_TRUE(found_comp_a);
+}

@@ -1087,6 +1087,16 @@ public:
 			trimmed_line.remove_prefix(first_non_space);
 		}
 
+		// What is the word immediately before the cursor?
+		std::string word_before;
+		if(pos.character > 0 && pos.character <= current_line.size()) {
+			auto start = pos.character;
+			while(start > 0 && (std::isalnum(current_line[start - 1]) || current_line[start - 1] == '_' || current_line[start - 1] == '.')) {
+				start--;
+			}
+			word_before = current_line.substr(start, pos.character - start);
+		}
+
 		completion_list result{.isIncomplete = false};
 
 		if(trimmed_line.starts_with("import")) {
@@ -1129,22 +1139,37 @@ public:
 			}
 
 			if(is_cap_line) {
+				std::string filter_pkg;
+				if(auto dot_pos = word_before.find_last_of('.'); dot_pos != std::string::npos) {
+					filter_pkg = word_before.substr(0, dot_pos);
+				}
+
 				std::set<std::string> component_names;
 				for(auto& [d_uri, d_state] : _documents) {
-					std::string pkg_prefix;
+					std::string doc_pkg;
 					for(auto& stack : d_state.parse_stacks) {
 						if(stack.empty()) continue;
 						if(stack.front().type == ECSACT_STATEMENT_PACKAGE) {
-							pkg_prefix = get_name_from_sv(stack.front().data.package_statement.package_name) + ".";
+							doc_pkg = get_name_from_sv(stack.front().data.package_statement.package_name);
 						}
+						
+						if(!filter_pkg.empty() && doc_pkg != filter_pkg) {
+							continue;
+						}
+
 						auto& stmt = stack.back();
 						if(stmt.type == ECSACT_STATEMENT_COMPONENT || stmt.type == ECSACT_STATEMENT_TRANSIENT) {
 							auto name = (stmt.type == ECSACT_STATEMENT_COMPONENT)
 								? get_name_from_sv(stmt.data.component_statement.component_name)
 								: get_name_from_sv(stmt.data.transient_statement.transient_name);
-							component_names.insert(name);
-							if(!pkg_prefix.empty()) {
-								component_names.insert(pkg_prefix + name);
+							
+							if(filter_pkg.empty()) {
+								component_names.insert(name);
+								if(!doc_pkg.empty()) {
+									component_names.insert(doc_pkg + "." + name);
+								}
+							} else {
+								component_names.insert(name);
 							}
 						}
 					}
