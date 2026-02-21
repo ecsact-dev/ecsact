@@ -20,6 +20,9 @@ cc_binary(
         "system_impls.cc",
     ],
     copts = copts,
+    defines = [
+        "ECSACT_DYNAMIC_API_IMPORT",
+    ],
     features = [
         "-exceptions",
     ],
