@@ -246,7 +246,11 @@ void ecsact_add_dependency(
 ) {
 	auto pkg_itr = package_defs.find(target);
 	if(pkg_itr != package_defs.end()) {
-		pkg_itr->second.dependencies.push_back(dependency);
+		auto& deps = pkg_itr->second.dependencies;
+		auto  itr = std::find(deps.begin(), deps.end(), dependency);
+		if(itr == deps.end()) {
+			deps.push_back(dependency);
+		}
 	}
 }
 

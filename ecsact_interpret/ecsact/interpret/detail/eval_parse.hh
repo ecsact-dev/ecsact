@@ -288,6 +288,10 @@ void parse_imports(
 					state.reader.pump_status_code();
 					continue;
 				}
+				if(statement.type == ECSACT_STATEMENT_PACKAGE) {
+					state.reader.pump_status_code();
+					continue;
+				}
 				if(statement.type != ECSACT_STATEMENT_IMPORT) {
 					state.reader.pop_rewind();
 					break;
