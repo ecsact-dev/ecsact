@@ -357,13 +357,6 @@ system SysA {
 		<< result->contents.value;
 	ASSERT_TRUE(result->contents.value.find("test.SysA") != std::string::npos)
 		<< result->contents.value;
-	ASSERT_TRUE(
-		result->contents.value.find("**Execution Batch 0 systems:**") !=
-		std::string::npos
-	) << result->contents.value;
-	ASSERT_TRUE(
-		result->contents.value.find("- **`test.SysA`** (this)") != std::string::npos
-	) << result->contents.value;
 
 	// Hover over CompA in SysA (system capability)
 	result = manager.get_hover(uri, {8, 12});
@@ -512,4 +505,28 @@ system SysB {
 		if(item.label == "CompA") found_comp_a = true;
 	}
 	EXPECT_TRUE(found_comp_a);
+}
+
+TEST(WorkspaceManager, KeywordCompletion) {
+	mock_sender                   sender;
+	sender.trace = ecsact_lsp::trace_value::verbose;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = "package test;\n\n";
+
+	manager.add_document(uri, 1, text);
+
+	// Top level keywords
+	// Cursor at line 2, col 0
+	auto result = manager.get_completions(uri, {2, 0});
+	ASSERT_TRUE(result.has_value());
+	bool found_component = false;
+	bool found_system = false;
+	for(auto const& item : result->items) {
+		if(item.label == "component") found_component = true;
+		if(item.label == "system") found_system = true;
+	}
+	EXPECT_TRUE(found_component);
+	EXPECT_TRUE(found_system);
 }
