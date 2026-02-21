@@ -1527,6 +1527,138 @@ public:
 
 		return std::nullopt;
 	}
+
+	auto get_code_lenses(std::string uri) -> std::vector<code_lens> {
+		auto result = std::vector<code_lens>{};
+		auto doc_it = _documents.find(uri);
+		if(doc_it == _documents.end() || !doc_it->second.package_id) {
+			return result;
+		}
+
+		auto& doc = doc_it->second;
+
+		for(auto& info : doc.stacks) {
+			if(info.stack.empty()) {
+				continue;
+			}
+
+			auto& statement = info.stack.back();
+			auto  name_sv = ecsact_statement_sv{};
+
+			if(statement.type == ECSACT_STATEMENT_SYSTEM) {
+				name_sv = statement.data.system_statement.system_name;
+			} else if(statement.type == ECSACT_STATEMENT_ACTION) {
+				name_sv = statement.data.action_statement.action_name;
+			}
+
+			if(name_sv.data != nullptr) {
+				auto sys_id = static_cast<ecsact_system_like_id>(statement.id);
+				auto batch_count = ecsact_meta_count_execution_batches(*doc.package_id);
+				auto batch_idx = -1;
+
+				for(int32_t i = 0; batch_count > i; ++i) {
+					int32_t                            systems_count = 0;
+					int32_t                            max_systems = 256;
+					std::vector<ecsact_system_like_id> systems(max_systems);
+					ecsact_meta_get_execution_batch(
+						*doc.package_id,
+						i,
+						max_systems,
+						systems.data(),
+						&systems_count
+					);
+
+					for(int32_t j = 0; systems_count > j; ++j) {
+						if(systems[j] == sys_id) {
+							batch_idx = i;
+							break;
+						}
+					}
+
+					if(batch_idx != -1) {
+						break;
+					}
+				}
+
+				if(batch_idx != -1) {
+					auto& lens = result.emplace_back();
+					lens.range = get_source_range(doc.full_text, name_sv);
+					lens.command = command{
+						.title = "Execution Block: " + std::to_string(batch_idx),
+						.command_name = "",
+					};
+				}
+			}
+		}
+
+		return result;
+	}
+
+	auto get_inlay_hints(std::string uri, range r) -> std::vector<inlay_hint> {
+		auto result = std::vector<inlay_hint>{};
+		auto doc_it = _documents.find(uri);
+		if(doc_it == _documents.end() || !doc_it->second.package_id) {
+			return result;
+		}
+
+		auto& doc = doc_it->second;
+
+		for(auto& info : doc.stacks) {
+			if(info.stack.empty()) {
+				continue;
+			}
+
+			auto& statement = info.stack.back();
+			auto  name_sv = ecsact_statement_sv{};
+
+			if(statement.type == ECSACT_STATEMENT_SYSTEM) {
+				name_sv = statement.data.system_statement.system_name;
+			} else if(statement.type == ECSACT_STATEMENT_ACTION) {
+				name_sv = statement.data.action_statement.action_name;
+			}
+
+			if(name_sv.data != nullptr) {
+				auto sys_id = static_cast<ecsact_system_like_id>(statement.id);
+				auto batch_count = ecsact_meta_count_execution_batches(*doc.package_id);
+				auto batch_idx = -1;
+
+				for(int32_t i = 0; batch_count > i; ++i) {
+					auto systems_count = 0;
+					auto max_systems = 256;
+					auto systems = std::vector<ecsact_system_like_id>(max_systems);
+					ecsact_meta_get_execution_batch(
+						*doc.package_id,
+						i,
+						max_systems,
+						systems.data(),
+						&systems_count
+					);
+
+					for(int32_t j = 0; systems_count > j; ++j) {
+						if(systems[j] == sys_id) {
+							batch_idx = i;
+							break;
+						}
+					}
+
+					if(batch_idx != -1) {
+						break;
+					}
+				}
+
+				if(batch_idx != -1) {
+					auto& hint = result.emplace_back();
+					auto  name_range = get_source_range(doc.full_text, name_sv);
+					hint.position = name_range.start;
+					hint.label = std::format("[{}]", batch_idx);
+					hint.paddingLeft = false;
+					hint.paddingRight = true;
+				}
+			}
+		}
+
+		return result;
+	}
 };
 
 template<send_interface Send>

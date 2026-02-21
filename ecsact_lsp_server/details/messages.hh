@@ -252,6 +252,74 @@ struct completion_params {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#command
+ */
+struct command {
+	std::string                                title;
+	std::string                                command_name;
+	std::optional<std::vector<nlohmann::json>> arguments;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(command, title, command_name, arguments);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLensParams
+ */
+struct code_lens_params {
+	text_document_identifier textDocument;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(code_lens_params, textDocument);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLens
+ */
+struct code_lens {
+	range                         range;
+	std::optional<command>        command;
+	std::optional<nlohmann::json> data;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(code_lens, range, command, data);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHintParams
+ */
+struct inlay_hint_params {
+	text_document_identifier textDocument;
+	range                    range;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(inlay_hint_params, textDocument, range);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHint
+ */
+struct inlay_hint {
+	position                      position;
+	std::string                   label;
+	std::optional<unsigned>       kind;
+	std::optional<nlohmann::json> data;
+	bool                          paddingLeft = false;
+	bool                          paddingRight = false;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		inlay_hint,
+		position,
+		label,
+		kind,
+		data,
+		paddingLeft,
+		paddingRight
+	);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity
  */
 enum class diagnostic_severity {
