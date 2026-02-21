@@ -126,8 +126,7 @@ inline auto builtin_type_name(ecsact_builtin_type type) -> std::string {
 		case ECSACT_ENTITY_TYPE:
 			return ECSACT_PARSE_KW_ENTITY;
 	}
-	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) +
-		")";
+	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) + ")";
 }
 
 template<typename E>
@@ -296,13 +295,10 @@ class workspace_manager {
 			doc.next_parse_view = parse_stack(current_parse_view, status, stack);
 
 			auto stack_end_ptr = doc.next_parse_view.data();
-			auto stack_range = get_source_range(
-				doc.full_text,
-				{
-					.data = stack_start_ptr,
-					.length = static_cast<int32_t>(stack_end_ptr - stack_start_ptr),
-				}
-			);
+			auto stack_range = get_source_range(doc.full_text, {
+				.data = stack_start_ptr,
+				.length = static_cast<int32_t>(stack_end_ptr - stack_start_ptr),
+			});
 
 			doc.stacks.push_back({.stack = stack, .range = stack_range});
 			doc.parse_stacks.push_back(stack);
@@ -660,8 +656,8 @@ public:
 					name_sv = statement.data.system_component_statement.component_name;
 					break;
 				case ECSACT_STATEMENT_ENTITY_CONSTRAINT:
-					name_sv = statement.data.entity_constraint_statement
-											.constraint_component_name;
+					name_sv =
+						statement.data.entity_constraint_statement.constraint_component_name;
 					break;
 				case ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT:
 					name_sv =
@@ -712,11 +708,8 @@ public:
 			return full_name ? std::string(full_name) : "";
 		};
 
-		auto build_decl_hover = [&](
-															int32_t                 id,
-															ecsact_statement_type   type,
-															const ecsact_statement& stmt
-														) {
+		auto build_decl_hover =
+			[&](int32_t id, ecsact_statement_type type, const ecsact_statement& stmt) {
 			auto name = get_full_name(id);
 			if(name.empty()) {
 				// fallback if meta doesn't have it yet or it's not in a package
@@ -734,10 +727,9 @@ public:
 				}
 
 				// Try to construct full name manually if it's just the short name
-				if(id != -1 && name != "unknown" &&
-					 name.find('.') == std::string::npos) {
+				if(id != -1 && name != "unknown" && name.find('.') == std::string::npos) {
 					std::vector<ecsact_package_id> packages;
-					auto                           doc_it = _documents.find(uri);
+					auto doc_it = _documents.find(uri);
 					if(doc_it != _documents.end() && doc_it->second.package_id) {
 						packages.push_back(*doc_it->second.package_id);
 					}
@@ -751,8 +743,7 @@ public:
 						&packages_count
 					);
 					for(int32_t i = 0; packages_count > i; ++i) {
-						if(doc_it == _documents.end() ||
-							 all_packages[i] != *doc_it->second.package_id) {
+						if(doc_it == _documents.end() || all_packages[i] != *doc_it->second.package_id) {
 							packages.push_back(all_packages[i]);
 						}
 					}
@@ -760,14 +751,9 @@ public:
 					for(auto package_id : packages) {
 						bool found = false;
 						if(type == ECSACT_STATEMENT_COMPONENT) {
-							int32_t count = ecsact_meta_count_components(package_id);
+							int32_t              count = ecsact_meta_count_components(package_id);
 							std::vector<ecsact_component_id> ids(count);
-							ecsact_meta_get_component_ids(
-								package_id,
-								count,
-								ids.data(),
-								&count
-							);
+							ecsact_meta_get_component_ids(package_id, count, ids.data(), &count);
 							for(auto comp_id : ids) {
 								if(static_cast<int32_t>(comp_id) == id) {
 									found = true;
@@ -775,14 +761,9 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_TRANSIENT) {
-							int32_t count = ecsact_meta_count_transients(package_id);
+							int32_t              count = ecsact_meta_count_transients(package_id);
 							std::vector<ecsact_transient_id> ids(count);
-							ecsact_meta_get_transient_ids(
-								package_id,
-								count,
-								ids.data(),
-								&count
-							);
+							ecsact_meta_get_transient_ids(package_id, count, ids.data(), &count);
 							for(auto trans_id : ids) {
 								if(static_cast<int32_t>(trans_id) == id) {
 									found = true;
@@ -790,7 +771,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_SYSTEM) {
-							int32_t count = ecsact_meta_count_systems(package_id);
+							int32_t              count = ecsact_meta_count_systems(package_id);
 							std::vector<ecsact_system_id> ids(count);
 							ecsact_meta_get_system_ids(package_id, count, ids.data(), &count);
 							for(auto sys_id : ids) {
@@ -800,7 +781,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_ACTION) {
-							int32_t count = ecsact_meta_count_actions(package_id);
+							int32_t              count = ecsact_meta_count_actions(package_id);
 							std::vector<ecsact_action_id> ids(count);
 							ecsact_meta_get_action_ids(package_id, count, ids.data(), &count);
 							for(auto act_id : ids) {
@@ -810,7 +791,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_ENUM) {
-							int32_t count = ecsact_meta_count_enums(package_id);
+							int32_t              count = ecsact_meta_count_enums(package_id);
 							std::vector<ecsact_enum_id> ids(count);
 							ecsact_meta_get_enum_ids(package_id, count, ids.data(), &count);
 							for(auto enum_id : ids) {
@@ -836,28 +817,14 @@ public:
 					for(auto& [doc_uri, doc_state] : _documents) {
 						bool has_decl = false;
 						for(auto& info : doc_state.stacks) {
-							if(info.stack.empty()) {
-								continue;
-							}
-							auto&       d_stmt = info.stack.back();
+							if(info.stack.empty()) continue;
+							auto& d_stmt = info.stack.back();
 							std::string d_name;
-							if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
-								d_name = get_name_from_sv(
-									d_stmt.data.component_statement.component_name
-								);
-							} else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) {
-								d_name = get_name_from_sv(
-									d_stmt.data.transient_statement.transient_name
-								);
-							} else if(d_stmt.type == ECSACT_STATEMENT_SYSTEM) {
-								d_name =
-									get_name_from_sv(d_stmt.data.system_statement.system_name);
-							} else if(d_stmt.type == ECSACT_STATEMENT_ACTION) {
-								d_name =
-									get_name_from_sv(d_stmt.data.action_statement.action_name);
-							} else if(d_stmt.type == ECSACT_STATEMENT_ENUM) {
-								d_name = get_name_from_sv(d_stmt.data.enum_statement.enum_name);
-							}
+							if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) d_name = get_name_from_sv(d_stmt.data.component_statement.component_name);
+							else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) d_name = get_name_from_sv(d_stmt.data.transient_statement.transient_name);
+							else if(d_stmt.type == ECSACT_STATEMENT_SYSTEM) d_name = get_name_from_sv(d_stmt.data.system_statement.system_name);
+							else if(d_stmt.type == ECSACT_STATEMENT_ACTION) d_name = get_name_from_sv(d_stmt.data.action_statement.action_name);
+							else if(d_stmt.type == ECSACT_STATEMENT_ENUM) d_name = get_name_from_sv(d_stmt.data.enum_statement.enum_name);
 
 							if(d_name == name) {
 								has_decl = true;
@@ -867,14 +834,10 @@ public:
 
 						if(has_decl) {
 							for(auto& info : doc_state.stacks) {
-								if(info.stack.empty()) {
-									continue;
-								}
+								if(info.stack.empty()) continue;
 								auto& d_stmt = info.stack.front();
 								if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
-									auto pkg_name = get_name_from_sv(
-										d_stmt.data.package_statement.package_name
-									);
+									auto pkg_name = get_name_from_sv(d_stmt.data.package_statement.package_name);
 									if(!pkg_name.empty()) {
 										name = pkg_name + "." + name;
 									}
@@ -893,7 +856,7 @@ public:
 				auto sys_like_id = static_cast<ecsact_system_like_id>(id);
 
 				std::vector<ecsact_package_id> packages;
-				auto                           doc_it = _documents.find(uri);
+				auto doc_it = _documents.find(uri);
 				if(doc_it != _documents.end() && doc_it->second.package_id) {
 					packages.push_back(*doc_it->second.package_id);
 				}
@@ -907,109 +870,91 @@ public:
 					&packages_count
 				);
 				for(int32_t i = 0; packages_count > i; ++i) {
-					if(doc_it == _documents.end() ||
-						 all_packages[i] != *doc_it->second.package_id) {
+					if(doc_it == _documents.end() || all_packages[i] != *doc_it->second.package_id) {
 						packages.push_back(all_packages[i]);
 					}
 				}
 
-				auto add_batch_info =
-					[&](auto package_or_sys_id, int32_t i, bool is_sys) {
-						int32_t                            systems_count = 0;
-						std::vector<ecsact_system_like_id> systems;
-						int32_t                            max_systems = 256;
-						systems.resize(max_systems);
-						if(is_sys) {
-							ecsact_meta_get_system_execution_batch(
-								static_cast<ecsact_system_like_id>(package_or_sys_id),
-								i,
-								max_systems,
-								systems.data(),
-								&systems_count
-							);
-						} else {
-							ecsact_meta_get_execution_batch(
-								static_cast<ecsact_package_id>(package_or_sys_id),
-								i,
-								max_systems,
-								systems.data(),
-								&systems_count
-							);
+				auto add_batch_info = [&](auto package_or_sys_id, int32_t i, bool is_sys) {
+					int32_t                            systems_count = 0;
+					std::vector<ecsact_system_like_id> systems;
+					int32_t                            max_systems = 256;
+					systems.resize(max_systems);
+					if(is_sys) {
+						ecsact_meta_get_system_execution_batch(
+							static_cast<ecsact_system_like_id>(package_or_sys_id),
+							i,
+							max_systems,
+							systems.data(),
+							&systems_count
+						);
+					} else {
+						ecsact_meta_get_execution_batch(
+							static_cast<ecsact_package_id>(package_or_sys_id),
+							i,
+							max_systems,
+							systems.data(),
+							&systems_count
+						);
+					}
+					bool in_batch = false;
+					for(int32_t j = 0; systems_count > j; ++j) {
+						if(systems[j] == sys_like_id) {
+							in_batch = true;
+							break;
 						}
-						bool in_batch = false;
+					}
+
+					if(in_batch) {
+						hover_text += std::format("\n**Execution Batch {} systems:**\n", i);
 						for(int32_t j = 0; systems_count > j; ++j) {
-							if(systems[j] == sys_like_id) {
-								in_batch = true;
-								break;
-							}
-						}
-
-						if(in_batch) {
-							hover_text +=
-								std::format("\n**Execution Batch {} systems:**\n", i);
-							for(int32_t j = 0; systems_count > j; ++j) {
-								auto other_sys_id = systems[j];
-								auto other_name =
-									get_full_name(static_cast<int32_t>(other_sys_id));
-								if(other_name.empty()) {
-									if(ecsact_meta_is_system(other_sys_id)) {
-										other_name = ecsact_meta_system_name(
-											static_cast<ecsact_system_id>(other_sys_id)
-										);
-									} else if(ecsact_meta_is_action(other_sys_id)) {
-										other_name = ecsact_meta_action_name(
-											static_cast<ecsact_action_id>(other_sys_id)
-										);
-									}
-								}
-
-								if(other_sys_id == sys_like_id) {
-									hover_text += std::format(" - **`{}`** (this)\n", other_name);
-								} else {
-									hover_text += std::format(" - `{}`\n", other_name);
+							auto other_sys_id = systems[j];
+							auto other_name =
+								get_full_name(static_cast<int32_t>(other_sys_id));
+							if(other_name.empty()) {
+								if(ecsact_meta_is_system(other_sys_id)) {
+									other_name = ecsact_meta_system_name(
+										static_cast<ecsact_system_id>(other_sys_id)
+									);
+								} else if(ecsact_meta_is_action(other_sys_id)) {
+									other_name = ecsact_meta_action_name(
+										static_cast<ecsact_action_id>(other_sys_id)
+									);
 								}
 							}
-							return true;
+
+							if(other_sys_id == sys_like_id) {
+								hover_text += std::format(" - **`{}`** (this)\n", other_name);
+							} else {
+								hover_text += std::format(" - `{}`\n", other_name);
+							}
 						}
-						return false;
-					};
+						return true;
+					}
+					return false;
+				};
 
 				for(auto package_id : packages) {
 					int32_t batch_count = ecsact_meta_count_execution_batches(package_id);
 					for(int32_t i = 0; batch_count > i; ++i) {
-						if(add_batch_info(package_id, i, false)) {
-							break;
-						}
+						if(add_batch_info(package_id, i, false)) break;
 					}
-					if(hover_text.find("Execution Batch") != std::string::npos) {
-						break;
-					}
+					if(hover_text.find("Execution Batch") != std::string::npos) break;
 
 					// Also check nested system execution batches
-					int32_t sys_count = ecsact_meta_count_systems(package_id);
+					int32_t              sys_count = ecsact_meta_count_systems(package_id);
 					std::vector<ecsact_system_id> sys_ids(sys_count);
-					ecsact_meta_get_system_ids(
-						package_id,
-						sys_count,
-						sys_ids.data(),
-						&sys_count
-					);
+					ecsact_meta_get_system_ids(package_id, sys_count, sys_ids.data(), &sys_count);
 					for(auto sys_id : sys_ids) {
 						int32_t s_batch_count = ecsact_meta_count_system_execution_batches(
 							static_cast<ecsact_system_like_id>(sys_id)
 						);
 						for(int32_t i = 0; s_batch_count > i; ++i) {
-							if(add_batch_info(sys_id, i, true)) {
-								break;
-							}
+							if(add_batch_info(sys_id, i, true)) break;
 						}
-						if(hover_text.find("Execution Batch") != std::string::npos) {
-							break;
-						}
+						if(hover_text.find("Execution Batch") != std::string::npos) break;
 					}
-					if(hover_text.find("Execution Batch") != std::string::npos) {
-						break;
-					}
+					if(hover_text.find("Execution Batch") != std::string::npos) break;
 				}
 			}
 		};
@@ -1028,16 +973,13 @@ public:
 				parent_name = get_full_name(p_id);
 				if(parent_name.empty()) {
 					if(parent.type == ECSACT_STATEMENT_ENUM) {
-						parent_name =
-							get_name_from_sv(parent.data.enum_statement.enum_name);
+						parent_name = get_name_from_sv(parent.data.enum_statement.enum_name);
 					}
 				}
 			}
-			auto value_name =
-				get_name_from_sv(statement.data.enum_value_statement.name);
+			auto value_name = get_name_from_sv(statement.data.enum_value_statement.name);
 			hover_text += "### enum value `" + parent_name + "." + value_name + "`\n";
-			hover_text +=
-				std::format("value: `{}`\n", statement.data.enum_value_statement.value);
+			hover_text += std::format("value: `{}`\n", statement.data.enum_value_statement.value);
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT ||
 							statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT ||
 							statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT ||
@@ -1056,13 +998,12 @@ public:
 					statement.data.system_notify_component_statement.component_name
 				);
 			} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
-				name = get_name_from_sv(
-					statement.data.user_type_field_statement.user_type_name
-				);
+				name =
+					get_name_from_sv(statement.data.user_type_field_statement.user_type_name);
 			}
 
 			std::string search_name = name;
-			auto        last_dot = search_name.find_last_of('.');
+			auto last_dot = search_name.find_last_of('.');
 			if(last_dot != std::string::npos) {
 				search_name = search_name.substr(last_dot + 1);
 			}
@@ -1073,14 +1014,12 @@ public:
 					if(info.stack.empty()) {
 						continue;
 					}
-					auto&       d_stmt = info.stack.back();
+					auto& d_stmt = info.stack.back();
 					std::string d_name;
 					if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
-						d_name =
-							get_name_from_sv(d_stmt.data.component_statement.component_name);
+						d_name = get_name_from_sv(d_stmt.data.component_statement.component_name);
 					} else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) {
-						d_name =
-							get_name_from_sv(d_stmt.data.transient_statement.transient_name);
+						d_name = get_name_from_sv(d_stmt.data.transient_statement.transient_name);
 					} else if(d_stmt.type == ECSACT_STATEMENT_SYSTEM) {
 						d_name = get_name_from_sv(d_stmt.data.system_statement.system_name);
 					} else if(d_stmt.type == ECSACT_STATEMENT_ACTION) {
@@ -1107,47 +1046,29 @@ public:
 				parent_name = get_full_name(parent.id);
 				if(parent_name.empty()) {
 					if(parent.type == ECSACT_STATEMENT_COMPONENT) {
-						parent_name =
-							get_name_from_sv(parent.data.component_statement.component_name);
+						parent_name = get_name_from_sv(parent.data.component_statement.component_name);
 					} else if(parent.type == ECSACT_STATEMENT_TRANSIENT) {
-						parent_name =
-							get_name_from_sv(parent.data.transient_statement.transient_name);
+						parent_name = get_name_from_sv(parent.data.transient_statement.transient_name);
 					} else if(parent.type == ECSACT_STATEMENT_ACTION) {
-						parent_name =
-							get_name_from_sv(parent.data.action_statement.action_name);
+						parent_name = get_name_from_sv(parent.data.action_statement.action_name);
 					}
 				}
 
 				// Construct parent full name if it's just short name
-				if(!parent_name.empty() && parent_name != "unknown" &&
-					 parent_name.find('.') == std::string::npos) {
+				if(!parent_name.empty() && parent_name != "unknown" && parent_name.find('.') == std::string::npos) {
 					for(auto& [doc_uri, doc_state] : _documents) {
 						for(auto& info : doc_state.stacks) {
-							if(info.stack.empty()) {
-								continue;
-							}
+							if(info.stack.empty()) continue;
 							auto& d_stmt = info.stack.front();
 							if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
 								bool has_parent_decl = false;
 								for(auto& info2 : doc_state.stacks) {
-									if(info2.stack.empty()) {
-										continue;
-									}
-									auto&       d_stmt2 = info2.stack.back();
+									if(info2.stack.empty()) continue;
+									auto& d_stmt2 = info2.stack.back();
 									std::string d_name;
-									if(d_stmt2.type == ECSACT_STATEMENT_COMPONENT) {
-										d_name = get_name_from_sv(
-											d_stmt2.data.component_statement.component_name
-										);
-									} else if(d_stmt2.type == ECSACT_STATEMENT_TRANSIENT) {
-										d_name = get_name_from_sv(
-											d_stmt2.data.transient_statement.transient_name
-										);
-									} else if(d_stmt2.type == ECSACT_STATEMENT_ACTION) {
-										d_name = get_name_from_sv(
-											d_stmt2.data.action_statement.action_name
-										);
-									}
+									if(d_stmt2.type == ECSACT_STATEMENT_COMPONENT) d_name = get_name_from_sv(d_stmt2.data.component_statement.component_name);
+									else if(d_stmt2.type == ECSACT_STATEMENT_TRANSIENT) d_name = get_name_from_sv(d_stmt2.data.transient_statement.transient_name);
+									else if(d_stmt2.type == ECSACT_STATEMENT_ACTION) d_name = get_name_from_sv(d_stmt2.data.action_statement.action_name);
 
 									if(d_name == parent_name) {
 										has_parent_decl = true;
@@ -1156,9 +1077,7 @@ public:
 								}
 
 								if(has_parent_decl) {
-									auto pkg_name = get_name_from_sv(
-										d_stmt.data.package_statement.package_name
-									);
+									auto pkg_name = get_name_from_sv(d_stmt.data.package_statement.package_name);
 									if(!pkg_name.empty()) {
 										parent_name = pkg_name + "." + parent_name;
 									}
@@ -1166,9 +1085,7 @@ public:
 								}
 							}
 						}
-						if(parent_name.find('.') != std::string::npos) {
-							break;
-						}
+						if(parent_name.find('.') != std::string::npos) break;
 					}
 				}
 			}
@@ -1177,19 +1094,13 @@ public:
 			std::string field_type_name;
 
 			if(statement.type == ECSACT_STATEMENT_BUILTIN_TYPE_FIELD) {
-				field_name =
-					get_name_from_sv(statement.data.field_statement.field_name);
-				field_type_name =
-					builtin_type_name(statement.data.field_statement.field_type);
+				field_name = get_name_from_sv(statement.data.field_statement.field_name);
+				field_type_name = builtin_type_name(statement.data.field_statement.field_type);
 			} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
-				field_name =
-					get_name_from_sv(statement.data.user_type_field_statement.field_name);
-				field_type_name = get_name_from_sv(
-					statement.data.user_type_field_statement.user_type_name
-				);
+				field_name = get_name_from_sv(statement.data.user_type_field_statement.field_name);
+				field_type_name = get_name_from_sv(statement.data.user_type_field_statement.user_type_name);
 			} else if(statement.type == ECSACT_STATEMENT_ENTITY_FIELD) {
-				field_name =
-					get_name_from_sv(statement.data.field_statement.field_name);
+				field_name = get_name_from_sv(statement.data.field_statement.field_name);
 				field_type_name = ECSACT_PARSE_KW_ENTITY;
 			}
 
@@ -1235,24 +1146,46 @@ public:
 		}
 
 		auto current_line = lines[pos.line];
-		auto line_view = std::string_view{current_line};
-		auto trimmed_line = line_view;
-		auto first_non_space = trimmed_line.find_first_not_of(" \t");
-		if(first_non_space != std::string_view::npos) {
-			trimmed_line.remove_prefix(first_non_space);
+		auto line_before_cursor = current_line.substr(0, pos.character);
+		auto trimmed_before = std::string_view{line_before_cursor};
+		auto first_non_space_before = trimmed_before.find_first_not_of(" \t");
+		if(first_non_space_before != std::string_view::npos) {
+			trimmed_before.remove_prefix(first_non_space_before);
+		} else {
+			trimmed_before = "";
 		}
 
+		// Count words before cursor on this line
+		int         word_count_before = 0;
+		bool        last_was_space = true;
+		std::string last_word;
+		for(char c : trimmed_before) {
+			if(std::isspace(c)) {
+				if(!last_was_space) {
+					word_count_before++;
+				}
+				last_was_space = true;
+			} else {
+				if(last_was_space) {
+					last_word = "";
+				}
+				last_word += c;
+				last_was_space = false;
+			}
+		}
+		// Don't count the word we are currently typing as a "full word before"
+		// unless there is a space after it.
+
 		// What is the word immediately before the cursor?
-		std::string word_before;
+		std::string word_at_cursor;
 		if(pos.character > 0 && pos.character <= current_line.size()) {
 			auto start = pos.character;
-			while(start > 0 &&
-						(std::isalnum(current_line[start - 1]) ||
-						 current_line[start - 1] == '_' ||
-						 current_line[start - 1] == '.')) {
+			while(start > 0 && (std::isalnum(current_line[start - 1]) ||
+													current_line[start - 1] == '_' ||
+													current_line[start - 1] == '.')) {
 				start--;
 			}
-			word_before = current_line.substr(start, pos.character - start);
+			word_at_cursor = current_line.substr(start, pos.character - start);
 		}
 
 		completion_list result{.isIncomplete = false};
@@ -1275,32 +1208,65 @@ public:
 
 		if(context_stack) {
 			for(auto const& stmt : *context_stack) {
-				if(stmt.type == ECSACT_STATEMENT_SYSTEM) {
-					inside_system = true;
-				}
-				if(stmt.type == ECSACT_STATEMENT_ACTION) {
-					inside_action = true;
-				}
+				if(stmt.type == ECSACT_STATEMENT_SYSTEM) inside_system = true;
+				if(stmt.type == ECSACT_STATEMENT_ACTION) inside_action = true;
 				if(stmt.type == ECSACT_STATEMENT_COMPONENT ||
-					 stmt.type == ECSACT_STATEMENT_TRANSIENT) {
+					 stmt.type == ECSACT_STATEMENT_TRANSIENT)
 					inside_component = true;
-				}
-				if(stmt.type == ECSACT_STATEMENT_ENUM) {
-					inside_enum = true;
-				}
-				if(stmt.type == ECSACT_STATEMENT_SYSTEM_GENERATES) {
+				if(stmt.type == ECSACT_STATEMENT_ENUM) inside_enum = true;
+				if(stmt.type == ECSACT_STATEMENT_SYSTEM_GENERATES)
 					inside_generates = true;
-				}
 			}
 		}
 
-		if(trimmed_line.starts_with(ECSACT_PARSE_KW_IMPORT)) {
+		static const std::vector<std::string> top_level_keywords = {
+			ECSACT_PARSE_KW_MAIN_PACKAGE,
+			ECSACT_PARSE_KW_PACKAGE,
+			ECSACT_PARSE_KW_IMPORT,
+			ECSACT_PARSE_KW_COMPONENT,
+			ECSACT_PARSE_KW_TRANSIENT,
+			ECSACT_PARSE_KW_SYSTEM,
+			ECSACT_PARSE_KW_ACTION,
+			ECSACT_PARSE_KW_ENUM,
+		};
+
+		static const std::vector<std::string> cap_keywords = {
+			ECSACT_PARSE_KW_READONLY,
+			ECSACT_PARSE_KW_READWRITE,
+			ECSACT_PARSE_KW_WRITEONLY,
+			ECSACT_PARSE_KW_ADDS,
+			ECSACT_PARSE_KW_REMOVES,
+			ECSACT_PARSE_KW_EXCLUDE,
+			ECSACT_PARSE_KW_INCLUDE,
+			ECSACT_PARSE_KW_REQUIRED,
+			ECSACT_PARSE_KW_GENERATES,
+		};
+
+		static const std::vector<std::string> generates_keywords = {
+			ECSACT_PARSE_KW_REQUIRED,
+			ECSACT_PARSE_KW_OPTIONAL,
+		};
+
+		static const std::vector<std::string> type_keywords = {
+			ECSACT_PARSE_KW_BOOL,
+			ECSACT_PARSE_KW_I8,
+			ECSACT_PARSE_KW_U8,
+			ECSACT_PARSE_KW_I16,
+			ECSACT_PARSE_KW_U16,
+			ECSACT_PARSE_KW_I32,
+			ECSACT_PARSE_KW_U32,
+			ECSACT_PARSE_KW_I64,
+			ECSACT_PARSE_KW_U64,
+			ECSACT_PARSE_KW_F32,
+			ECSACT_PARSE_KW_F64,
+			ECSACT_PARSE_KW_ENTITY,
+		};
+
+		if(trimmed_before.starts_with(ECSACT_PARSE_KW_IMPORT)) {
 			std::set<std::string> package_names;
 			for(auto& [d_uri, d_state] : _documents) {
 				for(auto& info : d_state.stacks) {
-					if(info.stack.empty()) {
-						continue;
-					}
+					if(info.stack.empty()) continue;
 					auto& stmt = info.stack.front();
 					if(stmt.type == ECSACT_STATEMENT_PACKAGE) {
 						package_names.insert(
@@ -1318,119 +1284,80 @@ public:
 				});
 			}
 		} else {
-			static const std::vector<std::string> top_level_keywords = {
-				ECSACT_PARSE_KW_MAIN_PACKAGE,
-				ECSACT_PARSE_KW_PACKAGE,
-				ECSACT_PARSE_KW_IMPORT,
-				ECSACT_PARSE_KW_COMPONENT,
-				ECSACT_PARSE_KW_TRANSIENT,
-				ECSACT_PARSE_KW_SYSTEM,
-				ECSACT_PARSE_KW_ACTION,
-				ECSACT_PARSE_KW_ENUM,
-			};
-
-			static const std::vector<std::string> cap_keywords = {
-				ECSACT_PARSE_KW_READONLY,
-				ECSACT_PARSE_KW_READWRITE,
-				ECSACT_PARSE_KW_WRITEONLY,
-				ECSACT_PARSE_KW_ADDS,
-				ECSACT_PARSE_KW_REMOVES,
-				ECSACT_PARSE_KW_EXCLUDE,
-				ECSACT_PARSE_KW_INCLUDE,
-				ECSACT_PARSE_KW_REQUIRED,
-				ECSACT_PARSE_KW_GENERATES,
-			};
-
-			static const std::vector<std::string> generates_keywords = {
-				ECSACT_PARSE_KW_REQUIRED,
-				ECSACT_PARSE_KW_OPTIONAL,
-			};
-
-			static const std::vector<std::string> type_keywords = {
-				ECSACT_PARSE_KW_BOOL,
-				ECSACT_PARSE_KW_I8,
-				ECSACT_PARSE_KW_U8,
-				ECSACT_PARSE_KW_I16,
-				ECSACT_PARSE_KW_U16,
-				ECSACT_PARSE_KW_I32,
-				ECSACT_PARSE_KW_U32,
-				ECSACT_PARSE_KW_I64,
-				ECSACT_PARSE_KW_U64,
-				ECSACT_PARSE_KW_F32,
-				ECSACT_PARSE_KW_F64,
-				ECSACT_PARSE_KW_ENTITY,
-			};
-
-			// Keyword suggestions
-			if(!inside_system && !inside_action && !inside_component &&
-				 !inside_enum) {
-				for(auto const& kw : top_level_keywords) {
-					result.items.push_back({
-						.label = kw,
-						.kind = completion_item_kind::keyword,
-					});
-				}
-			} else if(inside_system || inside_action) {
-				if(inside_generates) {
-					for(auto const& kw : generates_keywords) {
+			// Keyword suggestions - only if we are at the start of the line or haven't
+			// finished a keyword
+			if(word_count_before == 0) {
+				if(!inside_system && !inside_action && !inside_component &&
+					 !inside_enum) {
+					for(auto const& kw : top_level_keywords) {
 						result.items.push_back({
 							.label = kw,
 							.kind = completion_item_kind::keyword,
 						});
 					}
-				} else {
-					for(auto const& kw : cap_keywords) {
+				} else if(inside_system || inside_action) {
+					if(inside_generates) {
+						for(auto const& kw : generates_keywords) {
+							result.items.push_back({
+								.label = kw,
+								.kind = completion_item_kind::keyword,
+							});
+						}
+					} else {
+						for(auto const& kw : cap_keywords) {
+							result.items.push_back({
+								.label = kw,
+								.kind = completion_item_kind::keyword,
+							});
+						}
+						if(inside_system) {
+							result.items.push_back({
+								.label = ECSACT_PARSE_KW_SYSTEM,
+								.kind = completion_item_kind::keyword,
+							});
+						}
+					}
+				} else if(inside_component) {
+					for(auto const& kw : type_keywords) {
 						result.items.push_back({
 							.label = kw,
 							.kind = completion_item_kind::keyword,
 						});
 					}
-					if(inside_system) {
-						result.items.push_back({
-							.label = ECSACT_PARSE_KW_SYSTEM,
-							.kind = completion_item_kind::keyword,
-						});
+				}
+			}
+
+			// Component suggestions if we are after a capability keyword
+			bool after_cap_kw = false;
+			if(word_count_before >= 1) {
+				// Find the first word
+				auto first_word = std::string(trimmed_before.substr(0, trimmed_before.find_first_of(" \t")));
+				for(auto const& kw : cap_keywords) {
+					if(first_word == kw) {
+						after_cap_kw = true;
+						break;
 					}
 				}
-			} else if(inside_component) {
-				for(auto const& kw : type_keywords) {
-					result.items.push_back({
-						.label = kw,
-						.kind = completion_item_kind::keyword,
-					});
+				for(auto const& kw : generates_keywords) {
+					if(first_word == kw) {
+						after_cap_kw = true;
+						break;
+					}
 				}
 			}
 
-			// Component suggestions if starting with a cap keyword or already after
-			// one
-			bool is_cap_line = false;
-			for(auto const& cap : cap_keywords) {
-				if(trimmed_line.starts_with(cap)) {
-					is_cap_line = true;
-					break;
-				}
-			}
-			for(auto const& cap : generates_keywords) {
-				if(trimmed_line.starts_with(cap)) {
-					is_cap_line = true;
-					break;
-				}
-			}
-
-			if(is_cap_line) {
+			if(after_cap_kw) {
 				std::string filter_pkg;
-				if(auto dot_pos = word_before.find_last_of('.');
+				if(auto dot_pos = word_at_cursor.find_last_of('.');
 					 dot_pos != std::string::npos) {
-					filter_pkg = word_before.substr(0, dot_pos);
+					filter_pkg = word_at_cursor.substr(0, dot_pos);
 				}
 
 				std::set<std::string> component_names;
 				for(auto& [d_uri, d_state] : _documents) {
 					std::string doc_pkg;
 					for(auto& info : d_state.stacks) {
-						if(info.stack.empty()) {
-							continue;
-						}
+						if(info.stack.empty()) continue;
 						if(info.stack.front().type == ECSACT_STATEMENT_PACKAGE) {
 							doc_pkg = get_name_from_sv(
 								info.stack.front().data.package_statement.package_name
@@ -1446,9 +1373,7 @@ public:
 							 stmt.type == ECSACT_STATEMENT_TRANSIENT) {
 							auto name = (stmt.type == ECSACT_STATEMENT_COMPONENT)
 								? get_name_from_sv(stmt.data.component_statement.component_name)
-								: get_name_from_sv(
-										stmt.data.transient_statement.transient_name
-									);
+								: get_name_from_sv(stmt.data.transient_statement.transient_name);
 
 							if(filter_pkg.empty()) {
 								component_names.insert(name);
@@ -1492,24 +1417,17 @@ public:
 		std::string symbol_name;
 
 		if(statement.type == ECSACT_STATEMENT_IMPORT) {
-			symbol_name =
-				get_name_from_sv(statement.data.import_statement.import_package_name);
+			symbol_name = get_name_from_sv(statement.data.import_statement.import_package_name);
 			for(auto& [doc_uri, doc_state] : _documents) {
 				for(auto& info : doc_state.stacks) {
-					if(info.stack.empty()) {
-						continue;
-					}
+					if(info.stack.empty()) continue;
 					auto& d_stmt = info.stack.front();
 					if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
-						auto pkg_name =
-							get_name_from_sv(d_stmt.data.package_statement.package_name);
+						auto pkg_name = get_name_from_sv(d_stmt.data.package_statement.package_name);
 						if(pkg_name == symbol_name) {
 							return location{
 								.uri = doc_uri,
-								.range = get_source_range(
-									doc_state.full_text,
-									d_stmt.data.package_statement.package_name
-								),
+								.range = get_source_range(doc_state.full_text, d_stmt.data.package_statement.package_name),
 							};
 						}
 					}
@@ -1525,10 +1443,8 @@ public:
 			);
 		} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
 			symbol_name = std::string(
-				statement.data.entity_constraint_statement.constraint_component_name
-					.data,
-				statement.data.entity_constraint_statement.constraint_component_name
-					.length
+				statement.data.entity_constraint_statement.constraint_component_name.data,
+				statement.data.entity_constraint_statement.constraint_component_name.length
 			);
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
 			symbol_name = std::string(
@@ -1556,9 +1472,9 @@ public:
 				if(info.stack.empty()) {
 					continue;
 				}
-				auto&       d_stmt = info.stack.back();
+				auto& d_stmt = info.stack.back();
 				std::string d_name;
-				auto        name_sv = ecsact_statement_sv{};
+				auto name_sv = ecsact_statement_sv{};
 				if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
 					name_sv = d_stmt.data.component_statement.component_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) {
@@ -1574,28 +1490,21 @@ public:
 				d_name = get_name_from_sv(name_sv);
 
 				if(!d_name.empty() && d_name == short_name) {
-					// If the symbol_name has a package prefix, check if this document is
-					// in that package
+					// If the symbol_name has a package prefix, check if this document is in that package
 					if(last_dot != std::string::npos) {
 						std::string prefix = symbol_name.substr(0, last_dot);
 						bool        pkg_match = false;
 						for(auto& info2 : doc_state.stacks) {
-							if(info2.stack.empty()) {
-								continue;
-							}
+							if(info2.stack.empty()) continue;
 							auto& d_stmt2 = info2.stack.front();
 							if(d_stmt2.type == ECSACT_STATEMENT_PACKAGE) {
-								if(get_name_from_sv(
-										 d_stmt2.data.package_statement.package_name
-									 ) == prefix) {
+								if(get_name_from_sv(d_stmt2.data.package_statement.package_name) == prefix) {
 									pkg_match = true;
 									break;
 								}
 							}
 						}
-						if(!pkg_match) {
-							continue;
-						}
+						if(!pkg_match) continue;
 					}
 
 					return location{
