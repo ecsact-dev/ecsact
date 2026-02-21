@@ -598,8 +598,8 @@ ECSACT_DYNAMIC_API_FN(
 );
 
 /**
- * Resets the ecsact interpret state. This will destroy all packages, components,
- * systems, etc.
+ * Resets the ecsact interpret state. This will destroy all packages,
+ * components, systems, etc.
  */
 ECSACT_DYNAMIC_API_FN(void, ecsact_interpret_reset)();
 

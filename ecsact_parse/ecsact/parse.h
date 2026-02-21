@@ -33,4 +33,3 @@ ECSACT_PARSE_API int ecsact_parse_statement(
 ECSACT_PARSE_API void ecsact_parse_reset();
 
 #endif // ECSACT_PARSER_H
-

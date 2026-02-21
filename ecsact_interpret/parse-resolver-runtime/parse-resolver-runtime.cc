@@ -15,8 +15,8 @@
 #include <unordered_set>
 #include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
-using ecsact::interpret::details::trigger_on_destroy;
 using ecsact::interpret::details::reset_lifecycle;
+using ecsact::interpret::details::trigger_on_destroy;
 
 template<typename T, typename... Ts>
 struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
