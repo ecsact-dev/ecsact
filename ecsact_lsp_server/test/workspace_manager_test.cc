@@ -530,3 +530,34 @@ TEST(WorkspaceManager, KeywordCompletion) {
 	EXPECT_TRUE(found_component);
 	EXPECT_TRUE(found_system);
 }
+
+TEST(WorkspaceManager, KeywordCompletionInsideBlock) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+package test;
+system SysA {
+	
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Inside system keywords
+	// Cursor at line 3, col 1
+	auto result = manager.get_completions(uri, {3, 1});
+	ASSERT_TRUE(result.has_value());
+	bool found_readonly = false;
+	bool found_readwrite = false;
+	bool found_generates = false;
+	for(auto const& item : result->items) {
+		if(item.label == "readonly") found_readonly = true;
+		if(item.label == "readwrite") found_readwrite = true;
+		if(item.label == "generates") found_generates = true;
+	}
+	EXPECT_TRUE(found_readonly);
+	EXPECT_TRUE(found_readwrite);
+	EXPECT_TRUE(found_generates);
+}

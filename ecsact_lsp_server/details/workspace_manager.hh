@@ -13,6 +13,7 @@
 #include <sstream>
 #include "ecsact/parse.h"
 #include "ecsact/parse/statements.h"
+#include "ecsact/parse/keywords.h"
 #include "ecsact/interpret/eval.h"
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/runtime/meta.h"
@@ -101,29 +102,29 @@ inline auto get_source_range(
 inline auto builtin_type_name(ecsact_builtin_type type) -> std::string {
 	switch(type) {
 		case ECSACT_BOOL:
-			return "bool";
+			return ECSACT_PARSE_KW_BOOL;
 		case ECSACT_I8:
-			return "i8";
+			return ECSACT_PARSE_KW_I8;
 		case ECSACT_U8:
-			return "u8";
+			return ECSACT_PARSE_KW_U8;
 		case ECSACT_I16:
-			return "i16";
+			return ECSACT_PARSE_KW_I16;
 		case ECSACT_U16:
-			return "u16";
+			return ECSACT_PARSE_KW_U16;
 		case ECSACT_I32:
-			return "i32";
+			return ECSACT_PARSE_KW_I32;
 		case ECSACT_U32:
-			return "u32";
+			return ECSACT_PARSE_KW_U32;
 		case ECSACT_F32:
-			return "f32";
+			return ECSACT_PARSE_KW_F32;
 		case ECSACT_I64:
-			return "i64";
+			return ECSACT_PARSE_KW_I64;
 		case ECSACT_U64:
-			return "u64";
+			return ECSACT_PARSE_KW_U64;
 		case ECSACT_F64:
-			return "f64";
+			return ECSACT_PARSE_KW_F64;
 		case ECSACT_ENTITY_TYPE:
-			return "entity";
+			return ECSACT_PARSE_KW_ENTITY;
 	}
 	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) + ")";
 }
@@ -1100,7 +1101,7 @@ public:
 				field_type_name = get_name_from_sv(statement.data.user_type_field_statement.user_type_name);
 			} else if(statement.type == ECSACT_STATEMENT_ENTITY_FIELD) {
 				field_name = get_name_from_sv(statement.data.field_statement.field_name);
-				field_type_name = "entity";
+				field_type_name = ECSACT_PARSE_KW_ENTITY;
 			}
 
 			hover_text += "### field `" + parent_name + "." + field_name + "`\n";
@@ -1141,7 +1142,6 @@ public:
 		}
 
 		if(pos.line >= lines.size()) {
-			send.trace_log(std::format("get_completions: line {} out of range (size {})", pos.line, lines.size()));
 			return std::nullopt;
 		}
 
@@ -1170,7 +1170,8 @@ public:
 		// Determine context from stacks
 		auto const* context_stack = (std::vector<ecsact_statement>*)nullptr;
 		for(auto const& info : doc.stacks) {
-			if(pos.line >= info.range.start.line && pos.line <= info.range.end.line) {
+			if(info.range.start.line < pos.line ||
+				 (info.range.start.line == pos.line && info.range.start.character <= pos.character)) {
 				context_stack = &info.stack;
 			}
 		}
@@ -1194,7 +1195,7 @@ public:
 			}
 		}
 
-		if(trimmed_line.starts_with("import")) {
+		if(trimmed_line.starts_with(ECSACT_PARSE_KW_IMPORT)) {
 			std::set<std::string> package_names;
 			for(auto& [d_uri, d_state] : _documents) {
 				for(auto& info : d_state.stacks) {
@@ -1217,46 +1218,46 @@ public:
 			}
 		} else {
 			static const std::vector<std::string> top_level_keywords = {
-				"main package",
-				"package",
-				"import",
-				"component",
-				"transient",
-				"system",
-				"action",
-				"enum",
+				ECSACT_PARSE_KW_MAIN_PACKAGE,
+				ECSACT_PARSE_KW_PACKAGE,
+				ECSACT_PARSE_KW_IMPORT,
+				ECSACT_PARSE_KW_COMPONENT,
+				ECSACT_PARSE_KW_TRANSIENT,
+				ECSACT_PARSE_KW_SYSTEM,
+				ECSACT_PARSE_KW_ACTION,
+				ECSACT_PARSE_KW_ENUM,
 			};
 
 			static const std::vector<std::string> cap_keywords = {
-				"readonly",
-				"readwrite",
-				"writeonly",
-				"adds",
-				"removes",
-				"exclude",
-				"include",
-				"required",
-				"generates",
+				ECSACT_PARSE_KW_READONLY,
+				ECSACT_PARSE_KW_READWRITE,
+				ECSACT_PARSE_KW_WRITEONLY,
+				ECSACT_PARSE_KW_ADDS,
+				ECSACT_PARSE_KW_REMOVES,
+				ECSACT_PARSE_KW_EXCLUDE,
+				ECSACT_PARSE_KW_INCLUDE,
+				ECSACT_PARSE_KW_REQUIRED,
+				ECSACT_PARSE_KW_GENERATES,
 			};
 
 			static const std::vector<std::string> generates_keywords = {
-				"required",
-				"optional",
+				ECSACT_PARSE_KW_REQUIRED,
+				ECSACT_PARSE_KW_OPTIONAL,
 			};
 
 			static const std::vector<std::string> type_keywords = {
-				"bool",
-				"i8",
-				"u8",
-				"i16",
-				"u16",
-				"i32",
-				"u32",
-				"i64",
-				"u64",
-				"f32",
-				"f64",
-				"entity",
+				ECSACT_PARSE_KW_BOOL,
+				ECSACT_PARSE_KW_I8,
+				ECSACT_PARSE_KW_U8,
+				ECSACT_PARSE_KW_I16,
+				ECSACT_PARSE_KW_U16,
+				ECSACT_PARSE_KW_I32,
+				ECSACT_PARSE_KW_U32,
+				ECSACT_PARSE_KW_I64,
+				ECSACT_PARSE_KW_U64,
+				ECSACT_PARSE_KW_F32,
+				ECSACT_PARSE_KW_F64,
+				ECSACT_PARSE_KW_ENTITY,
 			};
 
 			// Keyword suggestions
@@ -1284,7 +1285,7 @@ public:
 					}
 					if(inside_system) {
 						result.items.push_back({
-							.label = "system",
+							.label = ECSACT_PARSE_KW_SYSTEM,
 							.kind = completion_item_kind::keyword,
 						});
 					}
