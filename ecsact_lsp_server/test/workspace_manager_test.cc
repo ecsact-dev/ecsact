@@ -723,3 +723,77 @@ system SysA {
 	}
 	EXPECT_TRUE(found_comp_a);
 }
+
+TEST(WorkspaceManager, FindReferences) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+
+component CompA {
+	i32 a;
+}
+
+system SysA {
+	readonly CompA;
+}
+
+action ActA {
+	readwrite CompA;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Find references for CompA (definition)
+	// component CompA is at line 3
+	auto result = manager.find_references(uri, {3, 12}, {true});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->size(), 3); // Decl + SysA usage + ActA usage
+
+	// Find references for CompA (usage in SysA)
+	// readonly CompA is at line 8
+	result = manager.find_references(uri, {8, 12}, {true});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->size(), 3);
+
+	// Find references for CompA (usage in SysA) without declaration
+	result = manager.find_references(uri, {8, 12}, {false});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->size(), 2); // SysA usage + ActA usage
+}
+
+TEST(WorkspaceManager, FindReferencesMultiFile) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package b;
+import a;
+system SysB {
+	readonly a.CompA;
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Find references for CompA (definition in a.ecsact)
+	auto result = manager.find_references(uri_a, {2, 12}, {true});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->size(), 2); // Decl in a + Usage in b
+
+	// Find references for a.CompA (usage in b.ecsact)
+	result = manager.find_references(uri_b, {4, 12}, {true});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->size(), 2);
+}

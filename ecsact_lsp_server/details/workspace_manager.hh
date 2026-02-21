@@ -1528,6 +1528,262 @@ public:
 		return std::nullopt;
 	}
 
+	auto find_references(std::string uri, position pos, reference_context context)
+		-> std::optional<std::vector<location>> {
+		auto found = find_statement_at(uri, pos);
+		if(!found) {
+			return std::nullopt;
+		}
+
+		auto& [stack, r] = *found;
+		auto& statement = stack.back();
+
+		std::string target_name;
+		std::string target_package;
+		bool        is_target_decl = false;
+
+		// 1. Identify Target Name and Package
+		if(statement.type == ECSACT_STATEMENT_COMPONENT) {
+			target_name =
+				get_name_from_sv(statement.data.component_statement.component_name);
+			is_target_decl = true;
+		} else if(statement.type == ECSACT_STATEMENT_TRANSIENT) {
+			target_name =
+				get_name_from_sv(statement.data.transient_statement.transient_name);
+			is_target_decl = true;
+		} else if(statement.type == ECSACT_STATEMENT_SYSTEM) {
+			target_name =
+				get_name_from_sv(statement.data.system_statement.system_name);
+			is_target_decl = true;
+		} else if(statement.type == ECSACT_STATEMENT_ACTION) {
+			target_name =
+				get_name_from_sv(statement.data.action_statement.action_name);
+			is_target_decl = true;
+		} else if(statement.type == ECSACT_STATEMENT_ENUM) {
+			target_name = get_name_from_sv(statement.data.enum_statement.enum_name);
+			is_target_decl = true;
+		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
+			target_name = get_name_from_sv(
+				statement.data.system_component_statement.component_name
+			);
+		} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
+			target_name = get_name_from_sv(
+				statement.data.entity_constraint_statement.constraint_component_name
+			);
+		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
+			target_name = get_name_from_sv(
+				statement.data.system_notify_component_statement.component_name
+			);
+		} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
+			target_name = get_name_from_sv(
+				statement.data.user_type_field_statement.user_type_name
+			);
+		}
+
+		if(target_name.empty()) {
+			return std::nullopt;
+		}
+
+		// Resolve package if target is a declaration
+		if(is_target_decl) {
+			auto doc_it = _documents.find(uri);
+			if(doc_it != _documents.end()) {
+				for(auto& info : doc_it->second.stacks) {
+					if(!info.stack.empty() &&
+						 info.stack.front().type == ECSACT_STATEMENT_PACKAGE) {
+						target_package = get_name_from_sv(
+							info.stack.front().data.package_statement.package_name
+						);
+						break;
+					}
+				}
+			}
+		} else {
+			// Resolve package if target is a usage
+			auto last_dot = target_name.find_last_of('.');
+			if(last_dot != std::string::npos) {
+				target_package = target_name.substr(0, last_dot);
+				target_name = target_name.substr(last_dot + 1);
+			} else {
+				// Search for declaration to find package
+				auto def_loc = goto_definition(uri, pos);
+				if(def_loc) {
+					auto def_doc_it = _documents.find(def_loc->uri);
+					if(def_doc_it != _documents.end()) {
+						for(auto& info : def_doc_it->second.stacks) {
+							if(!info.stack.empty() &&
+								 info.stack.front().type == ECSACT_STATEMENT_PACKAGE) {
+								target_package = get_name_from_sv(
+									info.stack.front().data.package_statement.package_name
+								);
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		std::vector<location> result;
+
+		// Helper to check if a usage matches the target
+		auto check_usage = [&](
+												 std::string                usage_name,
+												 std::string                doc_pkg,
+												 const ecsact_statement_sv& usage_sv,
+												 std::string                usage_uri
+											 ) {
+			auto usage_short = usage_name;
+			auto usage_pkg = std::string{};
+			auto last_dot = usage_name.find_last_of('.');
+			if(last_dot != std::string::npos) {
+				usage_pkg = usage_name.substr(0, last_dot);
+				usage_short = usage_name.substr(last_dot + 1);
+			}
+
+			if(usage_short != target_name) {
+				return;
+			}
+
+			// Package matching logic
+			bool match = false;
+			if(!target_package.empty()) {
+				if(!usage_pkg.empty()) {
+					if(usage_pkg == target_package) {
+						match = true;
+					}
+				} else {
+					if(doc_pkg == target_package) {
+						match = true;
+					}
+				}
+			} else {
+				// Target package unknown (fallback)
+				match = true;
+			}
+
+			if(match) {
+				result.push_back({
+					.uri = usage_uri,
+					.range = get_source_range(_documents[usage_uri].full_text, usage_sv),
+				});
+			}
+		};
+
+		// 2. Scan All Documents
+		for(auto& [doc_uri, doc_state] : _documents) {
+			std::string doc_pkg;
+			for(auto& info : doc_state.stacks) {
+				if(!info.stack.empty() &&
+					 info.stack.front().type == ECSACT_STATEMENT_PACKAGE) {
+					doc_pkg = get_name_from_sv(
+						info.stack.front().data.package_statement.package_name
+					);
+					break;
+				}
+			}
+
+			for(auto& info : doc_state.stacks) {
+				if(info.stack.empty()) {
+					continue;
+				}
+				auto& stmt = info.stack.back();
+
+				// Check Declarations (if includeDeclaration)
+				if(context.includeDeclaration) {
+					std::string         decl_name;
+					ecsact_statement_sv decl_sv;
+					bool                is_decl = false;
+
+					if(stmt.type == ECSACT_STATEMENT_COMPONENT) {
+						decl_name =
+							get_name_from_sv(stmt.data.component_statement.component_name);
+						decl_sv = stmt.data.component_statement.component_name;
+						is_decl = true;
+					} else if(stmt.type == ECSACT_STATEMENT_TRANSIENT) {
+						decl_name =
+							get_name_from_sv(stmt.data.transient_statement.transient_name);
+						decl_sv = stmt.data.transient_statement.transient_name;
+						is_decl = true;
+					} else if(stmt.type == ECSACT_STATEMENT_SYSTEM) {
+						decl_name =
+							get_name_from_sv(stmt.data.system_statement.system_name);
+						decl_sv = stmt.data.system_statement.system_name;
+						is_decl = true;
+					} else if(stmt.type == ECSACT_STATEMENT_ACTION) {
+						decl_name =
+							get_name_from_sv(stmt.data.action_statement.action_name);
+						decl_sv = stmt.data.action_statement.action_name;
+						is_decl = true;
+					} else if(stmt.type == ECSACT_STATEMENT_ENUM) {
+						decl_name = get_name_from_sv(stmt.data.enum_statement.enum_name);
+						decl_sv = stmt.data.enum_statement.enum_name;
+						is_decl = true;
+					}
+
+					if(is_decl) {
+						if(decl_name == target_name) {
+							if(!target_package.empty()) {
+								if(doc_pkg == target_package) {
+									result.push_back({
+										.uri = doc_uri,
+										.range = get_source_range(doc_state.full_text, decl_sv),
+									});
+								}
+							} else {
+								result.push_back({
+									.uri = doc_uri,
+									.range = get_source_range(doc_state.full_text, decl_sv),
+								});
+							}
+						}
+					}
+				}
+
+				// Check Usages
+				if(stmt.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
+					check_usage(
+						get_name_from_sv(
+							stmt.data.system_component_statement.component_name
+						),
+						doc_pkg,
+						stmt.data.system_component_statement.component_name,
+						doc_uri
+					);
+				} else if(stmt.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
+					check_usage(
+						get_name_from_sv(
+							stmt.data.entity_constraint_statement.constraint_component_name
+						),
+						doc_pkg,
+						stmt.data.entity_constraint_statement.constraint_component_name,
+						doc_uri
+					);
+				} else if(stmt.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
+					check_usage(
+						get_name_from_sv(
+							stmt.data.system_notify_component_statement.component_name
+						),
+						doc_pkg,
+						stmt.data.system_notify_component_statement.component_name,
+						doc_uri
+					);
+				} else if(stmt.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
+					check_usage(
+						get_name_from_sv(
+							stmt.data.user_type_field_statement.user_type_name
+						),
+						doc_pkg,
+						stmt.data.user_type_field_statement.user_type_name,
+						doc_uri
+					);
+				}
+			}
+		}
+
+		return result;
+	}
+
 	auto get_code_lenses(std::string uri) -> std::vector<code_lens> {
 		auto result = std::vector<code_lens>{};
 		auto doc_it = _documents.find(uri);

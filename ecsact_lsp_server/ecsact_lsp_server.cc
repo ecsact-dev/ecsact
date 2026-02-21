@@ -102,6 +102,7 @@ auto main(int argc, char* argv[]) -> int {
 					},
 					{"definitionProvider", true},
 					{"hoverProvider", true},
+					{"referencesProvider", true},
 					{
 						"completionProvider",
 						{
@@ -151,6 +152,24 @@ auto main(int argc, char* argv[]) -> int {
 			auto result = workspace_manager.goto_definition(
 				definition_params.textDocument.uri,
 				definition_params.position
+			);
+
+			if(result) {
+				return *result;
+			}
+
+			return "null"_json;
+		}
+	);
+
+	manager.set_request_handler(
+		"textDocument/references",
+		[&](json params) -> json {
+			auto reference_params = params.get<ecsact_lsp::reference_params>();
+			auto result = workspace_manager.find_references(
+				reference_params.textDocument.uri,
+				reference_params.position,
+				reference_params.context
 			);
 
 			if(result) {

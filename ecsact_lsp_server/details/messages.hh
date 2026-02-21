@@ -125,6 +125,33 @@ struct location {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceContext
+ */
+struct reference_context {
+	bool includeDeclaration;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(reference_context, includeDeclaration);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceParams
+ */
+struct reference_params {
+	text_document_identifier textDocument;
+	position                 position;
+	reference_context        context;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		reference_params,
+		textDocument,
+		position,
+		context
+	);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
  */
 struct definition_params {
