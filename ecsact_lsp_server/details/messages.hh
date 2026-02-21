@@ -358,10 +358,10 @@ struct workspace_symbol_params {
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolInformation
  */
 struct symbol_information {
-	std::string         name;
-	symbol_kind         kind;
-	location            location;
-	std::string         containerName;
+	std::string name;
+	symbol_kind kind;
+	location    location;
+	std::string containerName;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
 		symbol_information,

@@ -193,16 +193,13 @@ auto main(int argc, char* argv[]) -> int {
 		}
 	);
 
-	manager.set_request_handler(
-		"workspace/symbol",
-		[&](json params) -> json {
-			auto workspace_symbol_params =
-				params.get<ecsact_lsp::workspace_symbol_params>();
-			return workspace_manager.get_workspace_symbols(
-				workspace_symbol_params.query
-			);
-		}
-	);
+	manager.set_request_handler("workspace/symbol", [&](json params) -> json {
+		auto workspace_symbol_params =
+			params.get<ecsact_lsp::workspace_symbol_params>();
+		return workspace_manager.get_workspace_symbols(
+			workspace_symbol_params.query
+		);
+	});
 
 	manager.set_request_handler("textDocument/hover", [&](json params) -> json {
 		auto hover_params = params.get<ecsact_lsp::hover_params>();

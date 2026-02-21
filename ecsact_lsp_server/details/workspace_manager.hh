@@ -732,8 +732,7 @@ public:
 						pkg_name = sym.name;
 					}
 
-					if(query.empty() ||
-						 sym.name.find(query) != std::string::npos) {
+					if(query.empty() || sym.name.find(query) != std::string::npos) {
 						result.push_back({
 							.name = sym.name,
 							.kind = sym.kind,

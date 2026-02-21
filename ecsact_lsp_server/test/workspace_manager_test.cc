@@ -836,8 +836,7 @@ system SysA {
 		symbols.begin(),
 		symbols.end(),
 		[](const ecsact_lsp::document_symbol& s) {
-			return s.kind == ecsact_lsp::symbol_kind::class_kind &&
-				s.name == "CompA";
+			return s.kind == ecsact_lsp::symbol_kind::class_kind && s.name == "CompA";
 		}
 	);
 	ASSERT_NE(comp_sym, symbols.end());
@@ -913,4 +912,3 @@ system SysB {
 	}
 	EXPECT_TRUE(found_sys_b);
 }
-
