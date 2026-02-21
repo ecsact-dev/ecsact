@@ -618,6 +618,141 @@ public:
 		return std::nullopt;
 	}
 
+	auto get_document_symbols(std::string uri) -> std::vector<document_symbol> {
+		auto result = std::vector<document_symbol>{};
+		auto doc_it = _documents.find(uri);
+		if(doc_it == _documents.end()) {
+			return result;
+		}
+
+		auto& doc = doc_it->second;
+		auto  context_stack = std::vector<document_symbol*>{};
+		auto  context_depths = std::vector<size_t>{};
+
+		for(auto& info : doc.stacks) {
+			if(info.stack.empty()) {
+				continue;
+			}
+
+			auto& statement = info.stack.back();
+			auto  symbol = document_symbol{};
+			bool  is_symbol = false;
+			auto  name_sv = ecsact_statement_sv{};
+
+			if(statement.type == ECSACT_STATEMENT_PACKAGE) {
+				name_sv = statement.data.package_statement.package_name;
+				symbol.kind = symbol_kind::package;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_COMPONENT) {
+				name_sv = statement.data.component_statement.component_name;
+				symbol.kind = symbol_kind::class_kind;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_TRANSIENT) {
+				name_sv = statement.data.transient_statement.transient_name;
+				symbol.kind = symbol_kind::class_kind;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_SYSTEM) {
+				name_sv = statement.data.system_statement.system_name;
+				symbol.kind = symbol_kind::function;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_ACTION) {
+				name_sv = statement.data.action_statement.action_name;
+				symbol.kind = symbol_kind::function;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_ENUM) {
+				name_sv = statement.data.enum_statement.enum_name;
+				symbol.kind = symbol_kind::enum_kind;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_ENUM_VALUE) {
+				name_sv = statement.data.enum_value_statement.name;
+				symbol.kind = symbol_kind::enum_member;
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_BUILTIN_TYPE_FIELD) {
+				name_sv = statement.data.field_statement.field_name;
+				symbol.kind = symbol_kind::field;
+				symbol.detail = ecsact::parse::builtin_type_to_keyword_string(
+					statement.data.field_statement.field_type
+				);
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
+				name_sv = statement.data.user_type_field_statement.field_name;
+				symbol.kind = symbol_kind::field;
+				symbol.detail = get_name_from_sv(
+					statement.data.user_type_field_statement.user_type_name
+				);
+				is_symbol = true;
+			} else if(statement.type == ECSACT_STATEMENT_ENTITY_FIELD) {
+				name_sv = statement.data.field_statement.field_name;
+				symbol.kind = symbol_kind::field;
+				symbol.detail = ECSACT_PARSE_KW_ENTITY;
+				is_symbol = true;
+			}
+
+			if(is_symbol) {
+				symbol.name = get_name_from_sv(name_sv);
+				symbol.range = info.range;
+				symbol.selectionRange = get_source_range(doc.full_text, name_sv);
+
+				auto current_depth = info.stack.size();
+
+				while(!context_depths.empty() &&
+							context_depths.back() >= current_depth) {
+					context_stack.pop_back();
+					context_depths.pop_back();
+				}
+
+				if(context_stack.empty()) {
+					result.push_back(std::move(symbol));
+					context_stack.push_back(&result.back());
+				} else {
+					auto* parent = context_stack.back();
+					parent->children.push_back(std::move(symbol));
+					context_stack.push_back(&parent->children.back());
+				}
+				context_depths.push_back(current_depth);
+			}
+		}
+
+		return result;
+	}
+
+	auto get_workspace_symbols(std::string query)
+		-> std::vector<symbol_information> {
+		auto result = std::vector<symbol_information>{};
+
+		for(auto& [uri, doc] : _documents) {
+			auto doc_symbols = get_document_symbols(uri);
+			auto pkg_name = std::string{};
+
+			// Flatten and filter
+			auto process_symbols =
+				[&](const std::vector<document_symbol>& symbols, auto&& self) -> void {
+				for(const auto& sym : symbols) {
+					if(sym.kind == symbol_kind::package) {
+						pkg_name = sym.name;
+					}
+
+					if(query.empty() || sym.name.find(query) != std::string::npos) {
+						result.push_back({
+							.name = sym.name,
+							.kind = sym.kind,
+							.location = {.uri = uri, .range = sym.range},
+							.containerName = pkg_name,
+						});
+					}
+
+					if(!sym.children.empty()) {
+						self(sym.children, self);
+					}
+				}
+			};
+
+			process_symbols(doc_symbols, process_symbols);
+		}
+
+		return result;
+	}
+
 	auto get_hover(std::string uri, position pos) -> std::optional<hover> {
 		auto found = find_statement_at(uri, pos);
 		if(!found) {
