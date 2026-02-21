@@ -254,7 +254,8 @@ struct package_statement {
 	}
 
 	struct main_package_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("main") >> LEXY_LIT(ECSACT_PARSE_KW_PACKAGE);
+		static constexpr auto rule = LEXY_LIT("main") >>
+			LEXY_LIT(ECSACT_PARSE_KW_PACKAGE);
 		static constexpr auto value = lexy::constant(true);
 	};
 

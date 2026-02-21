@@ -69,8 +69,11 @@ auto main(int argc, char* argv[]) -> int {
 			manager.set_trace(params["trace"].get<ecsact_lsp::trace_value>());
 		}
 
-		if(params.contains("workspaceFolders") && params["workspaceFolders"].is_array()) {
-			auto workspace_folders = params["workspaceFolders"].get<std::vector<ecsact_lsp::workspace_folder>>();
+		if(params.contains("workspaceFolders") &&
+			 params["workspaceFolders"].is_array()) {
+			auto workspace_folders =
+				params["workspaceFolders"]
+					.get<std::vector<ecsact_lsp::workspace_folder>>();
 			for(auto const& folder : workspace_folders) {
 				workspace_manager.add_workspace(folder);
 			}

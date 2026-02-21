@@ -233,7 +233,7 @@ struct completion_item {
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionList
  */
 struct completion_list {
-	bool                        isIncomplete;
+	bool                         isIncomplete;
 	std::vector<completion_item> items;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(completion_list, isIncomplete, items);

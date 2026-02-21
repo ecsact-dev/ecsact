@@ -456,7 +456,9 @@ system SysB {
 	ASSERT_TRUE(result.has_value());
 	bool found_package_a = false;
 	for(auto const& item : result->items) {
-		if(item.label == "package_a") found_package_a = true;
+		if(item.label == "package_a") {
+			found_package_a = true;
+		}
 	}
 	EXPECT_TRUE(found_package_a);
 
@@ -467,8 +469,12 @@ system SysB {
 	bool found_comp_a = false;
 	bool found_full_comp_a = false;
 	for(auto const& item : result->items) {
-		if(item.label == "CompA") found_comp_a = true;
-		if(item.label == "package_a.CompA") found_full_comp_a = true;
+		if(item.label == "CompA") {
+			found_comp_a = true;
+		}
+		if(item.label == "package_a.CompA") {
+			found_full_comp_a = true;
+		}
 	}
 	EXPECT_TRUE(found_comp_a);
 	EXPECT_TRUE(found_full_comp_a);
@@ -502,13 +508,15 @@ system SysB {
 	ASSERT_TRUE(result.has_value());
 	bool found_comp_a = false;
 	for(auto const& item : result->items) {
-		if(item.label == "CompA") found_comp_a = true;
+		if(item.label == "CompA") {
+			found_comp_a = true;
+		}
 	}
 	EXPECT_TRUE(found_comp_a);
 }
 
 TEST(WorkspaceManager, KeywordCompletion) {
-	mock_sender                   sender;
+	mock_sender sender;
 	sender.trace = ecsact_lsp::trace_value::verbose;
 	ecsact_lsp::workspace_manager manager(std::move(sender));
 
@@ -524,8 +532,12 @@ TEST(WorkspaceManager, KeywordCompletion) {
 	bool found_component = false;
 	bool found_system = false;
 	for(auto const& item : result->items) {
-		if(item.label == "component") found_component = true;
-		if(item.label == "system") found_system = true;
+		if(item.label == "component") {
+			found_component = true;
+		}
+		if(item.label == "system") {
+			found_system = true;
+		}
 	}
 	EXPECT_TRUE(found_component);
 	EXPECT_TRUE(found_system);
@@ -553,9 +565,15 @@ system SysA {
 	bool found_readwrite = false;
 	bool found_generates = false;
 	for(auto const& item : result->items) {
-		if(item.label == "readonly") found_readonly = true;
-		if(item.label == "readwrite") found_readwrite = true;
-		if(item.label == "generates") found_generates = true;
+		if(item.label == "readonly") {
+			found_readonly = true;
+		}
+		if(item.label == "readwrite") {
+			found_readwrite = true;
+		}
+		if(item.label == "generates") {
+			found_generates = true;
+		}
 	}
 	EXPECT_TRUE(found_readonly);
 	EXPECT_TRUE(found_readwrite);
