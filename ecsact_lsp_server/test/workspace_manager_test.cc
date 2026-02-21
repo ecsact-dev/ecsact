@@ -797,4 +797,3 @@ system SysB {
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->size(), 2);
 }
-

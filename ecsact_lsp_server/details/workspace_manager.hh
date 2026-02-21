@@ -1528,11 +1528,8 @@ public:
 		return std::nullopt;
 	}
 
-	auto find_references(
-		std::string       uri,
-		position          pos,
-		reference_context context
-	) -> std::optional<std::vector<location>> {
+	auto find_references(std::string uri, position pos, reference_context context)
+		-> std::optional<std::vector<location>> {
 		auto found = find_statement_at(uri, pos);
 		if(!found) {
 			return std::nullopt;
@@ -1631,10 +1628,10 @@ public:
 
 		// Helper to check if a usage matches the target
 		auto check_usage = [&](
-												 std::string              usage_name,
-												 std::string              doc_pkg,
+												 std::string                usage_name,
+												 std::string                doc_pkg,
 												 const ecsact_statement_sv& usage_sv,
-												 std::string              usage_uri
+												 std::string                usage_uri
 											 ) {
 			auto usage_short = usage_name;
 			auto usage_pkg = std::string{};
@@ -1652,11 +1649,13 @@ public:
 			bool match = false;
 			if(!target_package.empty()) {
 				if(!usage_pkg.empty()) {
-					if(usage_pkg == target_package)
+					if(usage_pkg == target_package) {
 						match = true;
+					}
 				} else {
-					if(doc_pkg == target_package)
+					if(doc_pkg == target_package) {
 						match = true;
+					}
 				}
 			} else {
 				// Target package unknown (fallback)
@@ -1685,8 +1684,9 @@ public:
 			}
 
 			for(auto& info : doc_state.stacks) {
-				if(info.stack.empty())
+				if(info.stack.empty()) {
 					continue;
+				}
 				auto& stmt = info.stack.back();
 
 				// Check Declarations (if includeDeclaration)

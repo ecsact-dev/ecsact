@@ -142,7 +142,12 @@ struct reference_params {
 	position                 position;
 	reference_context        context;
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE(reference_params, textDocument, position, context);
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		reference_params,
+		textDocument,
+		position,
+		context
+	);
 };
 
 /**
