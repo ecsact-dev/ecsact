@@ -109,6 +109,18 @@ auto main(int argc, char* argv[]) -> int {
 							{"triggerCharacters", {"."}},
 						},
 					},
+					{
+						"codeLensProvider",
+						{
+							{"resolveProvider", false},
+						},
+					},
+					{
+						"inlayHintProvider",
+						{
+							{"resolveProvider", false},
+						},
+					},
 				},
 			},
 			{
@@ -120,6 +132,17 @@ auto main(int argc, char* argv[]) -> int {
 			},
 		};
 	});
+
+	manager.set_request_handler(
+		"textDocument/inlayHint",
+		[&](json params) -> json {
+			auto inlay_hint_params = params.get<ecsact_lsp::inlay_hint_params>();
+			return workspace_manager.get_inlay_hints(
+				inlay_hint_params.textDocument.uri,
+				inlay_hint_params.range
+			);
+		}
+	);
 
 	manager.set_request_handler(
 		"textDocument/definition",
@@ -166,6 +189,16 @@ auto main(int argc, char* argv[]) -> int {
 			}
 
 			return "null"_json;
+		}
+	);
+
+	manager.set_request_handler(
+		"textDocument/codeLens",
+		[&](json params) -> json {
+			auto code_lens_params = params.get<ecsact_lsp::code_lens_params>();
+			return workspace_manager.get_code_lenses(
+				code_lens_params.textDocument.uri
+			);
 		}
 	);
 
