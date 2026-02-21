@@ -128,3 +128,11 @@ auto ecsact::interpret::details::trigger_on_destroy( //
 		}
 	}
 }
+
+auto ecsact::interpret::details::reset_lifecycle() -> void {
+	for(auto& info : lifecycle_info) {
+		info.last_event_ref_id = {};
+		info.callback_id.clear();
+		info.callbacks.clear();
+	}
+}

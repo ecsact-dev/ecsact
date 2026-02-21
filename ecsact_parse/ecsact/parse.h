@@ -22,7 +22,7 @@
  *        parsing `statement_string`. May be `NULL`.
  * @returns read length
  */
-ECSACT_PARSE_API int32_t ecsact_parse_statement(
+ECSACT_PARSE_API int ecsact_parse_statement(
 	const char*             statement_string,
 	int                     max_read_length,
 	const ecsact_statement* context_statement,
@@ -30,4 +30,7 @@ ECSACT_PARSE_API int32_t ecsact_parse_statement(
 	ecsact_parse_status*    out_status
 );
 
+ECSACT_PARSE_API void ecsact_parse_reset();
+
 #endif // ECSACT_PARSER_H
+

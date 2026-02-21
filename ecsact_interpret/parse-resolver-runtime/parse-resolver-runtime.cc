@@ -16,6 +16,7 @@
 #include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
 using ecsact::interpret::details::trigger_on_destroy;
+using ecsact::interpret::details::reset_lifecycle;
 
 template<typename T, typename... Ts>
 struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
@@ -152,6 +153,21 @@ static std::unordered_map<ecsact_action_id, action_def>      act_defs;
 static std::unordered_map<ecsact_enum_id, enum_def>          enum_defs;
 static std::unordered_map<ecsact_cluster_id, cluster_def>    cluster_defs;
 static std::optional<ecsact_package_id>                      main_package_id;
+
+void ecsact_interpret_reset() {
+	last_id = 0;
+	full_names.clear();
+	package_defs.clear();
+	def_owner_map.clear();
+	comp_defs.clear();
+	trans_defs.clear();
+	sys_defs.clear();
+	act_defs.clear();
+	enum_defs.clear();
+	cluster_defs.clear();
+	main_package_id = std::nullopt;
+	reset_lifecycle();
+}
 
 template<typename T>
 static ecsact_package_id owner_package_id(T id) {

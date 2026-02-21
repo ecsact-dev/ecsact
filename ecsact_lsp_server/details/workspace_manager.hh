@@ -58,9 +58,6 @@ struct document_state {
 	std::vector<ecsact_parse_status> parse_statuses;
 	std::string                      full_text;
 	std::string_view                 next_parse_view;
-
-	// Legacy for compatibility during transition
-	std::vector<std::vector<ecsact_statement>> parse_stacks;
 };
 
 struct workspace_state {
@@ -102,32 +99,31 @@ inline auto get_source_range(
 inline auto builtin_type_name(ecsact_builtin_type type) -> std::string {
 	switch(type) {
 		case ECSACT_BOOL:
-			return ECSACT_PARSE_KW_BOOL;
+			return std::string(ECSACT_PARSE_KW_BOOL);
 		case ECSACT_I8:
-			return ECSACT_PARSE_KW_I8;
+			return std::string(ECSACT_PARSE_KW_I8);
 		case ECSACT_U8:
-			return ECSACT_PARSE_KW_U8;
+			return std::string(ECSACT_PARSE_KW_U8);
 		case ECSACT_I16:
-			return ECSACT_PARSE_KW_I16;
+			return std::string(ECSACT_PARSE_KW_I16);
 		case ECSACT_U16:
-			return ECSACT_PARSE_KW_U16;
+			return std::string(ECSACT_PARSE_KW_U16);
 		case ECSACT_I32:
-			return ECSACT_PARSE_KW_I32;
+			return std::string(ECSACT_PARSE_KW_I32);
 		case ECSACT_U32:
-			return ECSACT_PARSE_KW_U32;
+			return std::string(ECSACT_PARSE_KW_U32);
 		case ECSACT_F32:
-			return ECSACT_PARSE_KW_F32;
+			return std::string(ECSACT_PARSE_KW_F32);
 		case ECSACT_I64:
-			return ECSACT_PARSE_KW_I64;
+			return std::string(ECSACT_PARSE_KW_I64);
 		case ECSACT_U64:
-			return ECSACT_PARSE_KW_U64;
+			return std::string(ECSACT_PARSE_KW_U64);
 		case ECSACT_F64:
-			return ECSACT_PARSE_KW_F64;
+			return std::string(ECSACT_PARSE_KW_F64);
 		case ECSACT_ENTITY_TYPE:
-			return ECSACT_PARSE_KW_ENTITY;
+			return std::string(ECSACT_PARSE_KW_ENTITY);
 	}
-	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) +
-		")";
+	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) + ")";
 }
 
 template<typename E>
@@ -269,7 +265,6 @@ class workspace_manager {
 
 	auto _parse_document(std::string uri, int version, document_state& doc) {
 		doc.stacks.clear();
-		doc.parse_stacks.clear();
 		doc.parse_statuses.clear();
 
 		auto diagnostics = std::vector<diagnostic>{};
@@ -305,7 +300,6 @@ class workspace_manager {
 			);
 
 			doc.stacks.push_back({.stack = stack, .range = stack_range});
-			doc.parse_stacks.push_back(stack);
 
 			if(!ecsact_is_error_parse_status_code(status.code)) {
 				auto& statement = stack.back();
@@ -354,7 +348,7 @@ class workspace_manager {
 		using std::views::drop;
 		using namespace std::string_literals;
 
-		if(doc.parse_stacks.empty()) {
+		if(doc.stacks.empty()) {
 			return;
 		}
 
@@ -364,13 +358,13 @@ class workspace_manager {
 		}
 
 		auto  diagnostics = std::vector<diagnostic>{};
-		auto& package_parse_stack = doc.parse_stacks.front();
+		auto& package_stack_info = doc.stacks.front();
 
-		if(package_parse_stack.empty()) {
+		if(package_stack_info.stack.empty()) {
 			return;
 		}
 
-		auto& package_statement = package_parse_stack.front();
+		auto& package_statement = package_stack_info.stack.front();
 
 		if(package_statement.type != ECSACT_STATEMENT_PACKAGE) {
 			diagnostics.push_back(
@@ -392,9 +386,9 @@ class workspace_manager {
 			auto system_ranges = std::unordered_map<ecsact_system_like_id, range>{};
 
 			// Evaluate all statements in stacks except first (package)
-			for(size_t stack_idx = 1; stack_idx < doc.parse_stacks.size();
-					++stack_idx) {
-				auto& parse_stack = doc.parse_stacks[stack_idx];
+			for(size_t stack_idx = 1; stack_idx < doc.stacks.size(); ++stack_idx) {
+				auto& info = doc.stacks[stack_idx];
+				auto& parse_stack = info.stack;
 				auto& status = doc.parse_statuses[stack_idx];
 
 				for(auto idx = 0; parse_stack.size() > idx; ++idx) {
@@ -913,66 +907,63 @@ public:
 					}
 				}
 
-				auto add_batch_info =
-					[&](auto package_or_sys_id, int32_t i, bool is_sys) {
-						int32_t                            systems_count = 0;
-						std::vector<ecsact_system_like_id> systems;
-						int32_t                            max_systems = 256;
-						systems.resize(max_systems);
-						if(is_sys) {
-							ecsact_meta_get_system_execution_batch(
-								static_cast<ecsact_system_like_id>(package_or_sys_id),
-								i,
-								max_systems,
-								systems.data(),
-								&systems_count
-							);
-						} else {
-							ecsact_meta_get_execution_batch(
-								static_cast<ecsact_package_id>(package_or_sys_id),
-								i,
-								max_systems,
-								systems.data(),
-								&systems_count
-							);
+				auto add_batch_info = [&](auto package_or_sys_id, int32_t i, bool is_sys) {
+					int32_t                            systems_count = 0;
+					std::vector<ecsact_system_like_id> systems;
+					int32_t                            max_systems = 256;
+					systems.resize(max_systems);
+					if(is_sys) {
+						ecsact_meta_get_system_execution_batch(
+							static_cast<ecsact_system_like_id>(package_or_sys_id),
+							i,
+							max_systems,
+							systems.data(),
+							&systems_count
+						);
+					} else {
+						ecsact_meta_get_execution_batch(
+							static_cast<ecsact_package_id>(package_or_sys_id),
+							i,
+							max_systems,
+							systems.data(),
+							&systems_count
+						);
+					}
+					bool in_batch = false;
+					for(int32_t j = 0; systems_count > j; ++j) {
+						if(static_cast<int32_t>(systems[j]) == static_cast<int32_t>(sys_like_id)) {
+							in_batch = true;
 						}
-						bool in_batch = false;
+					}
+
+					if(in_batch) {
+						hover_text += std::format("\n**Execution Batch {} systems:**\n", i);
 						for(int32_t j = 0; systems_count > j; ++j) {
-							if(systems[j] == sys_like_id) {
-								in_batch = true;
-								break;
-							}
-						}
-
-						if(in_batch) {
-							hover_text +=
-								std::format("\n**Execution Batch {} systems:**\n", i);
-							for(int32_t j = 0; systems_count > j; ++j) {
-								auto other_sys_id = systems[j];
-								auto other_name =
-									get_full_name(static_cast<int32_t>(other_sys_id));
-								if(other_name.empty()) {
-									if(ecsact_meta_is_system(other_sys_id)) {
-										other_name = ecsact_meta_system_name(
-											static_cast<ecsact_system_id>(other_sys_id)
-										);
-									} else if(ecsact_meta_is_action(other_sys_id)) {
-										other_name = ecsact_meta_action_name(
-											static_cast<ecsact_action_id>(other_sys_id)
-										);
-									}
-								}
-
-								if(other_sys_id == sys_like_id) {
-									hover_text += std::format(" - **`{}`** (this)\n", other_name);
-								} else {
-									hover_text += std::format(" - `{}`\n", other_name);
+							auto other_sys_id = systems[j];
+							auto other_name =
+								get_full_name(static_cast<int32_t>(other_sys_id));
+							if(other_name.empty()) {
+								if(ecsact_meta_is_system(other_sys_id)) {
+									other_name = ecsact_meta_system_name(
+										static_cast<ecsact_system_id>(other_sys_id)
+									);
+								} else if(ecsact_meta_is_action(other_sys_id)) {
+									other_name = ecsact_meta_action_name(
+										static_cast<ecsact_action_id>(other_sys_id)
+									);
 								}
 							}
-							return true;
+
+							if(static_cast<int32_t>(other_sys_id) == static_cast<int32_t>(sys_like_id)) {
+								hover_text += std::format(" - **`{}`** (this)\n", other_name);
+							} else {
+								hover_text += std::format(" - `{}`\n", other_name);
+							}
 						}
-						return false;
-					};
+						return true;
+					}
+					return false;
+				};
 
 				for(auto package_id : packages) {
 					int32_t batch_count = ecsact_meta_count_execution_batches(package_id);
@@ -986,14 +977,9 @@ public:
 					}
 
 					// Also check nested system execution batches
-					int32_t sys_count = ecsact_meta_count_systems(package_id);
+					int32_t              sys_count = ecsact_meta_count_systems(package_id);
 					std::vector<ecsact_system_id> sys_ids(sys_count);
-					ecsact_meta_get_system_ids(
-						package_id,
-						sys_count,
-						sys_ids.data(),
-						&sys_count
-					);
+					ecsact_meta_get_system_ids(package_id, sys_count, sys_ids.data(), &sys_count);
 					for(auto sys_id : sys_ids) {
 						int32_t s_batch_count = ecsact_meta_count_system_execution_batches(
 							static_cast<ecsact_system_like_id>(sys_id)
@@ -1262,17 +1248,14 @@ public:
 				last_was_space = false;
 			}
 		}
-		// Don't count the word we are currently typing as a "full word before"
-		// unless there is a space after it.
 
 		// What is the word immediately before the cursor?
 		std::string word_at_cursor;
 		if(pos.character > 0 && pos.character <= current_line.size()) {
 			auto start = pos.character;
-			while(start > 0 &&
-						(std::isalnum(current_line[start - 1]) ||
-						 current_line[start - 1] == '_' ||
-						 current_line[start - 1] == '.')) {
+			while(start > 0 && (std::isalnum(current_line[start - 1]) ||
+													current_line[start - 1] == '_' ||
+													current_line[start - 1] == '.')) {
 				start--;
 			}
 			word_at_cursor = current_line.substr(start, pos.character - start);
@@ -1317,49 +1300,6 @@ public:
 			}
 		}
 
-		static const std::vector<std::string> top_level_keywords = {
-			ECSACT_PARSE_KW_MAIN_PACKAGE,
-			ECSACT_PARSE_KW_PACKAGE,
-			ECSACT_PARSE_KW_IMPORT,
-			ECSACT_PARSE_KW_COMPONENT,
-			ECSACT_PARSE_KW_TRANSIENT,
-			ECSACT_PARSE_KW_SYSTEM,
-			ECSACT_PARSE_KW_ACTION,
-			ECSACT_PARSE_KW_ENUM,
-		};
-
-		static const std::vector<std::string> cap_keywords = {
-			ECSACT_PARSE_KW_READONLY,
-			ECSACT_PARSE_KW_READWRITE,
-			ECSACT_PARSE_KW_WRITEONLY,
-			ECSACT_PARSE_KW_ADDS,
-			ECSACT_PARSE_KW_REMOVES,
-			ECSACT_PARSE_KW_EXCLUDE,
-			ECSACT_PARSE_KW_INCLUDE,
-			ECSACT_PARSE_KW_REQUIRED,
-			ECSACT_PARSE_KW_GENERATES,
-		};
-
-		static const std::vector<std::string> generates_keywords = {
-			ECSACT_PARSE_KW_REQUIRED,
-			ECSACT_PARSE_KW_OPTIONAL,
-		};
-
-		static const std::vector<std::string> type_keywords = {
-			ECSACT_PARSE_KW_BOOL,
-			ECSACT_PARSE_KW_I8,
-			ECSACT_PARSE_KW_U8,
-			ECSACT_PARSE_KW_I16,
-			ECSACT_PARSE_KW_U16,
-			ECSACT_PARSE_KW_I32,
-			ECSACT_PARSE_KW_U32,
-			ECSACT_PARSE_KW_I64,
-			ECSACT_PARSE_KW_U64,
-			ECSACT_PARSE_KW_F32,
-			ECSACT_PARSE_KW_F64,
-			ECSACT_PARSE_KW_ENTITY,
-		};
-
 		if(trimmed_before.starts_with(ECSACT_PARSE_KW_IMPORT)) {
 			std::set<std::string> package_names;
 			for(auto& [d_uri, d_state] : _documents) {
@@ -1384,6 +1324,49 @@ public:
 				});
 			}
 		} else {
+			static const std::vector<std::string> top_level_keywords = {
+				ECSACT_PARSE_KW_MAIN_PACKAGE,
+				ECSACT_PARSE_KW_PACKAGE,
+				ECSACT_PARSE_KW_IMPORT,
+				ECSACT_PARSE_KW_COMPONENT,
+				ECSACT_PARSE_KW_TRANSIENT,
+				ECSACT_PARSE_KW_SYSTEM,
+				ECSACT_PARSE_KW_ACTION,
+				ECSACT_PARSE_KW_ENUM,
+			};
+
+			static const std::vector<std::string> cap_keywords = {
+				ECSACT_PARSE_KW_READONLY,
+				ECSACT_PARSE_KW_READWRITE,
+				ECSACT_PARSE_KW_WRITEONLY,
+				ECSACT_PARSE_KW_ADDS,
+				ECSACT_PARSE_KW_REMOVES,
+				ECSACT_PARSE_KW_EXCLUDE,
+				ECSACT_PARSE_KW_INCLUDE,
+				ECSACT_PARSE_KW_REQUIRED,
+				ECSACT_PARSE_KW_GENERATES,
+			};
+
+			static const std::vector<std::string> generates_keywords = {
+				ECSACT_PARSE_KW_REQUIRED,
+				ECSACT_PARSE_KW_OPTIONAL,
+			};
+
+			static const std::vector<std::string> type_keywords = {
+				ECSACT_PARSE_KW_BOOL,
+				ECSACT_PARSE_KW_I8,
+				ECSACT_PARSE_KW_U8,
+				ECSACT_PARSE_KW_I16,
+				ECSACT_PARSE_KW_U16,
+				ECSACT_PARSE_KW_I32,
+				ECSACT_PARSE_KW_U32,
+				ECSACT_PARSE_KW_I64,
+				ECSACT_PARSE_KW_U64,
+				ECSACT_PARSE_KW_F32,
+				ECSACT_PARSE_KW_F64,
+				ECSACT_PARSE_KW_ENTITY,
+			};
+
 			// Keyword suggestions - only if we are at the start of the line or
 			// haven't finished a keyword
 			if(word_count_before == 0) {
@@ -1421,7 +1404,7 @@ public:
 					for(auto const& kw : type_keywords) {
 						result.items.push_back({
 							.label = kw,
-							.kind = completion_item_kind::keyword,
+							.kind = completion_item_kind::class_kind,
 						});
 					}
 				}
@@ -1477,9 +1460,7 @@ public:
 							 stmt.type == ECSACT_STATEMENT_TRANSIENT) {
 							auto name = (stmt.type == ECSACT_STATEMENT_COMPONENT)
 								? get_name_from_sv(stmt.data.component_statement.component_name)
-								: get_name_from_sv(
-										stmt.data.transient_statement.transient_name
-									);
+								: get_name_from_sv(stmt.data.transient_statement.transient_name);
 
 							if(filter_pkg.empty()) {
 								component_names.insert(name);
@@ -1556,10 +1537,8 @@ public:
 			);
 		} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
 			symbol_name = std::string(
-				statement.data.entity_constraint_statement.constraint_component_name
-					.data,
-				statement.data.entity_constraint_statement.constraint_component_name
-					.length
+				statement.data.entity_constraint_statement.constraint_component_name.data,
+				statement.data.entity_constraint_statement.constraint_component_name.length
 			);
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
 			symbol_name = std::string(
@@ -1616,9 +1595,7 @@ public:
 							}
 							auto& d_stmt2 = info2.stack.front();
 							if(d_stmt2.type == ECSACT_STATEMENT_PACKAGE) {
-								if(get_name_from_sv(
-										 d_stmt2.data.package_statement.package_name
-									 ) == prefix) {
+								if(get_name_from_sv(d_stmt2.data.package_statement.package_name) == prefix) {
 									pkg_match = true;
 									break;
 								}

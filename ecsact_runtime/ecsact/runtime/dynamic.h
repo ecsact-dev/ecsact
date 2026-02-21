@@ -597,6 +597,12 @@ ECSACT_DYNAMIC_API_FN(
 	ecsact_system_like_id system_id
 );
 
+/**
+ * Resets the ecsact interpret state. This will destroy all packages, components,
+ * systems, etc.
+ */
+ECSACT_DYNAMIC_API_FN(void, ecsact_interpret_reset)();
+
 // # BEGIN FOR_EACH_ECSACT_DYNAMIC_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL
 #	define FOR_EACH_ECSACT_DYNAMIC_API_FN(fn, ...) \
@@ -659,7 +665,8 @@ ECSACT_DYNAMIC_API_FN(
 		fn(ecsact_create_system_cluster, __VA_ARGS__);                  \
 		fn(ecsact_add_system_to_cluster, __VA_ARGS__);                  \
 		fn(ecsact_check_execution_batches, __VA_ARGS__);                \
-		fn(ecsact_check_system_execution_batches, __VA_ARGS__)
+		fn(ecsact_check_system_execution_batches, __VA_ARGS__);         \
+		fn(ecsact_interpret_reset, __VA_ARGS__)
 #endif
 
 #endif // ECSACT_RUNTIME_DYNAMIC_H
