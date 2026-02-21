@@ -434,3 +434,49 @@ system SysB {
 	EXPECT_EQ(result->uri, uri_a);
 	EXPECT_EQ(result->range.start.line, 1); // package a; is at line 1
 }
+
+TEST(WorkspaceManager, Completion) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package package_a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package package_b;
+import 
+system SysB {
+	readonly 
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Completion for 'import '
+	// import is at line 2
+	auto result = manager.get_completions(uri_b, {2, 7});
+	ASSERT_TRUE(result.has_value());
+	bool found_package_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "package_a") found_package_a = true;
+	}
+	EXPECT_TRUE(found_package_a);
+
+	// Completion for 'readonly '
+	// readonly is at line 4
+	result = manager.get_completions(uri_b, {4, 10});
+	ASSERT_TRUE(result.has_value());
+	bool found_comp_a = false;
+	bool found_full_comp_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "CompA") found_comp_a = true;
+		if(item.label == "package_a.CompA") found_full_comp_a = true;
+	}
+	EXPECT_TRUE(found_comp_a);
+	EXPECT_TRUE(found_full_comp_a);
+}

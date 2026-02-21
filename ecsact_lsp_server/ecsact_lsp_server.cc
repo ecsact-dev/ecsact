@@ -99,6 +99,7 @@ auto main(int argc, char* argv[]) -> int {
 					},
 					{"definitionProvider", true},
 					{"hoverProvider", true},
+					{"completionProvider", {{"resolveProvider", false}}},
 				},
 			},
 			{
@@ -141,6 +142,23 @@ auto main(int argc, char* argv[]) -> int {
 
 		return "null"_json;
 	});
+
+	manager.set_request_handler(
+		"textDocument/completion",
+		[&](json params) -> json {
+			auto completion_params = params.get<ecsact_lsp::completion_params>();
+			auto result = workspace_manager.get_completions(
+				completion_params.textDocument.uri,
+				completion_params.position
+			);
+
+			if(result) {
+				return *result;
+			}
+
+			return "null"_json;
+		}
+	);
 
 	manager.add_notification_listener("initialized", [&](json) {
 
