@@ -187,4 +187,51 @@ typedef struct ecsact_statement {
 	ecsact_statement_parameter parameters[16];
 } ecsact_statement;
 
+inline const char* ecsact_parse_statement_type_name_pretty(
+	ecsact_statement_type type
+) {
+	switch(type) {
+		case ECSACT_STATEMENT_NONE:
+			return "none";
+		case ECSACT_STATEMENT_UNKNOWN:
+			return "unknown";
+		case ECSACT_STATEMENT_PACKAGE:
+			return "package";
+		case ECSACT_STATEMENT_IMPORT:
+			return "import";
+		case ECSACT_STATEMENT_COMPONENT:
+			return "component";
+		case ECSACT_STATEMENT_TRANSIENT:
+			return "transient";
+		case ECSACT_STATEMENT_SYSTEM:
+			return "system";
+		case ECSACT_STATEMENT_ACTION:
+			return "action";
+		case ECSACT_STATEMENT_ENUM:
+			return "enum";
+		case ECSACT_STATEMENT_ENUM_VALUE:
+			return "enum value";
+		case ECSACT_STATEMENT_BUILTIN_TYPE_FIELD:
+		case ECSACT_STATEMENT_USER_TYPE_FIELD:
+		case ECSACT_STATEMENT_ENTITY_FIELD:
+			return "field";
+		case ECSACT_STATEMENT_SYSTEM_COMPONENT:
+			return "system capability";
+		case ECSACT_STATEMENT_SYSTEM_GENERATES:
+			return "generates";
+		case ECSACT_STATEMENT_SYSTEM_WITH:
+			return "with";
+		case ECSACT_STATEMENT_ENTITY_CONSTRAINT:
+			return "entity constraint";
+		case ECSACT_STATEMENT_SYSTEM_NOTIFY:
+			return "system notify";
+		case ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT:
+			return "system notify component";
+		case ECSACT_STATEMENT_CLUSTER:
+			return "cluster";
+	}
+
+	return "unknown statement";
+}
+
 #endif // ECSACT_PARSE_STATEMENTS_H

@@ -39,10 +39,11 @@
 #ifdef __cplusplus
 #	include <string>
 #	include <string_view>
+#	include <array>
 
 namespace ecsact::parse {
 
-inline auto builtin_type_to_string(ecsact_builtin_type type)
+constexpr auto builtin_type_to_keyword_string(ecsact_builtin_type type)
 	-> std::string_view {
 	switch(type) {
 		case ECSACT_BOOL:
@@ -70,8 +71,52 @@ inline auto builtin_type_to_string(ecsact_builtin_type type)
 		case ECSACT_ENTITY_TYPE:
 			return ECSACT_PARSE_KW_ENTITY;
 	}
+
 	return "unknown";
 }
+
+constexpr auto top_level_keywords = std::array{
+	std::string_view{ECSACT_PARSE_KW_MAIN_PACKAGE},
+	std::string_view{ECSACT_PARSE_KW_PACKAGE},
+	std::string_view{ECSACT_PARSE_KW_IMPORT},
+	std::string_view{ECSACT_PARSE_KW_COMPONENT},
+	std::string_view{ECSACT_PARSE_KW_TRANSIENT},
+	std::string_view{ECSACT_PARSE_KW_SYSTEM},
+	std::string_view{ECSACT_PARSE_KW_ACTION},
+	std::string_view{ECSACT_PARSE_KW_ENUM},
+};
+
+constexpr auto cap_keywords = std::array{
+	std::string_view{ECSACT_PARSE_KW_READONLY},
+	std::string_view{ECSACT_PARSE_KW_READWRITE},
+	std::string_view{ECSACT_PARSE_KW_WRITEONLY},
+	std::string_view{ECSACT_PARSE_KW_ADDS},
+	std::string_view{ECSACT_PARSE_KW_REMOVES},
+	std::string_view{ECSACT_PARSE_KW_EXCLUDE},
+	std::string_view{ECSACT_PARSE_KW_INCLUDE},
+	std::string_view{ECSACT_PARSE_KW_REQUIRED},
+	std::string_view{ECSACT_PARSE_KW_GENERATES},
+};
+
+constexpr auto generates_keywords = std::array{
+	std::string_view{ECSACT_PARSE_KW_REQUIRED},
+	std::string_view{ECSACT_PARSE_KW_OPTIONAL},
+};
+
+constexpr auto type_keywords = std::array{
+	std::string_view{ECSACT_PARSE_KW_BOOL},
+	std::string_view{ECSACT_PARSE_KW_I8},
+	std::string_view{ECSACT_PARSE_KW_U8},
+	std::string_view{ECSACT_PARSE_KW_I16},
+	std::string_view{ECSACT_PARSE_KW_U16},
+	std::string_view{ECSACT_PARSE_KW_I32},
+	std::string_view{ECSACT_PARSE_KW_U32},
+	std::string_view{ECSACT_PARSE_KW_I64},
+	std::string_view{ECSACT_PARSE_KW_U64},
+	std::string_view{ECSACT_PARSE_KW_F32},
+	std::string_view{ECSACT_PARSE_KW_F64},
+	std::string_view{ECSACT_PARSE_KW_ENTITY},
+};
 
 } // namespace ecsact::parse
 #endif
