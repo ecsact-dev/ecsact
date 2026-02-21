@@ -279,6 +279,101 @@ struct completion_params {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolKind
+ */
+enum class symbol_kind {
+	file = 1,
+	module = 2,
+	namespace_kind = 3,
+	package = 4,
+	class_kind = 5,
+	method = 6,
+	property = 7,
+	field = 8,
+	constructor = 9,
+	enum_kind = 10,
+	interface = 11,
+	function = 12,
+	variable = 13,
+	constant = 14,
+	string = 15,
+	number = 16,
+	boolean = 17,
+	array = 18,
+	object = 19,
+	key = 20,
+	null_kind = 21,
+	enum_member = 22,
+	struct_kind = 23,
+	event = 24,
+	operator_kind = 25,
+	type_parameter = 26,
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams
+ */
+struct document_symbol_params {
+	text_document_identifier textDocument;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(document_symbol_params, textDocument);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbol
+ */
+struct document_symbol {
+	std::string                  name;
+	std::string                  detail;
+	symbol_kind                  kind;
+	range                        range;
+	ecsact_lsp::range            selectionRange;
+	std::vector<document_symbol> children;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		document_symbol,
+		name,
+		detail,
+		kind,
+		range,
+		selectionRange,
+		children
+	);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceSymbolParams
+ */
+struct workspace_symbol_params {
+	std::string query;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(workspace_symbol_params, query);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolInformation
+ */
+struct symbol_information {
+	std::string         name;
+	symbol_kind         kind;
+	location            location;
+	std::string         containerName;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		symbol_information,
+		name,
+		kind,
+		location,
+		containerName
+	);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#command
  */
 struct command {

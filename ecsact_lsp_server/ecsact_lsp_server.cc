@@ -103,6 +103,8 @@ auto main(int argc, char* argv[]) -> int {
 					{"definitionProvider", true},
 					{"hoverProvider", true},
 					{"referencesProvider", true},
+					{"documentSymbolProvider", true},
+					{"workspaceSymbolProvider", true},
 					{
 						"completionProvider",
 						{
@@ -177,6 +179,28 @@ auto main(int argc, char* argv[]) -> int {
 			}
 
 			return "null"_json;
+		}
+	);
+
+	manager.set_request_handler(
+		"textDocument/documentSymbol",
+		[&](json params) -> json {
+			auto document_symbol_params =
+				params.get<ecsact_lsp::document_symbol_params>();
+			return workspace_manager.get_document_symbols(
+				document_symbol_params.textDocument.uri
+			);
+		}
+	);
+
+	manager.set_request_handler(
+		"workspace/symbol",
+		[&](json params) -> json {
+			auto workspace_symbol_params =
+				params.get<ecsact_lsp::workspace_symbol_params>();
+			return workspace_manager.get_workspace_symbols(
+				workspace_symbol_params.query
+			);
 		}
 	);
 

@@ -797,3 +797,120 @@ system SysB {
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->size(), 2);
 }
+
+TEST(WorkspaceManager, DocumentSymbols) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+
+component CompA {
+	i32 a;
+}
+
+system SysA {
+	readonly CompA;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	auto symbols = manager.get_document_symbols(uri);
+	EXPECT_FALSE(symbols.empty());
+
+	// Top level package
+	auto package_sym = std::find_if(
+		symbols.begin(),
+		symbols.end(),
+		[](const ecsact_lsp::document_symbol& s) {
+			return s.kind == ecsact_lsp::symbol_kind::package;
+		}
+	);
+	ASSERT_NE(package_sym, symbols.end());
+	EXPECT_EQ(package_sym->name, "test");
+
+	// Component CompA
+	auto comp_sym = std::find_if(
+		symbols.begin(),
+		symbols.end(),
+		[](const ecsact_lsp::document_symbol& s) {
+			return s.kind == ecsact_lsp::symbol_kind::class_kind &&
+				s.name == "CompA";
+		}
+	);
+	ASSERT_NE(comp_sym, symbols.end());
+
+	// Field a inside CompA
+	ASSERT_FALSE(comp_sym->children.empty());
+	auto field_sym = std::find_if(
+		comp_sym->children.begin(),
+		comp_sym->children.end(),
+		[](const ecsact_lsp::document_symbol& s) {
+			return s.kind == ecsact_lsp::symbol_kind::field && s.name == "a";
+		}
+	);
+	ASSERT_NE(field_sym, comp_sym->children.end());
+	EXPECT_EQ(field_sym->detail, "i32");
+
+	// System SysA
+	auto sys_sym = std::find_if(
+		symbols.begin(),
+		symbols.end(),
+		[](const ecsact_lsp::document_symbol& s) {
+			return s.kind == ecsact_lsp::symbol_kind::function && s.name == "SysA";
+		}
+	);
+	ASSERT_NE(sys_sym, symbols.end());
+}
+
+TEST(WorkspaceManager, WorkspaceSymbols) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package b;
+import a;
+system SysB {
+	readonly a.CompA;
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Search for 'Comp'
+	auto symbols = manager.get_workspace_symbols("Comp");
+	EXPECT_FALSE(symbols.empty());
+
+	bool found_comp_a = false;
+	for(const auto& sym : symbols) {
+		if(sym.name == "CompA" && sym.kind == ecsact_lsp::symbol_kind::class_kind) {
+			found_comp_a = true;
+			EXPECT_EQ(sym.containerName, "a");
+		}
+	}
+	EXPECT_TRUE(found_comp_a);
+
+	// Search for 'Sys'
+	symbols = manager.get_workspace_symbols("Sys");
+	EXPECT_FALSE(symbols.empty());
+
+	bool found_sys_b = false;
+	for(const auto& sym : symbols) {
+		if(sym.name == "SysB" && sym.kind == ecsact_lsp::symbol_kind::function) {
+			found_sys_b = true;
+			EXPECT_EQ(sym.containerName, "b");
+		}
+	}
+	EXPECT_TRUE(found_sys_b);
+}
+
