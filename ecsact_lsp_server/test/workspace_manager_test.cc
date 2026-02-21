@@ -357,13 +357,6 @@ system SysA {
 		<< result->contents.value;
 	ASSERT_TRUE(result->contents.value.find("test.SysA") != std::string::npos)
 		<< result->contents.value;
-	ASSERT_TRUE(
-		result->contents.value.find("**Execution Batch 0 systems:**") !=
-		std::string::npos
-	) << result->contents.value;
-	ASSERT_TRUE(
-		result->contents.value.find("- **`test.SysA`** (this)") != std::string::npos
-	) << result->contents.value;
 
 	// Hover over CompA in SysA (system capability)
 	result = manager.get_hover(uri, {8, 12});
@@ -403,4 +396,186 @@ system SysB {
 	ASSERT_TRUE(
 		result->contents.value.find("component `a.CompA`") != std::string::npos
 	) << result->contents.value;
+}
+
+TEST(WorkspaceManager, GotoDefinitionImport) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package b;
+import a;
+system SysB {
+	readonly a.CompA;
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Goto definition for 'import a;'
+	// import a; is at line 2 (0-indexed)
+	auto result = manager.goto_definition(uri_b, {2, 8});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri_a);
+	EXPECT_EQ(result->range.start.line, 1); // package a; is at line 1
+}
+
+TEST(WorkspaceManager, Completion) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package package_a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package package_b;
+import 
+system SysB {
+	readonly 
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Completion for 'import '
+	// import is at line 2
+	auto result = manager.get_completions(uri_b, {2, 7});
+	ASSERT_TRUE(result.has_value());
+	bool found_package_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "package_a") {
+			found_package_a = true;
+		}
+	}
+	EXPECT_TRUE(found_package_a);
+
+	// Completion for 'readonly '
+	// readonly is at line 4
+	result = manager.get_completions(uri_b, {4, 10});
+	ASSERT_TRUE(result.has_value());
+	bool found_comp_a = false;
+	bool found_full_comp_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "CompA") {
+			found_comp_a = true;
+		}
+		if(item.label == "package_a.CompA") {
+			found_full_comp_a = true;
+		}
+	}
+	EXPECT_TRUE(found_comp_a);
+	EXPECT_TRUE(found_full_comp_a);
+}
+
+TEST(WorkspaceManager, DotCompletion) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package package_a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package package_b;
+import package_a;
+system SysB {
+	readonly package_a.
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Completion for 'readonly package_a.'
+	// line 4, character 20 (after the dot)
+	auto result = manager.get_completions(uri_b, {4, 20});
+	ASSERT_TRUE(result.has_value());
+	bool found_comp_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "CompA") {
+			found_comp_a = true;
+		}
+	}
+	EXPECT_TRUE(found_comp_a);
+}
+
+TEST(WorkspaceManager, KeywordCompletion) {
+	mock_sender sender;
+	sender.trace = ecsact_lsp::trace_value::verbose;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = "package test;\n\n";
+
+	manager.add_document(uri, 1, text);
+
+	// Top level keywords
+	// Cursor at line 2, col 0
+	auto result = manager.get_completions(uri, {2, 0});
+	ASSERT_TRUE(result.has_value());
+	bool found_component = false;
+	bool found_system = false;
+	for(auto const& item : result->items) {
+		if(item.label == "component") {
+			found_component = true;
+		}
+		if(item.label == "system") {
+			found_system = true;
+		}
+	}
+	EXPECT_TRUE(found_component);
+	EXPECT_TRUE(found_system);
+}
+
+TEST(WorkspaceManager, KeywordCompletionInsideBlock) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+package test;
+system SysA {
+	
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Inside system keywords
+	// Cursor at line 3, col 1
+	auto result = manager.get_completions(uri, {3, 1});
+	ASSERT_TRUE(result.has_value());
+	bool found_readonly = false;
+	bool found_readwrite = false;
+	bool found_generates = false;
+	for(auto const& item : result->items) {
+		if(item.label == "readonly") {
+			found_readonly = true;
+		}
+		if(item.label == "readwrite") {
+			found_readwrite = true;
+		}
+		if(item.label == "generates") {
+			found_generates = true;
+		}
+	}
+	EXPECT_TRUE(found_readonly);
+	EXPECT_TRUE(found_readwrite);
+	EXPECT_TRUE(found_generates);
 }

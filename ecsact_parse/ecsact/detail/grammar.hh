@@ -8,6 +8,7 @@
 #include <lexy/callback.hpp>
 #include "ecsact/parse/status.h"
 #include "ecsact/parse/statements.h"
+#include "ecsact/parse/keywords.h"
 #include <magic_enum/magic_enum.hpp>
 
 namespace ecsact::parse::detail::grammar {
@@ -253,12 +254,13 @@ struct package_statement {
 	}
 
 	struct main_package_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("main") >> LEXY_LIT("package");
+		static constexpr auto rule = LEXY_LIT("main") >>
+			LEXY_LIT(ECSACT_PARSE_KW_PACKAGE);
 		static constexpr auto value = lexy::constant(true);
 	};
 
 	struct package_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("package");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_PACKAGE);
 		static constexpr auto value = lexy::constant(false);
 	};
 
@@ -288,7 +290,7 @@ struct import_statement {
 	}
 
 	struct import_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("import");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_IMPORT);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -315,7 +317,7 @@ struct component_statement {
 	}
 
 	struct component_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("component");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_COMPONENT);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -342,7 +344,7 @@ struct transient_statement {
 	}
 
 	struct transient_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("transient");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_TRANSIENT);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -365,7 +367,7 @@ struct transient_statement {
 
 struct system_statement {
 	struct system_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("system");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_SYSTEM);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -421,7 +423,7 @@ struct action_statement {
 	}
 
 	struct action_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("action");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_ACTION);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -448,7 +450,7 @@ struct enum_statement {
 	}
 
 	struct enum_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("enum");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_ENUM);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -537,57 +539,57 @@ struct field_statement {
 	}
 
 	struct i8_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("i8");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_I8);
 		static constexpr auto value = lexy::constant(ECSACT_I8);
 	};
 
 	struct u8_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("u8");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_U8);
 		static constexpr auto value = lexy::constant(ECSACT_U8);
 	};
 
 	struct i16_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("i16");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_I16);
 		static constexpr auto value = lexy::constant(ECSACT_I16);
 	};
 
 	struct u16_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("u16");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_U16);
 		static constexpr auto value = lexy::constant(ECSACT_U16);
 	};
 
 	struct i32_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("i32");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_I32);
 		static constexpr auto value = lexy::constant(ECSACT_I32);
 	};
 
 	struct u32_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("u32");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_U32);
 		static constexpr auto value = lexy::constant(ECSACT_U32);
 	};
 
 	struct f32_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("f32");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_F32);
 		static constexpr auto value = lexy::constant(ECSACT_F32);
 	};
 
 	struct i64_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("i64");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_I64);
 		static constexpr auto value = lexy::constant(ECSACT_I64);
 	};
 
 	struct u64_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("u64");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_U64);
 		static constexpr auto value = lexy::constant(ECSACT_U64);
 	};
 
 	struct f64_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("f64");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_F64);
 		static constexpr auto value = lexy::constant(ECSACT_F64);
 	};
 
 	struct entity_keyword : lexy::transparent_production {
-		static constexpr auto rule = LEXY_LIT("entity");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_ENTITY);
 		static constexpr auto value = lexy::constant(ECSACT_ENTITY_TYPE);
 	};
 
@@ -659,42 +661,42 @@ struct system_component_statement {
 	}
 
 	struct readonly_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("readonly");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_READONLY);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_READONLY);
 	};
 
 	struct writeonly_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("writeonly");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_WRITEONLY);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_WRITEONLY);
 	};
 
 	struct readwrite_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("readwrite");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_READWRITE);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_READWRITE);
 	};
 
 	struct optional_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("optional");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_OPTIONAL);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_OPTIONAL);
 	};
 
 	struct include_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("include");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_INCLUDE);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_INCLUDE);
 	};
 
 	struct exclude_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("exclude");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_EXCLUDE);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_EXCLUDE);
 	};
 
 	struct adds_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("adds");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_ADDS);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_ADDS);
 	};
 
 	struct removes_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("removes");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_REMOVES);
 		static constexpr auto value = lexy::constant(ECSACT_SYS_CAP_REMOVES);
 	};
 
@@ -794,7 +796,7 @@ struct system_component_statement {
 
 struct generates_statement {
 	struct generates_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("generates");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_GENERATES);
 		static constexpr auto value = lexy::noop;
 	};
 
@@ -809,12 +811,12 @@ struct generates_statement {
 
 struct entity_constraint_statement {
 	struct optional_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("optional");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_OPTIONAL);
 		static constexpr auto value = lexy::constant(true);
 	};
 
 	struct required_keyword : lexy::token_production {
-		static constexpr auto rule = LEXY_LIT("required");
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_REQUIRED);
 		static constexpr auto value = lexy::constant(false);
 	};
 

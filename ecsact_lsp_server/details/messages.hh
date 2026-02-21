@@ -186,6 +186,72 @@ struct hover_params {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
+ */
+enum class completion_item_kind {
+	text = 1,
+	method = 2,
+	function = 3,
+	constructor = 4,
+	field = 5,
+	variable = 6,
+	class_kind = 7,
+	interface = 8,
+	module = 9,
+	property = 10,
+	unit = 11,
+	value = 12,
+	enum_kind = 13,
+	keyword = 14,
+	snippet = 15,
+	color = 16,
+	file = 17,
+	reference = 18,
+	folder = 19,
+	enum_member = 20,
+	constant = 21,
+	struct_kind = 22,
+	event = 23,
+	operator_kind = 24,
+	type_parameter = 25,
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItem
+ */
+struct completion_item {
+	std::string          label;
+	completion_item_kind kind;
+	std::string          detail;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(completion_item, label, kind, detail);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionList
+ */
+struct completion_list {
+	bool                         isIncomplete;
+	std::vector<completion_item> items;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(completion_list, isIncomplete, items);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionParams
+ */
+struct completion_params {
+	text_document_identifier textDocument;
+	position                 position;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(completion_params, textDocument, position);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticSeverity
  */
 enum class diagnostic_severity {

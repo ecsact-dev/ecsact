@@ -13,6 +13,7 @@ _srcs = [
 _hdrs = [
     "ecsact/parse.h",
     "ecsact/parse/error.h",
+    "ecsact/parse/keywords.h",
     "ecsact/parse/statements.h",
     "ecsact/parse/status.h",
     "ecsact/parse/string.h",

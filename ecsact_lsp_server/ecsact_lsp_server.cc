@@ -69,6 +69,16 @@ auto main(int argc, char* argv[]) -> int {
 			manager.set_trace(params["trace"].get<ecsact_lsp::trace_value>());
 		}
 
+		if(params.contains("workspaceFolders") &&
+			 params["workspaceFolders"].is_array()) {
+			auto workspace_folders =
+				params["workspaceFolders"]
+					.get<std::vector<ecsact_lsp::workspace_folder>>();
+			for(auto const& folder : workspace_folders) {
+				workspace_manager.add_workspace(folder);
+			}
+		}
+
 		return nlohmann::json{
 			{
 				"capabilities",
@@ -92,6 +102,13 @@ auto main(int argc, char* argv[]) -> int {
 					},
 					{"definitionProvider", true},
 					{"hoverProvider", true},
+					{
+						"completionProvider",
+						{
+							{"resolveProvider", false},
+							{"triggerCharacters", {"."}},
+						},
+					},
 				},
 			},
 			{
@@ -134,6 +151,23 @@ auto main(int argc, char* argv[]) -> int {
 
 		return "null"_json;
 	});
+
+	manager.set_request_handler(
+		"textDocument/completion",
+		[&](json params) -> json {
+			auto completion_params = params.get<ecsact_lsp::completion_params>();
+			auto result = workspace_manager.get_completions(
+				completion_params.textDocument.uri,
+				completion_params.position
+			);
+
+			if(result) {
+				return *result;
+			}
+
+			return "null"_json;
+		}
+	);
 
 	manager.add_notification_listener("initialized", [&](json) {
 

@@ -8,8 +8,12 @@
 #include <vector>
 #include <string_view>
 #include <ranges>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include "ecsact/parse.h"
 #include "ecsact/parse/statements.h"
+#include "ecsact/parse/keywords.h"
 #include "ecsact/interpret/eval.h"
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/runtime/meta.h"
@@ -21,13 +25,42 @@
 
 namespace ecsact_lsp {
 
+namespace detail {
+inline auto uri_to_path(std::string uri) -> std::filesystem::path {
+	if(uri.starts_with("file:///")) {
+		auto path_str = uri.substr(8);
+		return std::filesystem::path(path_str);
+	}
+	if(uri.starts_with("file://")) {
+		return std::filesystem::path(uri.substr(7));
+	}
+	return std::filesystem::path(uri);
+}
+
+inline auto path_to_uri(std::filesystem::path path) -> std::string {
+	auto path_str = path.generic_string();
+	if(!path_str.starts_with("/")) {
+		return "file:///" + path_str;
+	}
+	return "file://" + path_str;
+}
+} // namespace detail
+
 struct document_state {
-	std::optional<ecsact_package_id>           package_id;
-	std::vector<ecsact_package_id>             imports;
+	struct stack_info {
+		std::vector<ecsact_statement> stack;
+		range                         range;
+	};
+
+	std::optional<ecsact_package_id> package_id;
+	std::vector<ecsact_package_id>   imports;
+	std::vector<stack_info>          stacks;
+	std::vector<ecsact_parse_status> parse_statuses;
+	std::string                      full_text;
+	std::string_view                 next_parse_view;
+
+	// Legacy for compatibility during transition
 	std::vector<std::vector<ecsact_statement>> parse_stacks;
-	std::vector<ecsact_parse_status>           parse_statuses;
-	std::string                                full_text;
-	std::string_view                           next_parse_view;
 };
 
 struct workspace_state {
@@ -69,29 +102,29 @@ inline auto get_source_range(
 inline auto builtin_type_name(ecsact_builtin_type type) -> std::string {
 	switch(type) {
 		case ECSACT_BOOL:
-			return "bool";
+			return ECSACT_PARSE_KW_BOOL;
 		case ECSACT_I8:
-			return "i8";
+			return ECSACT_PARSE_KW_I8;
 		case ECSACT_U8:
-			return "u8";
+			return ECSACT_PARSE_KW_U8;
 		case ECSACT_I16:
-			return "i16";
+			return ECSACT_PARSE_KW_I16;
 		case ECSACT_U16:
-			return "u16";
+			return ECSACT_PARSE_KW_U16;
 		case ECSACT_I32:
-			return "i32";
+			return ECSACT_PARSE_KW_I32;
 		case ECSACT_U32:
-			return "u32";
+			return ECSACT_PARSE_KW_U32;
 		case ECSACT_F32:
-			return "f32";
+			return ECSACT_PARSE_KW_F32;
 		case ECSACT_I64:
-			return "i64";
+			return ECSACT_PARSE_KW_I64;
 		case ECSACT_U64:
-			return "u64";
+			return ECSACT_PARSE_KW_U64;
 		case ECSACT_F64:
-			return "f64";
+			return ECSACT_PARSE_KW_F64;
 		case ECSACT_ENTITY_TYPE:
-			return "entity";
+			return ECSACT_PARSE_KW_ENTITY;
 	}
 	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) +
 		")";
@@ -227,7 +260,15 @@ class workspace_manager {
 	std::unordered_map<std::string, document_state>  _documents;
 	Send&&                                           send;
 
+	static auto get_name_from_sv(const ecsact_statement_sv& sv) -> std::string {
+		if(sv.data == nullptr || sv.length < 0) {
+			return "";
+		}
+		return std::string(sv.data, static_cast<size_t>(sv.length));
+	}
+
 	auto _parse_document(std::string uri, int version, document_state& doc) {
+		doc.stacks.clear();
 		doc.parse_stacks.clear();
 		doc.parse_statuses.clear();
 
@@ -235,11 +276,11 @@ class workspace_manager {
 
 		while(!doc.next_parse_view.empty()) {
 			auto& status = doc.parse_statuses.emplace_back();
-			auto& stack = doc.parse_stacks.emplace_back();
+			auto  stack = std::vector<ecsact_statement>{};
 
-			if(doc.parse_stacks.size() > 1) {
+			if(!doc.stacks.empty()) {
 				auto last_status = doc.parse_statuses[doc.parse_statuses.size() - 2];
-				stack = doc.parse_stacks[doc.parse_stacks.size() - 2];
+				stack = doc.stacks.back().stack;
 				if(last_status.code == ECSACT_PARSE_STATUS_OK) {
 					stack.pop_back();
 				} else if(last_status.code == ECSACT_PARSE_STATUS_BLOCK_END) {
@@ -251,7 +292,20 @@ class workspace_manager {
 			}
 
 			auto current_parse_view = doc.next_parse_view;
+			auto stack_start_ptr = current_parse_view.data();
 			doc.next_parse_view = parse_stack(current_parse_view, status, stack);
+
+			auto stack_end_ptr = doc.next_parse_view.data();
+			auto stack_range = get_source_range(
+				doc.full_text,
+				{
+					.data = stack_start_ptr,
+					.length = static_cast<int32_t>(stack_end_ptr - stack_start_ptr),
+				}
+			);
+
+			doc.stacks.push_back({.stack = stack, .range = stack_range});
+			doc.parse_stacks.push_back(stack);
 
 			if(!ecsact_is_error_parse_status_code(status.code)) {
 				auto& statement = stack.back();
@@ -482,11 +536,42 @@ public:
 	}
 
 	auto add_workspace(workspace_folder ws) -> void {
-		send.show_message(message_type::error, "Add Workspace: " + ws.uri);
+		auto ws_path = detail::uri_to_path(ws.uri);
+		if(!std::filesystem::exists(ws_path)) {
+			return;
+		}
+
+		_workspaces[ws.uri] = workspace_state{.uri = ws.uri};
+		auto& workspace = _workspaces[ws.uri];
+
+		for(auto const& entry :
+				std::filesystem::recursive_directory_iterator(ws_path)) {
+			if(entry.is_regular_file() && entry.path().extension() == ".ecsact") {
+				auto uri = detail::path_to_uri(entry.path());
+				workspace.document_uris.insert(uri);
+
+				if(!_documents.contains(uri)) {
+					std::ifstream file(entry.path());
+					if(file.is_open()) {
+						std::string content(
+							(std::istreambuf_iterator<char>(file)),
+							std::istreambuf_iterator<char>()
+						);
+						add_document(uri, 0, content);
+					}
+				}
+			}
+		}
 	}
 
 	auto remove_workspace(workspace_folder ws) -> void {
-		send.show_message(message_type::error, "Remove Workspace: " + ws.uri);
+		auto it = _workspaces.find(ws.uri);
+		if(it != _workspaces.end()) {
+			for(auto const& doc_uri : it->second.document_uris) {
+				remove_document(doc_uri);
+			}
+			_workspaces.erase(it);
+		}
 	}
 
 	auto add_document(std::string uri, int initial_version, std::string text)
@@ -520,12 +605,12 @@ public:
 
 		auto& doc = doc_it->second;
 
-		for(auto& stack : doc.parse_stacks) {
-			if(stack.empty()) {
+		for(auto& info : doc.stacks) {
+			if(info.stack.empty()) {
 				continue;
 			}
 
-			auto& statement = stack.back();
+			auto& statement = info.stack.back();
 
 			auto in_range = [&](const ecsact_statement_sv& sv) -> bool {
 				if(sv.data == nullptr) {
@@ -541,6 +626,12 @@ public:
 			auto name_sv = ecsact_statement_sv{};
 
 			switch(statement.type) {
+				case ECSACT_STATEMENT_PACKAGE:
+					name_sv = statement.data.package_statement.package_name;
+					break;
+				case ECSACT_STATEMENT_IMPORT:
+					name_sv = statement.data.import_statement.import_package_name;
+					break;
 				case ECSACT_STATEMENT_COMPONENT:
 					name_sv = statement.data.component_statement.component_name;
 					break;
@@ -581,14 +672,17 @@ public:
 			}
 
 			if(in_range(name_sv)) {
-				return std::make_pair(stack, get_source_range(doc.full_text, name_sv));
+				return std::make_pair(
+					info.stack,
+					get_source_range(doc.full_text, name_sv)
+				);
 			}
 
 			if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
 				name_sv = statement.data.user_type_field_statement.user_type_name;
 				if(in_range(name_sv)) {
 					return std::make_pair(
-						stack,
+						info.stack,
 						get_source_range(doc.full_text, name_sv)
 					);
 				}
@@ -616,13 +710,6 @@ public:
 			auto full_name =
 				ecsact_meta_decl_full_name(static_cast<ecsact_decl_id>(id));
 			return full_name ? std::string(full_name) : "";
-		};
-
-		auto get_name_from_sv = [&](const ecsact_statement_sv& sv) -> std::string {
-			if(sv.data == nullptr || sv.length < 0) {
-				return "";
-			}
-			return std::string(sv.data, static_cast<size_t>(sv.length));
 		};
 
 		auto build_decl_hover = [&](
@@ -748,11 +835,11 @@ public:
 				if(name != "unknown" && name.find('.') == std::string::npos) {
 					for(auto& [doc_uri, doc_state] : _documents) {
 						bool has_decl = false;
-						for(auto& d_stack : doc_state.parse_stacks) {
-							if(d_stack.empty()) {
+						for(auto& info : doc_state.stacks) {
+							if(info.stack.empty()) {
 								continue;
 							}
-							auto&       d_stmt = d_stack.back();
+							auto&       d_stmt = info.stack.back();
 							std::string d_name;
 							if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
 								d_name = get_name_from_sv(
@@ -779,11 +866,11 @@ public:
 						}
 
 						if(has_decl) {
-							for(auto& d_stack : doc_state.parse_stacks) {
-								if(d_stack.empty()) {
+							for(auto& info : doc_state.stacks) {
+								if(info.stack.empty()) {
 									continue;
 								}
-								auto& d_stmt = d_stack.front();
+								auto& d_stmt = info.stack.front();
 								if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
 									auto pkg_name = get_name_from_sv(
 										d_stmt.data.package_statement.package_name
@@ -806,30 +893,49 @@ public:
 				auto sys_like_id = static_cast<ecsact_system_like_id>(id);
 
 				std::vector<ecsact_package_id> packages;
+				auto                           doc_it = _documents.find(uri);
+				if(doc_it != _documents.end() && doc_it->second.package_id) {
+					packages.push_back(*doc_it->second.package_id);
+				}
+
 				int32_t                        packages_count = 0;
 				int32_t                        max_packages = 256;
-				packages.resize(max_packages);
+				std::vector<ecsact_package_id> all_packages(max_packages);
 				ecsact_meta_get_package_ids(
 					max_packages,
-					packages.data(),
+					all_packages.data(),
 					&packages_count
 				);
-				packages.resize(packages_count);
+				for(int32_t i = 0; packages_count > i; ++i) {
+					if(doc_it == _documents.end() ||
+						 all_packages[i] != *doc_it->second.package_id) {
+						packages.push_back(all_packages[i]);
+					}
+				}
 
-				for(auto package_id : packages) {
-					int32_t batch_count = ecsact_meta_count_execution_batches(package_id);
-					for(int32_t i = 0; batch_count > i; ++i) {
+				auto add_batch_info =
+					[&](auto package_or_sys_id, int32_t i, bool is_sys) {
 						int32_t                            systems_count = 0;
 						std::vector<ecsact_system_like_id> systems;
 						int32_t                            max_systems = 256;
 						systems.resize(max_systems);
-						ecsact_meta_get_execution_batch(
-							package_id,
-							i,
-							max_systems,
-							systems.data(),
-							&systems_count
-						);
+						if(is_sys) {
+							ecsact_meta_get_system_execution_batch(
+								static_cast<ecsact_system_like_id>(package_or_sys_id),
+								i,
+								max_systems,
+								systems.data(),
+								&systems_count
+							);
+						} else {
+							ecsact_meta_get_execution_batch(
+								static_cast<ecsact_package_id>(package_or_sys_id),
+								i,
+								max_systems,
+								systems.data(),
+								&systems_count
+							);
+						}
 						bool in_batch = false;
 						for(int32_t j = 0; systems_count > j; ++j) {
 							if(systems[j] == sys_like_id) {
@@ -863,8 +969,46 @@ public:
 									hover_text += std::format(" - `{}`\n", other_name);
 								}
 							}
+							return true;
+						}
+						return false;
+					};
+
+				for(auto package_id : packages) {
+					int32_t batch_count = ecsact_meta_count_execution_batches(package_id);
+					for(int32_t i = 0; batch_count > i; ++i) {
+						if(add_batch_info(package_id, i, false)) {
 							break;
 						}
+					}
+					if(hover_text.find("Execution Batch") != std::string::npos) {
+						break;
+					}
+
+					// Also check nested system execution batches
+					int32_t sys_count = ecsact_meta_count_systems(package_id);
+					std::vector<ecsact_system_id> sys_ids(sys_count);
+					ecsact_meta_get_system_ids(
+						package_id,
+						sys_count,
+						sys_ids.data(),
+						&sys_count
+					);
+					for(auto sys_id : sys_ids) {
+						int32_t s_batch_count = ecsact_meta_count_system_execution_batches(
+							static_cast<ecsact_system_like_id>(sys_id)
+						);
+						for(int32_t i = 0; s_batch_count > i; ++i) {
+							if(add_batch_info(sys_id, i, true)) {
+								break;
+							}
+						}
+						if(hover_text.find("Execution Batch") != std::string::npos) {
+							break;
+						}
+					}
+					if(hover_text.find("Execution Batch") != std::string::npos) {
+						break;
 					}
 				}
 			}
@@ -925,11 +1069,11 @@ public:
 
 			// Find definition for this name
 			for(auto& [doc_uri, doc_state] : _documents) {
-				for(auto& d_stack : doc_state.parse_stacks) {
-					if(d_stack.empty()) {
+				for(auto& info : doc_state.stacks) {
+					if(info.stack.empty()) {
 						continue;
 					}
-					auto&       d_stmt = d_stack.back();
+					auto&       d_stmt = info.stack.back();
 					std::string d_name;
 					if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
 						d_name =
@@ -978,18 +1122,18 @@ public:
 				if(!parent_name.empty() && parent_name != "unknown" &&
 					 parent_name.find('.') == std::string::npos) {
 					for(auto& [doc_uri, doc_state] : _documents) {
-						for(auto& d_stack : doc_state.parse_stacks) {
-							if(d_stack.empty()) {
+						for(auto& info : doc_state.stacks) {
+							if(info.stack.empty()) {
 								continue;
 							}
-							auto& d_stmt = d_stack.front();
+							auto& d_stmt = info.stack.front();
 							if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
 								bool has_parent_decl = false;
-								for(auto& d_stack2 : doc_state.parse_stacks) {
-									if(d_stack2.empty()) {
+								for(auto& info2 : doc_state.stacks) {
+									if(info2.stack.empty()) {
 										continue;
 									}
-									auto&       d_stmt2 = d_stack2.back();
+									auto&       d_stmt2 = info2.stack.back();
 									std::string d_name;
 									if(d_stmt2.type == ECSACT_STATEMENT_COMPONENT) {
 										d_name = get_name_from_sv(
@@ -1046,7 +1190,7 @@ public:
 			} else if(statement.type == ECSACT_STATEMENT_ENTITY_FIELD) {
 				field_name =
 					get_name_from_sv(statement.data.field_statement.field_name);
-				field_type_name = "entity";
+				field_type_name = ECSACT_PARSE_KW_ENTITY;
 			}
 
 			hover_text += "### field `" + parent_name + "." + field_name + "`\n";
@@ -1067,6 +1211,305 @@ public:
 		};
 	}
 
+	auto get_completions(std::string uri, position pos)
+		-> std::optional<completion_list> {
+		auto doc_it = _documents.find(uri);
+		if(doc_it == _documents.end()) {
+			return std::nullopt;
+		}
+
+		auto& doc = doc_it->second;
+
+		auto lines = std::vector<std::string>{};
+		auto ss = std::stringstream{doc.full_text};
+		auto line = std::string{};
+		while(std::getline(ss, line)) {
+			lines.push_back(line);
+		}
+		if(doc.full_text.ends_with('\n') || doc.full_text.empty()) {
+			lines.push_back("");
+		}
+
+		if(pos.line >= lines.size()) {
+			return std::nullopt;
+		}
+
+		auto current_line = lines[pos.line];
+		auto line_before_cursor = current_line.substr(0, pos.character);
+		auto trimmed_before = std::string_view{line_before_cursor};
+		auto first_non_space_before = trimmed_before.find_first_not_of(" \t");
+		if(first_non_space_before != std::string_view::npos) {
+			trimmed_before.remove_prefix(first_non_space_before);
+		} else {
+			trimmed_before = "";
+		}
+
+		// Count words before cursor on this line
+		int         word_count_before = 0;
+		bool        last_was_space = true;
+		std::string last_word;
+		for(char c : trimmed_before) {
+			if(std::isspace(c)) {
+				if(!last_was_space) {
+					word_count_before++;
+				}
+				last_was_space = true;
+			} else {
+				if(last_was_space) {
+					last_word = "";
+				}
+				last_word += c;
+				last_was_space = false;
+			}
+		}
+		// Don't count the word we are currently typing as a "full word before"
+		// unless there is a space after it.
+
+		// What is the word immediately before the cursor?
+		std::string word_at_cursor;
+		if(pos.character > 0 && pos.character <= current_line.size()) {
+			auto start = pos.character;
+			while(start > 0 &&
+						(std::isalnum(current_line[start - 1]) ||
+						 current_line[start - 1] == '_' ||
+						 current_line[start - 1] == '.')) {
+				start--;
+			}
+			word_at_cursor = current_line.substr(start, pos.character - start);
+		}
+
+		completion_list result{.isIncomplete = false};
+
+		// Determine context from stacks
+		auto const* context_stack = (std::vector<ecsact_statement>*)nullptr;
+		for(auto const& info : doc.stacks) {
+			if(info.range.start.line < pos.line ||
+				 (info.range.start.line == pos.line &&
+					info.range.start.character <= pos.character)) {
+				context_stack = &info.stack;
+			}
+		}
+
+		bool inside_system = false;
+		bool inside_action = false;
+		bool inside_component = false;
+		bool inside_enum = false;
+		bool inside_generates = false;
+
+		if(context_stack) {
+			for(auto const& stmt : *context_stack) {
+				if(stmt.type == ECSACT_STATEMENT_SYSTEM) {
+					inside_system = true;
+				}
+				if(stmt.type == ECSACT_STATEMENT_ACTION) {
+					inside_action = true;
+				}
+				if(stmt.type == ECSACT_STATEMENT_COMPONENT ||
+					 stmt.type == ECSACT_STATEMENT_TRANSIENT) {
+					inside_component = true;
+				}
+				if(stmt.type == ECSACT_STATEMENT_ENUM) {
+					inside_enum = true;
+				}
+				if(stmt.type == ECSACT_STATEMENT_SYSTEM_GENERATES) {
+					inside_generates = true;
+				}
+			}
+		}
+
+		static const std::vector<std::string> top_level_keywords = {
+			ECSACT_PARSE_KW_MAIN_PACKAGE,
+			ECSACT_PARSE_KW_PACKAGE,
+			ECSACT_PARSE_KW_IMPORT,
+			ECSACT_PARSE_KW_COMPONENT,
+			ECSACT_PARSE_KW_TRANSIENT,
+			ECSACT_PARSE_KW_SYSTEM,
+			ECSACT_PARSE_KW_ACTION,
+			ECSACT_PARSE_KW_ENUM,
+		};
+
+		static const std::vector<std::string> cap_keywords = {
+			ECSACT_PARSE_KW_READONLY,
+			ECSACT_PARSE_KW_READWRITE,
+			ECSACT_PARSE_KW_WRITEONLY,
+			ECSACT_PARSE_KW_ADDS,
+			ECSACT_PARSE_KW_REMOVES,
+			ECSACT_PARSE_KW_EXCLUDE,
+			ECSACT_PARSE_KW_INCLUDE,
+			ECSACT_PARSE_KW_REQUIRED,
+			ECSACT_PARSE_KW_GENERATES,
+		};
+
+		static const std::vector<std::string> generates_keywords = {
+			ECSACT_PARSE_KW_REQUIRED,
+			ECSACT_PARSE_KW_OPTIONAL,
+		};
+
+		static const std::vector<std::string> type_keywords = {
+			ECSACT_PARSE_KW_BOOL,
+			ECSACT_PARSE_KW_I8,
+			ECSACT_PARSE_KW_U8,
+			ECSACT_PARSE_KW_I16,
+			ECSACT_PARSE_KW_U16,
+			ECSACT_PARSE_KW_I32,
+			ECSACT_PARSE_KW_U32,
+			ECSACT_PARSE_KW_I64,
+			ECSACT_PARSE_KW_U64,
+			ECSACT_PARSE_KW_F32,
+			ECSACT_PARSE_KW_F64,
+			ECSACT_PARSE_KW_ENTITY,
+		};
+
+		if(trimmed_before.starts_with(ECSACT_PARSE_KW_IMPORT)) {
+			std::set<std::string> package_names;
+			for(auto& [d_uri, d_state] : _documents) {
+				for(auto& info : d_state.stacks) {
+					if(info.stack.empty()) {
+						continue;
+					}
+					auto& stmt = info.stack.front();
+					if(stmt.type == ECSACT_STATEMENT_PACKAGE) {
+						package_names.insert(
+							get_name_from_sv(stmt.data.package_statement.package_name)
+						);
+					}
+				}
+			}
+
+			for(auto const& pkg_name : package_names) {
+				result.items.push_back({
+					.label = pkg_name,
+					.kind = completion_item_kind::module,
+					.detail = "package",
+				});
+			}
+		} else {
+			// Keyword suggestions - only if we are at the start of the line or
+			// haven't finished a keyword
+			if(word_count_before == 0) {
+				if(!inside_system && !inside_action && !inside_component &&
+					 !inside_enum) {
+					for(auto const& kw : top_level_keywords) {
+						result.items.push_back({
+							.label = kw,
+							.kind = completion_item_kind::keyword,
+						});
+					}
+				} else if(inside_system || inside_action) {
+					if(inside_generates) {
+						for(auto const& kw : generates_keywords) {
+							result.items.push_back({
+								.label = kw,
+								.kind = completion_item_kind::keyword,
+							});
+						}
+					} else {
+						for(auto const& kw : cap_keywords) {
+							result.items.push_back({
+								.label = kw,
+								.kind = completion_item_kind::keyword,
+							});
+						}
+						if(inside_system) {
+							result.items.push_back({
+								.label = ECSACT_PARSE_KW_SYSTEM,
+								.kind = completion_item_kind::keyword,
+							});
+						}
+					}
+				} else if(inside_component) {
+					for(auto const& kw : type_keywords) {
+						result.items.push_back({
+							.label = kw,
+							.kind = completion_item_kind::keyword,
+						});
+					}
+				}
+			}
+
+			// Component suggestions if we are after a capability keyword
+			bool after_cap_kw = false;
+			if(word_count_before >= 1) {
+				// Find the first word
+				auto first_word = std::string(
+					trimmed_before.substr(0, trimmed_before.find_first_of(" \t"))
+				);
+				for(auto const& kw : cap_keywords) {
+					if(first_word == kw) {
+						after_cap_kw = true;
+						break;
+					}
+				}
+				for(auto const& kw : generates_keywords) {
+					if(first_word == kw) {
+						after_cap_kw = true;
+						break;
+					}
+				}
+			}
+
+			if(after_cap_kw) {
+				std::string filter_pkg;
+				if(auto dot_pos = word_at_cursor.find_last_of('.');
+					 dot_pos != std::string::npos) {
+					filter_pkg = word_at_cursor.substr(0, dot_pos);
+				}
+
+				std::set<std::string> component_names;
+				for(auto& [d_uri, d_state] : _documents) {
+					std::string doc_pkg;
+					for(auto& info : d_state.stacks) {
+						if(info.stack.empty()) {
+							continue;
+						}
+						if(info.stack.front().type == ECSACT_STATEMENT_PACKAGE) {
+							doc_pkg = get_name_from_sv(
+								info.stack.front().data.package_statement.package_name
+							);
+						}
+
+						if(!filter_pkg.empty() && doc_pkg != filter_pkg) {
+							continue;
+						}
+
+						auto& stmt = info.stack.back();
+						if(stmt.type == ECSACT_STATEMENT_COMPONENT ||
+							 stmt.type == ECSACT_STATEMENT_TRANSIENT) {
+							auto name = (stmt.type == ECSACT_STATEMENT_COMPONENT)
+								? get_name_from_sv(stmt.data.component_statement.component_name)
+								: get_name_from_sv(
+										stmt.data.transient_statement.transient_name
+									);
+
+							if(filter_pkg.empty()) {
+								component_names.insert(name);
+								if(!doc_pkg.empty()) {
+									component_names.insert(doc_pkg + "." + name);
+								}
+							} else {
+								component_names.insert(name);
+							}
+						}
+					}
+				}
+
+				for(auto const& comp_name : component_names) {
+					result.items.push_back({
+						.label = comp_name,
+						.kind = completion_item_kind::class_kind,
+						.detail = "component",
+					});
+				}
+			}
+		}
+
+		if(result.items.empty()) {
+			return std::nullopt;
+		}
+
+		return result;
+	}
+
 	auto goto_definition(std::string uri, position pos)
 		-> std::optional<location> {
 		auto found = find_statement_at(uri, pos);
@@ -1078,6 +1521,33 @@ public:
 		auto& statement = stack.back();
 
 		std::string symbol_name;
+
+		if(statement.type == ECSACT_STATEMENT_IMPORT) {
+			symbol_name =
+				get_name_from_sv(statement.data.import_statement.import_package_name);
+			for(auto& [doc_uri, doc_state] : _documents) {
+				for(auto& info : doc_state.stacks) {
+					if(info.stack.empty()) {
+						continue;
+					}
+					auto& d_stmt = info.stack.front();
+					if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
+						auto pkg_name =
+							get_name_from_sv(d_stmt.data.package_statement.package_name);
+						if(pkg_name == symbol_name) {
+							return location{
+								.uri = doc_uri,
+								.range = get_source_range(
+									doc_state.full_text,
+									d_stmt.data.package_statement.package_name
+								),
+							};
+						}
+					}
+				}
+			}
+			return std::nullopt;
+		}
 
 		if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
 			symbol_name = std::string(
@@ -1113,68 +1583,56 @@ public:
 			: symbol_name.substr(last_dot + 1);
 
 		for(auto& [doc_uri, doc_state] : _documents) {
-			for(auto& d_stack : doc_state.parse_stacks) {
-				if(d_stack.empty()) {
+			for(auto& info : doc_state.stacks) {
+				if(info.stack.empty()) {
 					continue;
 				}
-				auto& d_stmt = d_stack.back();
+				auto&       d_stmt = info.stack.back();
+				std::string d_name;
+				auto        name_sv = ecsact_statement_sv{};
 				if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
-					auto& data = d_stmt.data.component_statement;
-					if(std::string_view{
-							 data.component_name.data,
-							 static_cast<size_t>(data.component_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range =
-								get_source_range(doc_state.full_text, data.component_name),
-						};
-					}
+					name_sv = d_stmt.data.component_statement.component_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) {
-					auto& data = d_stmt.data.transient_statement;
-					if(std::string_view{
-							 data.transient_name.data,
-							 static_cast<size_t>(data.transient_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range =
-								get_source_range(doc_state.full_text, data.transient_name),
-						};
-					}
+					name_sv = d_stmt.data.transient_statement.transient_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_SYSTEM) {
-					auto& data = d_stmt.data.system_statement;
-					if(std::string_view{
-							 data.system_name.data,
-							 static_cast<size_t>(data.system_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range = get_source_range(doc_state.full_text, data.system_name),
-						};
-					}
+					name_sv = d_stmt.data.system_statement.system_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_ACTION) {
-					auto& data = d_stmt.data.action_statement;
-					if(std::string_view{
-							 data.action_name.data,
-							 static_cast<size_t>(data.action_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range = get_source_range(doc_state.full_text, data.action_name),
-						};
-					}
+					name_sv = d_stmt.data.action_statement.action_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_ENUM) {
-					auto& data = d_stmt.data.enum_statement;
-					if(std::string_view{
-							 data.enum_name.data,
-							 static_cast<size_t>(data.enum_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range = get_source_range(doc_state.full_text, data.enum_name),
-						};
+					name_sv = d_stmt.data.enum_statement.enum_name;
+				}
+
+				d_name = get_name_from_sv(name_sv);
+
+				if(!d_name.empty() && d_name == short_name) {
+					// If the symbol_name has a package prefix, check if this document is
+					// in that package
+					if(last_dot != std::string::npos) {
+						std::string prefix = symbol_name.substr(0, last_dot);
+						bool        pkg_match = false;
+						for(auto& info2 : doc_state.stacks) {
+							if(info2.stack.empty()) {
+								continue;
+							}
+							auto& d_stmt2 = info2.stack.front();
+							if(d_stmt2.type == ECSACT_STATEMENT_PACKAGE) {
+								if(get_name_from_sv(
+										 d_stmt2.data.package_statement.package_name
+									 ) == prefix) {
+									pkg_match = true;
+									break;
+								}
+							}
+						}
+						if(!pkg_match) {
+							continue;
+						}
 					}
+
+					return location{
+						.uri = doc_uri,
+						.range = get_source_range(doc_state.full_text, name_sv),
+					};
 				}
 			}
 		}
