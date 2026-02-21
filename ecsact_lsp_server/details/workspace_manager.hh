@@ -99,31 +99,32 @@ inline auto get_source_range(
 inline auto builtin_type_name(ecsact_builtin_type type) -> std::string {
 	switch(type) {
 		case ECSACT_BOOL:
-			return std::string(ECSACT_PARSE_KW_BOOL);
+			return ECSACT_PARSE_KW_BOOL;
 		case ECSACT_I8:
-			return std::string(ECSACT_PARSE_KW_I8);
+			return ECSACT_PARSE_KW_I8;
 		case ECSACT_U8:
-			return std::string(ECSACT_PARSE_KW_U8);
+			return ECSACT_PARSE_KW_U8;
 		case ECSACT_I16:
-			return std::string(ECSACT_PARSE_KW_I16);
+			return ECSACT_PARSE_KW_I16;
 		case ECSACT_U16:
-			return std::string(ECSACT_PARSE_KW_U16);
+			return ECSACT_PARSE_KW_U16;
 		case ECSACT_I32:
-			return std::string(ECSACT_PARSE_KW_I32);
+			return ECSACT_PARSE_KW_I32;
 		case ECSACT_U32:
-			return std::string(ECSACT_PARSE_KW_U32);
+			return ECSACT_PARSE_KW_U32;
 		case ECSACT_F32:
-			return std::string(ECSACT_PARSE_KW_F32);
+			return ECSACT_PARSE_KW_F32;
 		case ECSACT_I64:
-			return std::string(ECSACT_PARSE_KW_I64);
+			return ECSACT_PARSE_KW_I64;
 		case ECSACT_U64:
-			return std::string(ECSACT_PARSE_KW_U64);
+			return ECSACT_PARSE_KW_U64;
 		case ECSACT_F64:
-			return std::string(ECSACT_PARSE_KW_F64);
+			return ECSACT_PARSE_KW_F64;
 		case ECSACT_ENTITY_TYPE:
-			return std::string(ECSACT_PARSE_KW_ENTITY);
+			return ECSACT_PARSE_KW_ENTITY;
 	}
-	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) + ")";
+
+	return std::format("unknown builtin type ({})", static_cast<int>(type));
 }
 
 template<typename E>
@@ -907,63 +908,67 @@ public:
 					}
 				}
 
-				auto add_batch_info = [&](auto package_or_sys_id, int32_t i, bool is_sys) {
-					int32_t                            systems_count = 0;
-					std::vector<ecsact_system_like_id> systems;
-					int32_t                            max_systems = 256;
-					systems.resize(max_systems);
-					if(is_sys) {
-						ecsact_meta_get_system_execution_batch(
-							static_cast<ecsact_system_like_id>(package_or_sys_id),
-							i,
-							max_systems,
-							systems.data(),
-							&systems_count
-						);
-					} else {
-						ecsact_meta_get_execution_batch(
-							static_cast<ecsact_package_id>(package_or_sys_id),
-							i,
-							max_systems,
-							systems.data(),
-							&systems_count
-						);
-					}
-					bool in_batch = false;
-					for(int32_t j = 0; systems_count > j; ++j) {
-						if(static_cast<int32_t>(systems[j]) == static_cast<int32_t>(sys_like_id)) {
-							in_batch = true;
+				auto add_batch_info =
+					[&](auto package_or_sys_id, int32_t i, bool is_sys) {
+						int32_t                            systems_count = 0;
+						std::vector<ecsact_system_like_id> systems;
+						int32_t                            max_systems = 256;
+						systems.resize(max_systems);
+						if(is_sys) {
+							ecsact_meta_get_system_execution_batch(
+								static_cast<ecsact_system_like_id>(package_or_sys_id),
+								i,
+								max_systems,
+								systems.data(),
+								&systems_count
+							);
+						} else {
+							ecsact_meta_get_execution_batch(
+								static_cast<ecsact_package_id>(package_or_sys_id),
+								i,
+								max_systems,
+								systems.data(),
+								&systems_count
+							);
 						}
-					}
-
-					if(in_batch) {
-						hover_text += std::format("\n**Execution Batch {} systems:**\n", i);
+						bool in_batch = false;
 						for(int32_t j = 0; systems_count > j; ++j) {
-							auto other_sys_id = systems[j];
-							auto other_name =
-								get_full_name(static_cast<int32_t>(other_sys_id));
-							if(other_name.empty()) {
-								if(ecsact_meta_is_system(other_sys_id)) {
-									other_name = ecsact_meta_system_name(
-										static_cast<ecsact_system_id>(other_sys_id)
-									);
-								} else if(ecsact_meta_is_action(other_sys_id)) {
-									other_name = ecsact_meta_action_name(
-										static_cast<ecsact_action_id>(other_sys_id)
-									);
+							if(static_cast<int32_t>(systems[j]) ==
+								 static_cast<int32_t>(sys_like_id)) {
+								in_batch = true;
+							}
+						}
+
+						if(in_batch) {
+							hover_text +=
+								std::format("\n**Execution Batch {} systems:**\n", i);
+							for(int32_t j = 0; systems_count > j; ++j) {
+								auto other_sys_id = systems[j];
+								auto other_name =
+									get_full_name(static_cast<int32_t>(other_sys_id));
+								if(other_name.empty()) {
+									if(ecsact_meta_is_system(other_sys_id)) {
+										other_name = ecsact_meta_system_name(
+											static_cast<ecsact_system_id>(other_sys_id)
+										);
+									} else if(ecsact_meta_is_action(other_sys_id)) {
+										other_name = ecsact_meta_action_name(
+											static_cast<ecsact_action_id>(other_sys_id)
+										);
+									}
+								}
+
+								if(static_cast<int32_t>(other_sys_id) ==
+									 static_cast<int32_t>(sys_like_id)) {
+									hover_text += std::format(" - **`{}`** (this)\n", other_name);
+								} else {
+									hover_text += std::format(" - `{}`\n", other_name);
 								}
 							}
-
-							if(static_cast<int32_t>(other_sys_id) == static_cast<int32_t>(sys_like_id)) {
-								hover_text += std::format(" - **`{}`** (this)\n", other_name);
-							} else {
-								hover_text += std::format(" - `{}`\n", other_name);
-							}
+							return true;
 						}
-						return true;
-					}
-					return false;
-				};
+						return false;
+					};
 
 				for(auto package_id : packages) {
 					int32_t batch_count = ecsact_meta_count_execution_batches(package_id);
@@ -977,9 +982,14 @@ public:
 					}
 
 					// Also check nested system execution batches
-					int32_t              sys_count = ecsact_meta_count_systems(package_id);
+					int32_t sys_count = ecsact_meta_count_systems(package_id);
 					std::vector<ecsact_system_id> sys_ids(sys_count);
-					ecsact_meta_get_system_ids(package_id, sys_count, sys_ids.data(), &sys_count);
+					ecsact_meta_get_system_ids(
+						package_id,
+						sys_count,
+						sys_ids.data(),
+						&sys_count
+					);
 					for(auto sys_id : sys_ids) {
 						int32_t s_batch_count = ecsact_meta_count_system_execution_batches(
 							static_cast<ecsact_system_like_id>(sys_id)
@@ -1253,9 +1263,10 @@ public:
 		std::string word_at_cursor;
 		if(pos.character > 0 && pos.character <= current_line.size()) {
 			auto start = pos.character;
-			while(start > 0 && (std::isalnum(current_line[start - 1]) ||
-													current_line[start - 1] == '_' ||
-													current_line[start - 1] == '.')) {
+			while(start > 0 &&
+						(std::isalnum(current_line[start - 1]) ||
+						 current_line[start - 1] == '_' ||
+						 current_line[start - 1] == '.')) {
 				start--;
 			}
 			word_at_cursor = current_line.substr(start, pos.character - start);
@@ -1460,7 +1471,9 @@ public:
 							 stmt.type == ECSACT_STATEMENT_TRANSIENT) {
 							auto name = (stmt.type == ECSACT_STATEMENT_COMPONENT)
 								? get_name_from_sv(stmt.data.component_statement.component_name)
-								: get_name_from_sv(stmt.data.transient_statement.transient_name);
+								: get_name_from_sv(
+										stmt.data.transient_statement.transient_name
+									);
 
 							if(filter_pkg.empty()) {
 								component_names.insert(name);
@@ -1537,8 +1550,10 @@ public:
 			);
 		} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
 			symbol_name = std::string(
-				statement.data.entity_constraint_statement.constraint_component_name.data,
-				statement.data.entity_constraint_statement.constraint_component_name.length
+				statement.data.entity_constraint_statement.constraint_component_name
+					.data,
+				statement.data.entity_constraint_statement.constraint_component_name
+					.length
 			);
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
 			symbol_name = std::string(
@@ -1595,7 +1610,9 @@ public:
 							}
 							auto& d_stmt2 = info2.stack.front();
 							if(d_stmt2.type == ECSACT_STATEMENT_PACKAGE) {
-								if(get_name_from_sv(d_stmt2.data.package_statement.package_name) == prefix) {
+								if(get_name_from_sv(
+										 d_stmt2.data.package_statement.package_name
+									 ) == prefix) {
 									pkg_match = true;
 									break;
 								}
