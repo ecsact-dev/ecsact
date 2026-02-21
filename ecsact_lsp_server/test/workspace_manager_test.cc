@@ -337,27 +337,41 @@ system SysA {
 	// line 3 (0-indexed)
 	auto result = manager.get_hover(uri, {3, 12});
 	ASSERT_TRUE(result.has_value());
-	ASSERT_TRUE(result->contents.value.find("component `test.CompA`") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("component `test.CompA`") != std::string::npos
+	) << result->contents.value;
 
 	// Hover over field a
 	result = manager.get_hover(uri, {4, 5});
 	ASSERT_TRUE(result.has_value());
-	ASSERT_TRUE(result->contents.value.find("field `test.CompA.a`") != std::string::npos) << result->contents.value;
-	ASSERT_TRUE(result->contents.value.find("type: `i32`") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("field `test.CompA.a`") != std::string::npos
+	) << result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("type: `i32`") != std::string::npos)
+		<< result->contents.value;
 
 	// Hover over SysA definition
 	result = manager.get_hover(uri, {7, 8});
 	ASSERT_TRUE(result.has_value());
-	ASSERT_TRUE(result->contents.value.find("system") != std::string::npos) << result->contents.value;
-	ASSERT_TRUE(result->contents.value.find("test.SysA") != std::string::npos) << result->contents.value;
-	ASSERT_TRUE(result->contents.value.find("**Execution Batch 0 systems:**") != std::string::npos) << result->contents.value;
-	ASSERT_TRUE(result->contents.value.find("- **`test.SysA`** (this)") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("system") != std::string::npos)
+		<< result->contents.value;
+	ASSERT_TRUE(result->contents.value.find("test.SysA") != std::string::npos)
+		<< result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("**Execution Batch 0 systems:**") !=
+		std::string::npos
+	) << result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("- **`test.SysA`** (this)") != std::string::npos
+	) << result->contents.value;
 
 	// Hover over CompA in SysA (system capability)
 	result = manager.get_hover(uri, {8, 12});
 	ASSERT_TRUE(result.has_value());
 	// It should show info for CompA
-	ASSERT_TRUE(result->contents.value.find("component `test.CompA`") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("component `test.CompA`") != std::string::npos
+	) << result->contents.value;
 }
 
 TEST(WorkspaceManager, HoverMultiFile) {
@@ -386,5 +400,7 @@ system SysB {
 	// readonly a.CompA; is at line 4
 	auto result = manager.get_hover(uri_b, {4, 12});
 	ASSERT_TRUE(result.has_value());
-	ASSERT_TRUE(result->contents.value.find("component `a.CompA`") != std::string::npos) << result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("component `a.CompA`") != std::string::npos
+	) << result->contents.value;
 }

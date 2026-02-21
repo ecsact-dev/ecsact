@@ -92,47 +92,50 @@ auto main(int argc, char* argv[]) -> int {
 					},
 					{"definitionProvider", true},
 					{"hoverProvider", true},
-					},
-					},
-					{
-					"serverInfo",
-					{
+				},
+			},
+			{
+				"serverInfo",
+				{
 					{"name", "ecsact_lsp_server"},
 					{"version", "0.1.0"},
-					},
-					},
-					};
-					});
+				},
+			},
+		};
+	});
 
-					manager.set_request_handler("textDocument/definition", [&](json params) -> json {
-					auto definition_params = params.get<ecsact_lsp::definition_params>();
-					auto result = workspace_manager.goto_definition(
-					definition_params.textDocument.uri,
-					definition_params.position
-					);
+	manager.set_request_handler(
+		"textDocument/definition",
+		[&](json params) -> json {
+			auto definition_params = params.get<ecsact_lsp::definition_params>();
+			auto result = workspace_manager.goto_definition(
+				definition_params.textDocument.uri,
+				definition_params.position
+			);
 
-					if(result) {
-					return *result;
-					}
+			if(result) {
+				return *result;
+			}
 
-					return "null"_json;
-					});
+			return "null"_json;
+		}
+	);
 
-					manager.set_request_handler("textDocument/hover", [&](json params) -> json {
-					auto hover_params = params.get<ecsact_lsp::hover_params>();
-					auto result = workspace_manager.get_hover(
-					hover_params.textDocument.uri,
-					hover_params.position
-					);
+	manager.set_request_handler("textDocument/hover", [&](json params) -> json {
+		auto hover_params = params.get<ecsact_lsp::hover_params>();
+		auto result = workspace_manager.get_hover(
+			hover_params.textDocument.uri,
+			hover_params.position
+		);
 
-					if(result) {
-					return *result;
-					}
+		if(result) {
+			return *result;
+		}
 
-					return "null"_json;
-					});
+		return "null"_json;
+	});
 
-					manager.add_notification_listener("initialized", [&](json) {
+	manager.add_notification_listener("initialized", [&](json) {
 
 	});
 

@@ -167,7 +167,7 @@ struct markup_content {
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hover
  */
 struct hover {
-	markup_content    contents;
+	markup_content       contents;
 	std::optional<range> range;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(hover, contents, range);
