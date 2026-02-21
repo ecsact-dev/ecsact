@@ -33,6 +33,7 @@ struct mock_sender {
 	}
 
 	void log_message(ecsact_lsp::message_type type, std::string message) {
+		std::cerr << "[LSP LOG] " << message << "\n";
 		last_log_message = message;
 	}
 
@@ -60,9 +61,20 @@ static void expect_no_errors(const nlohmann::json& publish_diagnostics) {
 	}
 }
 
+class WorkspaceManager : public ::testing::Test {
+protected:
+	static void SetUpTestSuite() {
+		ecsact_interpret_reset();
+		ecsact_parse_reset();
+	}
+
+	static void TearDownTestSuite() {
+	}
+};
+
 TEST(WorkspaceManager, ClusterCrashRepro) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test.ecsact";
 	std::string text = R"(
@@ -77,8 +89,8 @@ cluster {
 }
 
 TEST(WorkspaceManager, EmptyCluster) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test_empty.ecsact";
 	std::string text = R"(
@@ -91,8 +103,8 @@ cluster {}
 }
 
 TEST(WorkspaceManager, MultipleClusters) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test_multiple.ecsact";
 	std::string text = R"(
@@ -106,8 +118,8 @@ cluster B {}
 }
 
 TEST(WorkspaceManager, InvalidClusterContext) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test_invalid_ctx.ecsact";
 	std::string text = R"(
@@ -130,8 +142,8 @@ component Foo {
 }
 
 TEST(WorkspaceManager, SyntaxErrorInCluster) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test_syntax_err.ecsact";
 	std::string text = R"(
@@ -154,8 +166,8 @@ cluster {
 }
 
 TEST(WorkspaceManager, StackManagement) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test_stack.ecsact";
 	std::string text = R"(
@@ -169,8 +181,8 @@ component C {}
 }
 
 TEST(WorkspaceManager, ActionNoCapabilities) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///action_no_caps.ecsact";
 	std::string text = R"(
@@ -192,9 +204,8 @@ action Foo {}
 }
 
 TEST(WorkspaceManager, ClusterConflict) {
-	mock_sender sender;
-	sender.trace = ecsact_lsp::trace_value::verbose;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///cluster_conflict.ecsact";
 	std::string text = R"(
@@ -222,8 +233,8 @@ cluster {
 }
 
 TEST(WorkspaceManager, GotoDefinition) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test.ecsact";
 	std::string text = R"(
@@ -285,8 +296,8 @@ system SysB {
 }
 
 TEST(WorkspaceManager, GotoDefinitionMultiFile) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri_a = "file:///a.ecsact";
 	std::string text_a = R"(
@@ -315,8 +326,8 @@ system SysB {
 }
 
 TEST(WorkspaceManager, Hover) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test.ecsact";
 	std::string text = R"(
@@ -357,6 +368,13 @@ system SysA {
 		<< result->contents.value;
 	ASSERT_TRUE(result->contents.value.find("test.SysA") != std::string::npos)
 		<< result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("**Execution Batch 0 systems:**") !=
+		std::string::npos
+	) << result->contents.value;
+	ASSERT_TRUE(
+		result->contents.value.find("- **`test.SysA`** (this)") != std::string::npos
+	) << result->contents.value;
 
 	// Hover over CompA in SysA (system capability)
 	result = manager.get_hover(uri, {8, 12});
@@ -368,8 +386,8 @@ system SysA {
 }
 
 TEST(WorkspaceManager, HoverMultiFile) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri_a = "file:///a.ecsact";
 	std::string text_a = R"(
@@ -399,8 +417,8 @@ system SysB {
 }
 
 TEST(WorkspaceManager, GotoDefinitionImport) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri_a = "file:///a.ecsact";
 	std::string text_a = R"(
@@ -429,8 +447,8 @@ system SysB {
 }
 
 TEST(WorkspaceManager, Completion) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri_a = "file:///a.ecsact";
 	std::string text_a = R"(
@@ -481,8 +499,8 @@ system SysB {
 }
 
 TEST(WorkspaceManager, DotCompletion) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri_a = "file:///a.ecsact";
 	std::string text_a = R"(
@@ -516,9 +534,8 @@ system SysB {
 }
 
 TEST(WorkspaceManager, KeywordCompletion) {
-	mock_sender sender;
-	sender.trace = ecsact_lsp::trace_value::verbose;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test.ecsact";
 	std::string text = "package test;\n\n";
@@ -544,8 +561,8 @@ TEST(WorkspaceManager, KeywordCompletion) {
 }
 
 TEST(WorkspaceManager, KeywordCompletionInsideBlock) {
-	mock_sender                   sender;
-	ecsact_lsp::workspace_manager manager(std::move(sender));
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
 
 	std::string uri = "file:///test.ecsact";
 	std::string text = R"(
@@ -578,4 +595,131 @@ system SysA {
 	EXPECT_TRUE(found_readonly);
 	EXPECT_TRUE(found_readwrite);
 	EXPECT_TRUE(found_generates);
+}
+
+TEST(WorkspaceManager, FieldCompletion) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+package test;
+component CompA {
+	
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Typing 'i' inside component
+	// Cursor at line 3, col 1
+	auto result = manager.get_completions(uri, {3, 1});
+	ASSERT_TRUE(result.has_value());
+	bool found_i32 = false;
+	bool found_component_kw = false;
+	for(auto const& item : result->items) {
+		if(item.label == "i32") {
+			found_i32 = true;
+		}
+		if(item.label == "component") {
+			found_component_kw = true;
+		}
+	}
+	EXPECT_TRUE(found_i32);
+	EXPECT_FALSE(found_component_kw); // Should not suggest top-level keywords
+																		// here
+
+	// Typing 'i' inside component
+	// Cursor at line 3, col 2 (after the 'i')
+	text = R"(
+package test;
+component CompA {
+	i
+}
+)";
+	manager.update_document(uri, 3, text);
+	result = manager.get_completions(uri, {3, 2});
+	ASSERT_TRUE(result.has_value());
+	found_i32 = false;
+	for(auto const& item : result->items) {
+		if(item.label == "i32") {
+			found_i32 = true;
+		}
+	}
+	EXPECT_TRUE(found_i32);
+
+	// Typing 'i32 ' inside component
+	// Cursor at line 3, col 5
+	text = R"(
+package test;
+component CompA {
+	i32 
+}
+)";
+	manager.update_document(uri, 2, text);
+	result = manager.get_completions(uri, {3, 5});
+	// Should NOT suggest anything (let the user type the field name)
+	// or at least not keywords
+	if(result.has_value()) {
+		for(auto const& item : result->items) {
+			EXPECT_NE(item.kind, ecsact_lsp::completion_item_kind::keyword)
+				<< "Unexpected keyword suggestion: " << item.label;
+		}
+	}
+}
+
+TEST(WorkspaceManager, SystemCapabilityCompletion) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+package test;
+component CompA { i32 a; }
+system SysA {
+	
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Typing 'r' inside system
+	// Cursor at line 4, col 1
+	text = R"(
+package test;
+component CompA { i32 a; }
+system SysA {
+	r
+}
+)";
+	manager.update_document(uri, 2, text);
+	auto result = manager.get_completions(uri, {4, 2});
+	ASSERT_TRUE(result.has_value());
+	bool found_readonly = false;
+	for(auto const& item : result->items) {
+		if(item.label == "readonly") {
+			found_readonly = true;
+		}
+	}
+	EXPECT_TRUE(found_readonly);
+
+	// Typing 'readonly ' inside system
+	// Cursor at line 4, col 10
+	text = R"(
+package test;
+component CompA { i32 a; }
+system SysA {
+	readonly 
+}
+)";
+	manager.update_document(uri, 3, text);
+	result = manager.get_completions(uri, {4, 10});
+	ASSERT_TRUE(result.has_value());
+	bool found_comp_a = false;
+	for(auto const& item : result->items) {
+		if(item.label == "CompA") {
+			found_comp_a = true;
+		}
+	}
+	EXPECT_TRUE(found_comp_a);
 }

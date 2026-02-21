@@ -58,9 +58,6 @@ struct document_state {
 	std::vector<ecsact_parse_status> parse_statuses;
 	std::string                      full_text;
 	std::string_view                 next_parse_view;
-
-	// Legacy for compatibility during transition
-	std::vector<std::vector<ecsact_statement>> parse_stacks;
 };
 
 struct workspace_state {
@@ -99,89 +96,12 @@ inline auto get_source_range(
 	return r;
 }
 
-inline auto builtin_type_name(ecsact_builtin_type type) -> std::string {
-	switch(type) {
-		case ECSACT_BOOL:
-			return ECSACT_PARSE_KW_BOOL;
-		case ECSACT_I8:
-			return ECSACT_PARSE_KW_I8;
-		case ECSACT_U8:
-			return ECSACT_PARSE_KW_U8;
-		case ECSACT_I16:
-			return ECSACT_PARSE_KW_I16;
-		case ECSACT_U16:
-			return ECSACT_PARSE_KW_U16;
-		case ECSACT_I32:
-			return ECSACT_PARSE_KW_I32;
-		case ECSACT_U32:
-			return ECSACT_PARSE_KW_U32;
-		case ECSACT_F32:
-			return ECSACT_PARSE_KW_F32;
-		case ECSACT_I64:
-			return ECSACT_PARSE_KW_I64;
-		case ECSACT_U64:
-			return ECSACT_PARSE_KW_U64;
-		case ECSACT_F64:
-			return ECSACT_PARSE_KW_F64;
-		case ECSACT_ENTITY_TYPE:
-			return ECSACT_PARSE_KW_ENTITY;
-	}
-	return "unknown builtin type (" + std::to_string(static_cast<int>(type)) +
-		")";
-}
-
 template<typename E>
 inline auto enum_name_safe(E value, std::string fallback) -> std::string {
 	if(magic_enum::enum_cast<E>(value)) {
 		return std::string{magic_enum::enum_name(value)};
 	}
-	return fallback + " (" + std::to_string(static_cast<int>(value)) + ")";
-}
-
-inline auto pretty_statement_type_name(ecsact_statement_type type)
-	-> std::string {
-	switch(type) {
-		case ECSACT_STATEMENT_NONE:
-			return "none";
-		case ECSACT_STATEMENT_UNKNOWN:
-			return "unknown";
-		case ECSACT_STATEMENT_PACKAGE:
-			return "package";
-		case ECSACT_STATEMENT_IMPORT:
-			return "import";
-		case ECSACT_STATEMENT_COMPONENT:
-			return "component";
-		case ECSACT_STATEMENT_TRANSIENT:
-			return "transient";
-		case ECSACT_STATEMENT_SYSTEM:
-			return "system";
-		case ECSACT_STATEMENT_ACTION:
-			return "action";
-		case ECSACT_STATEMENT_ENUM:
-			return "enum";
-		case ECSACT_STATEMENT_ENUM_VALUE:
-			return "enum value";
-		case ECSACT_STATEMENT_BUILTIN_TYPE_FIELD:
-		case ECSACT_STATEMENT_USER_TYPE_FIELD:
-		case ECSACT_STATEMENT_ENTITY_FIELD:
-			return "field";
-		case ECSACT_STATEMENT_SYSTEM_COMPONENT:
-			return "system capability";
-		case ECSACT_STATEMENT_SYSTEM_GENERATES:
-			return "generates";
-		case ECSACT_STATEMENT_SYSTEM_WITH:
-			return "with";
-		case ECSACT_STATEMENT_ENTITY_CONSTRAINT:
-			return "entity constraint";
-		case ECSACT_STATEMENT_SYSTEM_NOTIFY:
-			return "system notify";
-		case ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT:
-			return "system notify component";
-		case ECSACT_STATEMENT_CLUSTER:
-			return "cluster";
-	}
-
-	return enum_name_safe(type, "unknown statement");
+	return std::format("{} ({})", fallback, static_cast<int>(value));
 }
 
 inline auto parse_stack(
@@ -217,13 +137,21 @@ static inline auto create_eval_error_diagnostics(
 	if(err.code == ECSACT_EVAL_ERR_INVALID_CONTEXT) {
 		auto r = get_source_range(doc.full_text, err.relevant_content);
 		auto message = [&]() -> std::string {
+			auto pretty_type_name =
+				ecsact_parse_statement_type_name_pretty(statement.type);
 			if(err.context_type == ECSACT_STATEMENT_NONE) {
-				return pretty_statement_type_name(statement.type) +
-					" is not allowed as a top level statement"s;
+				return std::format(
+					"{} is not allowed as a top level statement",
+					pretty_type_name
+				);
 			} else {
-				return pretty_statement_type_name(statement.type) +
-					" is not allowed in "s +
-					pretty_statement_type_name(err.context_type) + " context";
+				auto context_type_name =
+					ecsact_parse_statement_type_name_pretty(err.context_type);
+				return std::format(
+					"{} is not allowed in {} context",
+					pretty_type_name,
+					context_type_name
+				);
 			}
 		}();
 
@@ -269,7 +197,6 @@ class workspace_manager {
 
 	auto _parse_document(std::string uri, int version, document_state& doc) {
 		doc.stacks.clear();
-		doc.parse_stacks.clear();
 		doc.parse_statuses.clear();
 
 		auto diagnostics = std::vector<diagnostic>{};
@@ -291,21 +218,20 @@ class workspace_manager {
 				}
 			}
 
-			auto current_parse_view = doc.next_parse_view;
-			auto stack_start_ptr = current_parse_view.data();
+			auto  current_parse_view = doc.next_parse_view;
+			auto* stack_start_ptr = current_parse_view.data();
 			doc.next_parse_view = parse_stack(current_parse_view, status, stack);
 
-			auto stack_end_ptr = doc.next_parse_view.data();
-			auto stack_range = get_source_range(
-				doc.full_text,
-				{
-					.data = stack_start_ptr,
-					.length = static_cast<int32_t>(stack_end_ptr - stack_start_ptr),
-				}
-			);
+			auto* stack_end_ptr = doc.next_parse_view.data();
+			auto  stack_range = get_source_range(
+        doc.full_text,
+        ecsact_statement_sv{
+					 .data = stack_start_ptr,
+					 .length = static_cast<int32_t>(stack_end_ptr - stack_start_ptr),
+        }
+      );
 
 			doc.stacks.push_back({.stack = stack, .range = stack_range});
-			doc.parse_stacks.push_back(stack);
 
 			if(!ecsact_is_error_parse_status_code(status.code)) {
 				auto& statement = stack.back();
@@ -354,7 +280,7 @@ class workspace_manager {
 		using std::views::drop;
 		using namespace std::string_literals;
 
-		if(doc.parse_stacks.empty()) {
+		if(doc.stacks.empty()) {
 			return;
 		}
 
@@ -364,13 +290,13 @@ class workspace_manager {
 		}
 
 		auto  diagnostics = std::vector<diagnostic>{};
-		auto& package_parse_stack = doc.parse_stacks.front();
+		auto& package_stack_info = doc.stacks.front();
 
-		if(package_parse_stack.empty()) {
+		if(package_stack_info.stack.empty()) {
 			return;
 		}
 
-		auto& package_statement = package_parse_stack.front();
+		auto& package_statement = package_stack_info.stack.front();
 
 		if(package_statement.type != ECSACT_STATEMENT_PACKAGE) {
 			diagnostics.push_back(
@@ -392,9 +318,9 @@ class workspace_manager {
 			auto system_ranges = std::unordered_map<ecsact_system_like_id, range>{};
 
 			// Evaluate all statements in stacks except first (package)
-			for(size_t stack_idx = 1; stack_idx < doc.parse_stacks.size();
-					++stack_idx) {
-				auto& parse_stack = doc.parse_stacks[stack_idx];
+			for(size_t stack_idx = 1; stack_idx < doc.stacks.size(); ++stack_idx) {
+				auto& info = doc.stacks[stack_idx];
+				auto& parse_stack = info.stack;
 				auto& status = doc.parse_statuses[stack_idx];
 
 				for(auto idx = 0; parse_stack.size() > idx; ++idx) {
@@ -544,7 +470,7 @@ public:
 		_workspaces[ws.uri] = workspace_state{.uri = ws.uri};
 		auto& workspace = _workspaces[ws.uri];
 
-		for(auto const& entry :
+		for(const auto& entry :
 				std::filesystem::recursive_directory_iterator(ws_path)) {
 			if(entry.is_regular_file() && entry.path().extension() == ".ecsact") {
 				auto uri = detail::path_to_uri(entry.path());
@@ -567,7 +493,7 @@ public:
 	auto remove_workspace(workspace_folder ws) -> void {
 		auto it = _workspaces.find(ws.uri);
 		if(it != _workspaces.end()) {
-			for(auto const& doc_uri : it->second.document_uris) {
+			for(const auto& doc_uri : it->second.document_uris) {
 				remove_document(doc_uri);
 			}
 			_workspaces.erase(it);
@@ -886,8 +812,12 @@ public:
 					}
 				}
 			}
-			hover_text +=
-				"### " + pretty_statement_type_name(type) + " `" + name + "`\n";
+
+			hover_text += std::format(
+				"### {} `{}`\n",
+				ecsact_parse_statement_type_name_pretty(type),
+				name
+			);
 
 			if(type == ECSACT_STATEMENT_SYSTEM || type == ECSACT_STATEMENT_ACTION) {
 				auto sys_like_id = static_cast<ecsact_system_like_id>(id);
@@ -938,9 +868,9 @@ public:
 						}
 						bool in_batch = false;
 						for(int32_t j = 0; systems_count > j; ++j) {
-							if(systems[j] == sys_like_id) {
+							if(static_cast<int32_t>(systems[j]) ==
+								 static_cast<int32_t>(sys_like_id)) {
 								in_batch = true;
-								break;
 							}
 						}
 
@@ -963,7 +893,8 @@ public:
 									}
 								}
 
-								if(other_sys_id == sys_like_id) {
+								if(static_cast<int32_t>(other_sys_id) ==
+									 static_cast<int32_t>(sys_like_id)) {
 									hover_text += std::format(" - **`{}`** (this)\n", other_name);
 								} else {
 									hover_text += std::format(" - `{}`\n", other_name);
@@ -1033,11 +964,13 @@ public:
 					}
 				}
 			}
-			auto value_name =
-				get_name_from_sv(statement.data.enum_value_statement.name);
-			hover_text += "### enum value `" + parent_name + "." + value_name + "`\n";
-			hover_text +=
-				std::format("value: `{}`\n", statement.data.enum_value_statement.value);
+
+			hover_text += std::format(
+				"## enum value `{}.{}`\n value: `{}`\n",
+				parent_name,
+				get_name_from_sv(statement.data.enum_value_statement.name),
+				statement.data.enum_value_statement.value
+			);
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT ||
 							statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT ||
 							statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT ||
@@ -1061,8 +994,8 @@ public:
 				);
 			}
 
-			std::string search_name = name;
-			auto        last_dot = search_name.find_last_of('.');
+			auto search_name = name;
+			auto last_dot = search_name.find_last_of('.');
 			if(last_dot != std::string::npos) {
 				search_name = search_name.substr(last_dot + 1);
 			}
@@ -1073,8 +1006,8 @@ public:
 					if(info.stack.empty()) {
 						continue;
 					}
-					auto&       d_stmt = info.stack.back();
-					std::string d_name;
+					auto& d_stmt = info.stack.back();
+					auto  d_name = std::string{};
 					if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
 						d_name =
 							get_name_from_sv(d_stmt.data.component_statement.component_name);
@@ -1173,14 +1106,15 @@ public:
 				}
 			}
 
-			std::string field_name;
-			std::string field_type_name;
+			auto field_name = std::string{};
+			auto field_type_name = std::string{};
 
 			if(statement.type == ECSACT_STATEMENT_BUILTIN_TYPE_FIELD) {
 				field_name =
 					get_name_from_sv(statement.data.field_statement.field_name);
-				field_type_name =
-					builtin_type_name(statement.data.field_statement.field_type);
+				field_type_name = ecsact::parse::builtin_type_to_keyword_string(
+					statement.data.field_statement.field_type
+				);
 			} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
 				field_name =
 					get_name_from_sv(statement.data.user_type_field_statement.field_name);
@@ -1202,11 +1136,10 @@ public:
 		}
 
 		return hover{
-			.contents =
-				{
-					.kind = markup_kind::markdown,
-					.value = hover_text,
-				},
+			.contents{
+				.kind = markup_kind::markdown,
+				.value = hover_text,
+			},
 			.range = r,
 		};
 	}
@@ -1262,11 +1195,9 @@ public:
 				last_was_space = false;
 			}
 		}
-		// Don't count the word we are currently typing as a "full word before"
-		// unless there is a space after it.
 
 		// What is the word immediately before the cursor?
-		std::string word_at_cursor;
+		auto word_at_cursor = std::string{};
 		if(pos.character > 0 && pos.character <= current_line.size()) {
 			auto start = pos.character;
 			while(start > 0 &&
@@ -1282,7 +1213,7 @@ public:
 
 		// Determine context from stacks
 		auto const* context_stack = (std::vector<ecsact_statement>*)nullptr;
-		for(auto const& info : doc.stacks) {
+		for(const auto& info : doc.stacks) {
 			if(info.range.start.line < pos.line ||
 				 (info.range.start.line == pos.line &&
 					info.range.start.character <= pos.character)) {
@@ -1297,7 +1228,7 @@ public:
 		bool inside_generates = false;
 
 		if(context_stack) {
-			for(auto const& stmt : *context_stack) {
+			for(const auto& stmt : *context_stack) {
 				if(stmt.type == ECSACT_STATEMENT_SYSTEM) {
 					inside_system = true;
 				}
@@ -1317,49 +1248,6 @@ public:
 			}
 		}
 
-		static const std::vector<std::string> top_level_keywords = {
-			ECSACT_PARSE_KW_MAIN_PACKAGE,
-			ECSACT_PARSE_KW_PACKAGE,
-			ECSACT_PARSE_KW_IMPORT,
-			ECSACT_PARSE_KW_COMPONENT,
-			ECSACT_PARSE_KW_TRANSIENT,
-			ECSACT_PARSE_KW_SYSTEM,
-			ECSACT_PARSE_KW_ACTION,
-			ECSACT_PARSE_KW_ENUM,
-		};
-
-		static const std::vector<std::string> cap_keywords = {
-			ECSACT_PARSE_KW_READONLY,
-			ECSACT_PARSE_KW_READWRITE,
-			ECSACT_PARSE_KW_WRITEONLY,
-			ECSACT_PARSE_KW_ADDS,
-			ECSACT_PARSE_KW_REMOVES,
-			ECSACT_PARSE_KW_EXCLUDE,
-			ECSACT_PARSE_KW_INCLUDE,
-			ECSACT_PARSE_KW_REQUIRED,
-			ECSACT_PARSE_KW_GENERATES,
-		};
-
-		static const std::vector<std::string> generates_keywords = {
-			ECSACT_PARSE_KW_REQUIRED,
-			ECSACT_PARSE_KW_OPTIONAL,
-		};
-
-		static const std::vector<std::string> type_keywords = {
-			ECSACT_PARSE_KW_BOOL,
-			ECSACT_PARSE_KW_I8,
-			ECSACT_PARSE_KW_U8,
-			ECSACT_PARSE_KW_I16,
-			ECSACT_PARSE_KW_U16,
-			ECSACT_PARSE_KW_I32,
-			ECSACT_PARSE_KW_U32,
-			ECSACT_PARSE_KW_I64,
-			ECSACT_PARSE_KW_U64,
-			ECSACT_PARSE_KW_F32,
-			ECSACT_PARSE_KW_F64,
-			ECSACT_PARSE_KW_ENTITY,
-		};
-
 		if(trimmed_before.starts_with(ECSACT_PARSE_KW_IMPORT)) {
 			std::set<std::string> package_names;
 			for(auto& [d_uri, d_state] : _documents) {
@@ -1376,7 +1264,7 @@ public:
 				}
 			}
 
-			for(auto const& pkg_name : package_names) {
+			for(const auto& pkg_name : package_names) {
 				result.items.push_back({
 					.label = pkg_name,
 					.kind = completion_item_kind::module,
@@ -1389,24 +1277,24 @@ public:
 			if(word_count_before == 0) {
 				if(!inside_system && !inside_action && !inside_component &&
 					 !inside_enum) {
-					for(auto const& kw : top_level_keywords) {
+					for(const auto& kw : ecsact::parse::top_level_keywords) {
 						result.items.push_back({
-							.label = kw,
+							.label{kw},
 							.kind = completion_item_kind::keyword,
 						});
 					}
 				} else if(inside_system || inside_action) {
 					if(inside_generates) {
-						for(auto const& kw : generates_keywords) {
+						for(const auto& kw : ecsact::parse::generates_keywords) {
 							result.items.push_back({
-								.label = kw,
+								.label{kw},
 								.kind = completion_item_kind::keyword,
 							});
 						}
 					} else {
-						for(auto const& kw : cap_keywords) {
+						for(const auto& kw : ecsact::parse::cap_keywords) {
 							result.items.push_back({
-								.label = kw,
+								.label{kw},
 								.kind = completion_item_kind::keyword,
 							});
 						}
@@ -1418,10 +1306,10 @@ public:
 						}
 					}
 				} else if(inside_component) {
-					for(auto const& kw : type_keywords) {
+					for(const auto& kw : ecsact::parse::type_keywords) {
 						result.items.push_back({
-							.label = kw,
-							.kind = completion_item_kind::keyword,
+							.label{kw},
+							.kind = completion_item_kind::class_kind,
 						});
 					}
 				}
@@ -1434,13 +1322,13 @@ public:
 				auto first_word = std::string(
 					trimmed_before.substr(0, trimmed_before.find_first_of(" \t"))
 				);
-				for(auto const& kw : cap_keywords) {
+				for(const auto& kw : ecsact::parse::cap_keywords) {
 					if(first_word == kw) {
 						after_cap_kw = true;
 						break;
 					}
 				}
-				for(auto const& kw : generates_keywords) {
+				for(const auto& kw : ecsact::parse::generates_keywords) {
 					if(first_word == kw) {
 						after_cap_kw = true;
 						break;
@@ -1493,7 +1381,7 @@ public:
 					}
 				}
 
-				for(auto const& comp_name : component_names) {
+				for(const auto& comp_name : component_names) {
 					result.items.push_back({
 						.label = comp_name,
 						.kind = completion_item_kind::class_kind,
@@ -1587,9 +1475,9 @@ public:
 				if(info.stack.empty()) {
 					continue;
 				}
-				auto&       d_stmt = info.stack.back();
-				std::string d_name;
-				auto        name_sv = ecsact_statement_sv{};
+				auto& d_stmt = info.stack.back();
+				auto  d_name = std::string{};
+				auto  name_sv = ecsact_statement_sv{};
 				if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
 					name_sv = d_stmt.data.component_statement.component_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) {
@@ -1608,8 +1496,8 @@ public:
 					// If the symbol_name has a package prefix, check if this document is
 					// in that package
 					if(last_dot != std::string::npos) {
-						std::string prefix = symbol_name.substr(0, last_dot);
-						bool        pkg_match = false;
+						auto prefix = symbol_name.substr(0, last_dot);
+						auto pkg_match = false;
 						for(auto& info2 : doc_state.stacks) {
 							if(info2.stack.empty()) {
 								continue;

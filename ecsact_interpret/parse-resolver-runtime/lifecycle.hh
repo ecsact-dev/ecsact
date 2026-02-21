@@ -43,6 +43,8 @@ auto on_destroy( //
 
 auto trigger_on_destroy(destroyable_id_t id) -> void;
 
+auto reset_lifecycle() -> void;
+
 class event_ref {
 	friend auto on_destroy(castable_destroyable_ids_t, std::function<void()>)
 		-> event_ref;
