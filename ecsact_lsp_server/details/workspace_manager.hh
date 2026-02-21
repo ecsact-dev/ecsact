@@ -8,6 +8,8 @@
 #include <vector>
 #include <string_view>
 #include <ranges>
+#include <filesystem>
+#include <fstream>
 #include "ecsact/parse.h"
 #include "ecsact/parse/statements.h"
 #include "ecsact/interpret/eval.h"
@@ -20,6 +22,31 @@
 #include "./interfaces.hh"
 
 namespace ecsact_lsp {
+
+namespace detail {
+inline auto uri_to_path(std::string uri) -> std::filesystem::path {
+	if(uri.starts_with("file:///")) {
+		auto path_str = uri.substr(8);
+#ifdef _WIN32
+		// Replace forward slashes with backward slashes if needed
+		// But filesystem::path handles forward slashes on Windows too.
+#endif
+		return std::filesystem::path(path_str);
+	}
+	if(uri.starts_with("file://")) {
+		return std::filesystem::path(uri.substr(7));
+	}
+	return std::filesystem::path(uri);
+}
+
+inline auto path_to_uri(std::filesystem::path path) -> std::string {
+	auto path_str = path.generic_string();
+	if(!path_str.starts_with("/")) {
+		return "file:///" + path_str;
+	}
+	return "file://" + path_str;
+}
+} // namespace detail
 
 struct document_state {
 	std::optional<ecsact_package_id>           package_id;
@@ -226,6 +253,13 @@ class workspace_manager {
 	std::unordered_map<std::string, workspace_state> _workspaces;
 	std::unordered_map<std::string, document_state>  _documents;
 	Send&&                                           send;
+
+	static auto get_name_from_sv(const ecsact_statement_sv& sv) -> std::string {
+		if(sv.data == nullptr || sv.length < 0) {
+			return "";
+		}
+		return std::string(sv.data, static_cast<size_t>(sv.length));
+	}
 
 	auto _parse_document(std::string uri, int version, document_state& doc) {
 		doc.parse_stacks.clear();
@@ -482,11 +516,42 @@ public:
 	}
 
 	auto add_workspace(workspace_folder ws) -> void {
-		send.show_message(message_type::error, "Add Workspace: " + ws.uri);
+		auto ws_path = detail::uri_to_path(ws.uri);
+		if(!std::filesystem::exists(ws_path)) {
+			return;
+		}
+
+		_workspaces[ws.uri] = workspace_state{.uri = ws.uri};
+		auto& workspace = _workspaces[ws.uri];
+
+		for(auto const& entry :
+				std::filesystem::recursive_directory_iterator(ws_path)) {
+			if(entry.is_regular_file() && entry.path().extension() == ".ecsact") {
+				auto uri = detail::path_to_uri(entry.path());
+				workspace.document_uris.insert(uri);
+
+				if(!_documents.contains(uri)) {
+					std::ifstream file(entry.path());
+					if(file.is_open()) {
+						std::string content(
+							(std::istreambuf_iterator<char>(file)),
+							std::istreambuf_iterator<char>()
+						);
+						add_document(uri, 0, content);
+					}
+				}
+			}
+		}
 	}
 
 	auto remove_workspace(workspace_folder ws) -> void {
-		send.show_message(message_type::error, "Remove Workspace: " + ws.uri);
+		auto it = _workspaces.find(ws.uri);
+		if(it != _workspaces.end()) {
+			for(auto const& doc_uri : it->second.document_uris) {
+				remove_document(doc_uri);
+			}
+			_workspaces.erase(it);
+		}
 	}
 
 	auto add_document(std::string uri, int initial_version, std::string text)
@@ -541,6 +606,12 @@ public:
 			auto name_sv = ecsact_statement_sv{};
 
 			switch(statement.type) {
+				case ECSACT_STATEMENT_PACKAGE:
+					name_sv = statement.data.package_statement.package_name;
+					break;
+				case ECSACT_STATEMENT_IMPORT:
+					name_sv = statement.data.import_statement.import_package_name;
+					break;
 				case ECSACT_STATEMENT_COMPONENT:
 					name_sv = statement.data.component_statement.component_name;
 					break;
@@ -616,16 +687,10 @@ public:
 			auto full_name =
 				ecsact_meta_decl_full_name(static_cast<ecsact_decl_id>(id));
 			return full_name ? std::string(full_name) : "";
-		};
+			};
 
-		auto get_name_from_sv = [&](const ecsact_statement_sv& sv) -> std::string {
-			if(sv.data == nullptr || sv.length < 0) {
-				return "";
-			}
-			return std::string(sv.data, static_cast<size_t>(sv.length));
-		};
-
-		auto build_decl_hover = [&](
+			auto build_decl_hover =
+ [&](
 															int32_t                 id,
 															ecsact_statement_type   type,
 															const ecsact_statement& stmt
@@ -1079,6 +1144,26 @@ public:
 
 		std::string symbol_name;
 
+		if(statement.type == ECSACT_STATEMENT_IMPORT) {
+			symbol_name = get_name_from_sv(statement.data.import_statement.import_package_name);
+			for(auto& [doc_uri, doc_state] : _documents) {
+				for(auto& d_stack : doc_state.parse_stacks) {
+					if(d_stack.empty()) continue;
+					auto& d_stmt = d_stack.front();
+					if(d_stmt.type == ECSACT_STATEMENT_PACKAGE) {
+						auto pkg_name = get_name_from_sv(d_stmt.data.package_statement.package_name);
+						if(pkg_name == symbol_name) {
+							return location{
+								.uri = doc_uri,
+								.range = get_source_range(doc_state.full_text, d_stmt.data.package_statement.package_name),
+							};
+						}
+					}
+				}
+			}
+			return std::nullopt;
+		}
+
 		if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
 			symbol_name = std::string(
 				statement.data.system_component_statement.component_name.data,
@@ -1118,63 +1203,44 @@ public:
 					continue;
 				}
 				auto& d_stmt = d_stack.back();
+				std::string d_name;
+				auto name_sv = ecsact_statement_sv{};
 				if(d_stmt.type == ECSACT_STATEMENT_COMPONENT) {
-					auto& data = d_stmt.data.component_statement;
-					if(std::string_view{
-							 data.component_name.data,
-							 static_cast<size_t>(data.component_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range =
-								get_source_range(doc_state.full_text, data.component_name),
-						};
-					}
+					name_sv = d_stmt.data.component_statement.component_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_TRANSIENT) {
-					auto& data = d_stmt.data.transient_statement;
-					if(std::string_view{
-							 data.transient_name.data,
-							 static_cast<size_t>(data.transient_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range =
-								get_source_range(doc_state.full_text, data.transient_name),
-						};
-					}
+					name_sv = d_stmt.data.transient_statement.transient_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_SYSTEM) {
-					auto& data = d_stmt.data.system_statement;
-					if(std::string_view{
-							 data.system_name.data,
-							 static_cast<size_t>(data.system_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range = get_source_range(doc_state.full_text, data.system_name),
-						};
-					}
+					name_sv = d_stmt.data.system_statement.system_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_ACTION) {
-					auto& data = d_stmt.data.action_statement;
-					if(std::string_view{
-							 data.action_name.data,
-							 static_cast<size_t>(data.action_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range = get_source_range(doc_state.full_text, data.action_name),
-						};
-					}
+					name_sv = d_stmt.data.action_statement.action_name;
 				} else if(d_stmt.type == ECSACT_STATEMENT_ENUM) {
-					auto& data = d_stmt.data.enum_statement;
-					if(std::string_view{
-							 data.enum_name.data,
-							 static_cast<size_t>(data.enum_name.length)
-						 } == short_name) {
-						return location{
-							.uri = doc_uri,
-							.range = get_source_range(doc_state.full_text, data.enum_name),
-						};
+					name_sv = d_stmt.data.enum_statement.enum_name;
+				}
+
+				d_name = get_name_from_sv(name_sv);
+
+				if(!d_name.empty() && d_name == short_name) {
+					// If the symbol_name has a package prefix, check if this document is in that package
+					if(last_dot != std::string::npos) {
+						std::string prefix = symbol_name.substr(0, last_dot);
+						bool        pkg_match = false;
+						for(auto& d_stack2 : doc_state.parse_stacks) {
+							if(d_stack2.empty()) continue;
+							auto& d_stmt2 = d_stack2.front();
+							if(d_stmt2.type == ECSACT_STATEMENT_PACKAGE) {
+								if(get_name_from_sv(d_stmt2.data.package_statement.package_name) == prefix) {
+									pkg_match = true;
+									break;
+								}
+							}
+						}
+						if(!pkg_match) continue;
 					}
+
+					return location{
+						.uri = doc_uri,
+						.range = get_source_range(doc_state.full_text, name_sv),
+					};
 				}
 			}
 		}

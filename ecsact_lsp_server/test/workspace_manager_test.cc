@@ -404,3 +404,33 @@ system SysB {
 		result->contents.value.find("component `a.CompA`") != std::string::npos
 	) << result->contents.value;
 }
+
+TEST(WorkspaceManager, GotoDefinitionImport) {
+	mock_sender                   sender;
+	ecsact_lsp::workspace_manager manager(std::move(sender));
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package b;
+import a;
+system SysB {
+	readonly a.CompA;
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Goto definition for 'import a;'
+	// import a; is at line 2 (0-indexed)
+	auto result = manager.goto_definition(uri_b, {2, 8});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->uri, uri_a);
+	EXPECT_EQ(result->range.start.line, 1); // package a; is at line 1
+}
