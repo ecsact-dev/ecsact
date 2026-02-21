@@ -444,8 +444,10 @@ void parse_eval_declarations(
 		if(eval_err.code == ECSACT_EVAL_ERR_UNEXPECTED_STATEMENT) {
 			auto type = file_state.reader.statements.top().type;
 			if(type == ECSACT_STATEMENT_PACKAGE || type == ECSACT_STATEMENT_IMPORT) {
-				file_state.reader.pump_status_code();
-				continue;
+				if(file_state.reader.statements.size() == 1) {
+					file_state.reader.pump_status_code();
+					continue;
+				}
 			}
 		}
 
