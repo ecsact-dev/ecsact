@@ -912,3 +912,54 @@ system SysB {
 	}
 	EXPECT_TRUE(found_sys_b);
 }
+
+TEST(WorkspaceManager, EcsactSymbols) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test.pkg;
+
+component CompA {
+	i32 a;
+}
+
+system SysA {
+	readonly CompA;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Package: test.pkg
+	auto result = manager.get_ecsact_symbols(uri, {1, 15});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->c, "test__pkg");
+	EXPECT_EQ(result->cpp.type, "test::pkg");
+
+	// Component: test.pkg.CompA
+	result = manager.get_ecsact_symbols(uri, {3, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->c, "test__pkg__CompA");
+	EXPECT_EQ(result->cpp.type, "test::pkg::CompA");
+
+	// Field: test.pkg.CompA.a
+	result = manager.get_ecsact_symbols(uri, {4, 5});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->c, "test__pkg__CompA__a");
+	EXPECT_EQ(result->cpp.type, "test::pkg::CompA::a");
+
+	// System: test.pkg.SysA
+	result = manager.get_ecsact_symbols(uri, {7, 8});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->c, "test__pkg__SysA");
+	EXPECT_EQ(result->cpp.type, "test::pkg::SysA");
+	EXPECT_EQ(result->cpp.implementation, "test::pkg::SysA::impl");
+
+	// Usage: test.pkg.CompA
+	result = manager.get_ecsact_symbols(uri, {8, 12});
+	ASSERT_TRUE(result.has_value());
+	EXPECT_EQ(result->c, "test__pkg__CompA");
+	EXPECT_EQ(result->cpp.type, "test::pkg::CompA");
+}

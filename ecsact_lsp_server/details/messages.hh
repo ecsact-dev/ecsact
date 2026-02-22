@@ -488,4 +488,27 @@ struct diagnostic {
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(diagnostic, range, severity, message);
 };
 
+struct ecsact_symbol_params {
+	text_document_identifier textDocument;
+	position                 position;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ecsact_symbol_params, textDocument, position);
+};
+
+struct cpp_symbol_detail {
+	std::string type;
+	std::string implementation;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(cpp_symbol_detail, type, implementation);
+};
+
+struct ecsact_symbol_result {
+	std::string       c;
+	cpp_symbol_detail cpp;
+	std::string       csharp;
+	std::string       rust;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(ecsact_symbol_result, c, cpp, csharp, rust);
+};
+
 } // namespace ecsact_lsp
