@@ -872,9 +872,19 @@ public:
 			return std::nullopt;
 		}
 
+		auto cpp_name = ecsact::cc_lang_support::cpp_identifier(full_name);
+		auto cpp_impl = std::string{};
+
+		if(!is_usage && !stack.empty()) {
+			auto type = stack.back().type;
+			if(type == ECSACT_STATEMENT_SYSTEM || type == ECSACT_STATEMENT_ACTION) {
+				cpp_impl = cpp_name + "::impl";
+			}
+		}
+
 		return ecsact_symbol_result{
 			.c = ecsact::cc_lang_support::c_identifier(full_name),
-			.cpp = ecsact::cc_lang_support::cpp_identifier(full_name),
+			.cpp = {.type = cpp_name, .implementation = cpp_impl},
 			.csharp = full_name,
 			.rust = "",
 		};

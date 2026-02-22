@@ -936,30 +936,31 @@ system SysA {
 	auto result = manager.get_ecsact_symbols(uri, {1, 15});
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->c, "test__pkg");
-	EXPECT_EQ(result->cpp, "test::pkg");
+	EXPECT_EQ(result->cpp.type, "test::pkg");
 
 	// Component: test.pkg.CompA
 	result = manager.get_ecsact_symbols(uri, {3, 12});
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->c, "test__pkg__CompA");
-	EXPECT_EQ(result->cpp, "test::pkg::CompA");
+	EXPECT_EQ(result->cpp.type, "test::pkg::CompA");
 
 	// Field: test.pkg.CompA.a
 	result = manager.get_ecsact_symbols(uri, {4, 5});
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->c, "test__pkg__CompA__a");
-	EXPECT_EQ(result->cpp, "test::pkg::CompA::a");
+	EXPECT_EQ(result->cpp.type, "test::pkg::CompA::a");
 
 	// System: test.pkg.SysA
 	result = manager.get_ecsact_symbols(uri, {7, 8});
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->c, "test__pkg__SysA");
-	EXPECT_EQ(result->cpp, "test::pkg::SysA");
+	EXPECT_EQ(result->cpp.type, "test::pkg::SysA");
+	EXPECT_EQ(result->cpp.implementation, "test::pkg::SysA::impl");
 
 	// Usage: test.pkg.CompA
 	result = manager.get_ecsact_symbols(uri, {8, 12});
 	ASSERT_TRUE(result.has_value());
 	EXPECT_EQ(result->c, "test__pkg__CompA");
-	EXPECT_EQ(result->cpp, "test::pkg::CompA");
+	EXPECT_EQ(result->cpp.type, "test::pkg::CompA");
 }
 
