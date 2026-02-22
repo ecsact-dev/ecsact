@@ -776,8 +776,9 @@ public:
 				get_name_from_sv(statement.data.import_statement.import_package_name);
 			is_usage = true;
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
-			full_name =
-				get_name_from_sv(statement.data.system_component_statement.component_name);
+			full_name = get_name_from_sv(
+				statement.data.system_component_statement.component_name
+			);
 			is_usage = true;
 		} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
 			full_name = get_name_from_sv(
@@ -854,7 +855,8 @@ public:
 				} else if(stmt.type == ECSACT_STATEMENT_BUILTIN_TYPE_FIELD) {
 					name = get_name_from_sv(stmt.data.field_statement.field_name);
 				} else if(stmt.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
-					name = get_name_from_sv(stmt.data.user_type_field_statement.field_name);
+					name =
+						get_name_from_sv(stmt.data.user_type_field_statement.field_name);
 				} else if(stmt.type == ECSACT_STATEMENT_ENTITY_FIELD) {
 					name = get_name_from_sv(stmt.data.field_statement.field_name);
 				}

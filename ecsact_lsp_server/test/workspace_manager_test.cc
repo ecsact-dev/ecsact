@@ -963,4 +963,3 @@ system SysA {
 	EXPECT_EQ(result->c, "test__pkg__CompA");
 	EXPECT_EQ(result->cpp.type, "test::pkg::CompA");
 }
-

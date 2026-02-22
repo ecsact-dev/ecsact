@@ -201,22 +201,19 @@ auto main(int argc, char* argv[]) -> int {
 		);
 	});
 
-	manager.set_request_handler(
-		"ecsact/symbols",
-		[&](json params) -> json {
-			auto symbol_params = params.get<ecsact_lsp::ecsact_symbol_params>();
-			auto result = workspace_manager.get_ecsact_symbols(
-				symbol_params.textDocument.uri,
-				symbol_params.position
-			);
+	manager.set_request_handler("ecsact/symbols", [&](json params) -> json {
+		auto symbol_params = params.get<ecsact_lsp::ecsact_symbol_params>();
+		auto result = workspace_manager.get_ecsact_symbols(
+			symbol_params.textDocument.uri,
+			symbol_params.position
+		);
 
-			if(result) {
-				return *result;
-			}
-
-			return "null"_json;
+		if(result) {
+			return *result;
 		}
-	);
+
+		return "null"_json;
+	});
 
 	manager.set_request_handler("textDocument/hover", [&](json params) -> json {
 		auto hover_params = params.get<ecsact_lsp::hover_params>();
