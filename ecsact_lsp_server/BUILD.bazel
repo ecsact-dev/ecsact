@@ -19,6 +19,8 @@ cc_library(
     copts = copts,
     deps = [
         "//ecsact_interpret",
+        "//ecsact_lang_cpp:support",
+        "//ecsact_lang_csharp:support",
         "//ecsact_parse",
         "@magic_enum",
         "@nlohmann_json//:json",

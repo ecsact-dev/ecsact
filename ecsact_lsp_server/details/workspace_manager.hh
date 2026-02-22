@@ -19,6 +19,7 @@
 #include "ecsact/runtime/meta.h"
 #include "ecsact/runtime/meta.hh"
 #include <magic_enum/magic_enum.hpp>
+#include "ecsact/lang-support/lang-cc.hh"
 
 #include "./messages.hh"
 #include "./interfaces.hh"
@@ -751,6 +752,132 @@ public:
 		}
 
 		return result;
+	}
+
+	auto get_ecsact_symbols(std::string uri, position pos)
+		-> std::optional<ecsact_symbol_result> {
+		auto found = find_statement_at(uri, pos);
+		if(!found) {
+			return std::nullopt;
+		}
+
+		auto& [stack, r] = *found;
+		if(stack.empty()) {
+			return std::nullopt;
+		}
+
+		auto& doc = _documents[uri];
+		auto& statement = stack.back();
+		auto  full_name = std::string{};
+		bool  is_usage = false;
+
+		if(statement.type == ECSACT_STATEMENT_IMPORT) {
+			full_name =
+				get_name_from_sv(statement.data.import_statement.import_package_name);
+			is_usage = true;
+		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
+			full_name =
+				get_name_from_sv(statement.data.system_component_statement.component_name);
+			is_usage = true;
+		} else if(statement.type == ECSACT_STATEMENT_ENTITY_CONSTRAINT) {
+			full_name = get_name_from_sv(
+				statement.data.entity_constraint_statement.constraint_component_name
+			);
+			is_usage = true;
+		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT) {
+			full_name = get_name_from_sv(
+				statement.data.system_notify_component_statement.component_name
+			);
+			is_usage = true;
+		} else if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
+			auto type_range = get_source_range(
+				doc.full_text,
+				statement.data.user_type_field_statement.user_type_name
+			);
+			if(r.start.line == type_range.start.line &&
+				 r.start.character == type_range.start.character) {
+				full_name = get_name_from_sv(
+					statement.data.user_type_field_statement.user_type_name
+				);
+				is_usage = true;
+			}
+		}
+
+		if(is_usage) {
+			auto def_loc = goto_definition(uri, pos);
+			if(def_loc) {
+				if(def_loc->uri != uri || def_loc->range.start.line != pos.line ||
+					 def_loc->range.start.character != pos.character) {
+					return get_ecsact_symbols(def_loc->uri, def_loc->range.start);
+				}
+			}
+		} else {
+			bool has_pkg = false;
+			for(auto& s : stack) {
+				if(s.type == ECSACT_STATEMENT_PACKAGE) {
+					has_pkg = true;
+					break;
+				}
+			}
+
+			if(!has_pkg) {
+				for(auto& info : doc.stacks) {
+					if(!info.stack.empty() &&
+						 info.stack.front().type == ECSACT_STATEMENT_PACKAGE) {
+						auto pkg_name = get_name_from_sv(
+							info.stack.front().data.package_statement.package_name
+						);
+						if(!pkg_name.empty()) {
+							full_name = pkg_name;
+						}
+						break;
+					}
+				}
+			}
+
+			for(auto& stmt : stack) {
+				std::string name;
+				if(stmt.type == ECSACT_STATEMENT_PACKAGE) {
+					name = get_name_from_sv(stmt.data.package_statement.package_name);
+				} else if(stmt.type == ECSACT_STATEMENT_COMPONENT) {
+					name = get_name_from_sv(stmt.data.component_statement.component_name);
+				} else if(stmt.type == ECSACT_STATEMENT_TRANSIENT) {
+					name = get_name_from_sv(stmt.data.transient_statement.transient_name);
+				} else if(stmt.type == ECSACT_STATEMENT_SYSTEM) {
+					name = get_name_from_sv(stmt.data.system_statement.system_name);
+				} else if(stmt.type == ECSACT_STATEMENT_ACTION) {
+					name = get_name_from_sv(stmt.data.action_statement.action_name);
+				} else if(stmt.type == ECSACT_STATEMENT_ENUM) {
+					name = get_name_from_sv(stmt.data.enum_statement.enum_name);
+				} else if(stmt.type == ECSACT_STATEMENT_ENUM_VALUE) {
+					name = get_name_from_sv(stmt.data.enum_value_statement.name);
+				} else if(stmt.type == ECSACT_STATEMENT_BUILTIN_TYPE_FIELD) {
+					name = get_name_from_sv(stmt.data.field_statement.field_name);
+				} else if(stmt.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
+					name = get_name_from_sv(stmt.data.user_type_field_statement.field_name);
+				} else if(stmt.type == ECSACT_STATEMENT_ENTITY_FIELD) {
+					name = get_name_from_sv(stmt.data.field_statement.field_name);
+				}
+
+				if(!name.empty()) {
+					if(!full_name.empty()) {
+						full_name += ".";
+					}
+					full_name += name;
+				}
+			}
+		}
+
+		if(full_name.empty()) {
+			return std::nullopt;
+		}
+
+		return ecsact_symbol_result{
+			.c = ecsact::cc_lang_support::c_identifier(full_name),
+			.cpp = ecsact::cc_lang_support::cpp_identifier(full_name),
+			.csharp = full_name,
+			.rust = "",
+		};
 	}
 
 	auto get_hover(std::string uri, position pos) -> std::optional<hover> {
