@@ -124,6 +124,7 @@ auto main(int argc, char* argv[]) -> int {
 							{"resolveProvider", false},
 						},
 					},
+					{"renameProvider", true},
 				},
 			},
 			{
@@ -134,6 +135,21 @@ auto main(int argc, char* argv[]) -> int {
 				},
 			},
 		};
+	});
+
+	manager.set_request_handler("textDocument/rename", [&](json params) -> json {
+		auto rename_params = params.get<ecsact_lsp::rename_params>();
+		auto result = workspace_manager.rename(
+			rename_params.textDocument.uri,
+			rename_params.position,
+			rename_params.newName
+		);
+
+		if(result) {
+			return *result;
+		}
+
+		return "null"_json;
 	});
 
 	manager.set_request_handler(

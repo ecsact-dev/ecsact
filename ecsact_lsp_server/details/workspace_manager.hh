@@ -550,6 +550,48 @@ public:
 				return result;
 			};
 
+			auto get_part_at_pos = [&](const ecsact_statement_sv& sv)
+				-> std::optional<std::pair<std::vector<ecsact_statement>, range>> {
+				if(!in_range(sv)) {
+					return std::nullopt;
+				}
+
+				auto full_range = get_source_range(doc.full_text, sv);
+				auto name = get_name_from_sv(sv);
+				auto parts = std::vector<std::string>{};
+				auto start = 0;
+				auto end = name.find('.');
+				while(end != std::string::npos) {
+					parts.push_back(name.substr(start, end - start));
+					start = end + 1;
+					end = name.find('.', start);
+				}
+				parts.push_back(name.substr(start));
+
+				if(parts.size() == 1) {
+					return std::make_pair(info.stack, full_range);
+				}
+
+				auto current_char = full_range.start.character;
+				for(auto i = 0; i < parts.size(); ++i) {
+					auto& part = parts[i];
+					auto  part_start = current_char;
+					auto  part_end = current_char + part.length();
+
+					if(pos.character >= part_start && pos.character <= part_end) {
+						auto part_range = range{
+							.start = {pos.line, static_cast<unsigned>(part_start)},
+							.end = {pos.line, static_cast<unsigned>(part_end)},
+						};
+						return std::make_pair(info.stack, part_range);
+					}
+
+					current_char += part.length() + 1; // +1 for the dot
+				}
+
+				return std::make_pair(info.stack, full_range);
+			};
+
 			auto name_sv = ecsact_statement_sv{};
 
 			switch(statement.type) {
@@ -598,20 +640,19 @@ public:
 					break;
 			}
 
-			if(in_range(name_sv)) {
-				return std::make_pair(
-					info.stack,
-					get_source_range(doc.full_text, name_sv)
-				);
+			if(name_sv.data != nullptr) {
+				auto res = get_part_at_pos(name_sv);
+				if(res) {
+					return res;
+				}
 			}
 
 			if(statement.type == ECSACT_STATEMENT_USER_TYPE_FIELD) {
-				name_sv = statement.data.user_type_field_statement.user_type_name;
-				if(in_range(name_sv)) {
-					return std::make_pair(
-						info.stack,
-						get_source_range(doc.full_text, name_sv)
-					);
+				auto res = get_part_at_pos(
+					statement.data.user_type_field_statement.user_type_name
+				);
+				if(res) {
+					return res;
 				}
 			}
 		}
@@ -1812,9 +1853,37 @@ public:
 		auto& [stack, r] = *found;
 		auto& statement = stack.back();
 
+		auto doc_it = _documents.find(uri);
+		if(doc_it == _documents.end()) {
+			return std::nullopt;
+		}
+		auto& doc = doc_it->second;
+
+		auto get_text_from_range =
+			[&](std::string const& text, range r) -> std::string {
+			auto lines = std::vector<std::string>{};
+			auto ss = std::stringstream{text};
+			auto line_content = std::string{};
+			for(unsigned i = 0; i <= r.end.line; ++i) {
+				if(!std::getline(ss, line_content)) {
+					line_content = "";
+				}
+				if(i == r.start.line) {
+					auto start = r.start.character;
+					auto len = (r.start.line == r.end.line)
+						? (r.end.character - r.start.character)
+						: (line_content.length() - r.start.character);
+					return line_content.substr(start, len);
+				}
+			}
+			return "";
+		};
+
+		std::string selected_text = get_text_from_range(doc.full_text, r);
 		std::string target_name;
 		std::string target_package;
 		bool        is_target_decl = false;
+		bool        is_pkg_rename = false;
 
 		// 1. Identify Target Name and Package
 		if(statement.type == ECSACT_STATEMENT_COMPONENT) {
@@ -1836,6 +1905,13 @@ public:
 		} else if(statement.type == ECSACT_STATEMENT_ENUM) {
 			target_name = get_name_from_sv(statement.data.enum_statement.enum_name);
 			is_target_decl = true;
+		} else if(statement.type == ECSACT_STATEMENT_PACKAGE) {
+			target_name = selected_text;
+			is_target_decl = true;
+			is_pkg_rename = true;
+		} else if(statement.type == ECSACT_STATEMENT_IMPORT) {
+			target_name = selected_text;
+			is_pkg_rename = true;
 		} else if(statement.type == ECSACT_STATEMENT_SYSTEM_COMPONENT) {
 			target_name = get_name_from_sv(
 				statement.data.system_component_statement.component_name
@@ -1858,8 +1934,9 @@ public:
 			return std::nullopt;
 		}
 
-		// Resolve package if target is a declaration
-		if(is_target_decl) {
+		if(is_pkg_rename) {
+			// For package renames, target_name is the part of the package name
+		} else if(is_target_decl) {
 			auto doc_it = _documents.find(uri);
 			if(doc_it != _documents.end()) {
 				for(auto& info : doc_it->second.stacks) {
@@ -1874,10 +1951,21 @@ public:
 			}
 		} else {
 			// Resolve package if target is a usage
-			auto last_dot = target_name.find_last_of('.');
+			auto full_name = target_name;
+			auto last_dot = full_name.find_last_of('.');
 			if(last_dot != std::string::npos) {
-				target_package = target_name.substr(0, last_dot);
-				target_name = target_name.substr(last_dot + 1);
+				auto component_name = full_name.substr(last_dot + 1);
+				if(selected_text == component_name) {
+					target_name = component_name;
+					target_package = full_name.substr(0, last_dot);
+				} else {
+					// It's a package part of a qualified name
+					// For now we don't support renaming these as easily via
+					// find_references because target_package logic below is built for
+					// components.
+					target_name = component_name;
+					target_package = full_name.substr(0, last_dot);
+				}
 			} else {
 				// Search for declaration to find package
 				auto def_loc = goto_definition(uri, pos);
@@ -1937,9 +2025,15 @@ public:
 			}
 
 			if(match) {
+				auto full_range =
+					get_source_range(_documents[usage_uri].full_text, usage_sv);
+				auto r = full_range;
+				if(last_dot != std::string::npos) {
+					r.start.character += last_dot + 1;
+				}
 				result.push_back({
 					.uri = usage_uri,
-					.range = get_source_range(_documents[usage_uri].full_text, usage_sv),
+					.range = r,
 				});
 			}
 		};
@@ -2053,6 +2147,26 @@ public:
 					);
 				}
 			}
+		}
+
+		return result;
+	}
+
+	auto rename(std::string uri, position pos, std::string new_name)
+		-> std::optional<workspace_edit> {
+		auto refs = find_references(uri, pos, {.includeDeclaration = true});
+		if(!refs || refs->empty()) {
+			return std::nullopt;
+		}
+
+		workspace_edit result;
+		result.changes = std::map<std::string, std::vector<text_edit>>{};
+
+		for(auto& ref : *refs) {
+			(*result.changes)[ref.uri].push_back({
+				.range = ref.range,
+				.newText = new_name,
+			});
 		}
 
 		return result;

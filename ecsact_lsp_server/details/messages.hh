@@ -125,6 +125,27 @@ struct location {
 
 /**
  * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit
+ */
+struct text_edit {
+	range       range;
+	std::string newText;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(text_edit, range, newText);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceEdit
+ */
+struct workspace_edit {
+	std::optional<std::map<std::string, std::vector<text_edit>>> changes;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(workspace_edit, changes);
+};
+
+/**
+ * @SEE:
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceContext
  */
 struct reference_context {
@@ -209,6 +230,23 @@ struct hover_params {
 	position                 position;
 
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(hover_params, textDocument, position);
+};
+
+/**
+ * @SEE:
+ * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#renameParams
+ */
+struct rename_params {
+	text_document_identifier textDocument;
+	position                 position;
+	std::string              newName;
+
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+		rename_params,
+		textDocument,
+		position,
+		newName
+	);
 };
 
 /**

@@ -963,3 +963,135 @@ system SysA {
 	EXPECT_EQ(result->c, "test__pkg__CompA");
 	EXPECT_EQ(result->cpp.type, "test::pkg::CompA");
 }
+
+TEST(WorkspaceManager, Rename) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+
+component CompA {
+	i32 a;
+}
+
+system SysA {
+	readonly CompA;
+}
+
+action ActA {
+	readwrite CompA;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Rename CompA to CompNew
+	// component CompA is at line 3, character 12
+	auto result = manager.rename(uri, {3, 12}, "CompNew");
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->changes.has_value());
+	ASSERT_EQ(result->changes->size(), 1);
+	auto const& changes = (*result->changes).at(uri);
+	EXPECT_EQ(changes.size(), 3);
+
+	for(auto const& edit : changes) {
+		EXPECT_EQ(edit.newText, "CompNew");
+	}
+
+	// Verify ranges
+	// 1. Definition: line 3, character 10-15
+	// 2. SysA usage: line 8, character 10-15
+	// 3. ActA usage: line 12, character 11-16
+	EXPECT_EQ(changes[0].range.start.line, 3);
+	EXPECT_EQ(changes[0].range.start.character, 10);
+	EXPECT_EQ(changes[0].range.end.character, 15);
+
+	EXPECT_EQ(changes[1].range.start.line, 8);
+	EXPECT_EQ(changes[1].range.start.character, 10);
+	EXPECT_EQ(changes[1].range.end.character, 15);
+
+	EXPECT_EQ(changes[2].range.start.line, 12);
+	EXPECT_EQ(changes[2].range.start.character, 11);
+	EXPECT_EQ(changes[2].range.end.character, 16);
+}
+
+TEST(WorkspaceManager, RenameMultiFile) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri_a = "file:///a.ecsact";
+	std::string text_a = R"(
+package a;
+component CompA { i32 a; }
+)";
+
+	std::string uri_b = "file:///b.ecsact";
+	std::string text_b = R"(
+package b;
+import a;
+system SysB {
+	readonly a.CompA;
+}
+)";
+
+	manager.add_document(uri_a, 1, text_a);
+	manager.add_document(uri_b, 1, text_b);
+
+	// Rename CompA to CompNew
+	auto result = manager.rename(uri_a, {2, 12}, "CompNew");
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->changes.has_value());
+	EXPECT_EQ(result->changes->size(), 2);
+
+	auto const& changes_a = (*result->changes).at(uri_a);
+	EXPECT_EQ(changes_a.size(), 1);
+	EXPECT_EQ(changes_a[0].newText, "CompNew");
+	EXPECT_EQ(changes_a[0].range.start.line, 2);
+	EXPECT_EQ(changes_a[0].range.start.character, 10);
+	EXPECT_EQ(changes_a[0].range.end.character, 15);
+
+	auto const& changes_b = (*result->changes).at(uri_b);
+	EXPECT_EQ(changes_b.size(), 1);
+	EXPECT_EQ(changes_b[0].newText, "CompNew");
+	EXPECT_EQ(changes_b[0].range.start.line, 4);
+	// readonly a.CompA;
+	// a.CompA starts at col 10. CompA starts at col 12.
+	EXPECT_EQ(changes_b[0].range.start.character, 12);
+	EXPECT_EQ(changes_b[0].range.end.character, 17);
+}
+
+TEST(WorkspaceManager, RenameComponentUsedAsField) {
+	auto sender = mock_sender{};
+	auto manager = ecsact_lsp::workspace_manager{std::move(sender)};
+
+	std::string uri = "file:///test.ecsact";
+	std::string text = R"(
+main package test;
+
+component CompA {
+	i32 a;
+}
+
+component CompB {
+	CompA field_a;
+}
+)";
+
+	manager.add_document(uri, 1, text);
+
+	// Rename CompA to CompNew
+	auto result = manager.rename(uri, {3, 12}, "CompNew");
+	ASSERT_TRUE(result.has_value());
+	ASSERT_TRUE(result->changes.has_value());
+	auto const& changes = (*result->changes).at(uri);
+	EXPECT_EQ(changes.size(), 2); // Decl + usage in CompB
+
+	// Verify range for usage in CompB
+	// CompA field_a; is at line 8
+	// CompA starts at col 1
+	EXPECT_EQ(changes[1].range.start.line, 8);
+	EXPECT_EQ(changes[1].range.start.character, 1);
+	EXPECT_EQ(changes[1].range.end.character, 6);
+}
