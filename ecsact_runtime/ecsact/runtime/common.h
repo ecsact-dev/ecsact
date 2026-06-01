@@ -181,7 +181,7 @@ ECSACT_COMPARE_ID_FN(ecsact_transient_id, ecsact_component_like_id)
 #undef ECSACT_CAST_ID_FN
 #undef ECSACT_COMPARE_ID_FN
 
-#if defined(_WIN32) && (!defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL)
+#if defined(_MSC_VER) && (!defined(_MSVC_TRADITIONAL) || _MSVC_TRADITIONAL)
 #	define ECSACT_MSVC_TRADITIONAL
 #endif
 
