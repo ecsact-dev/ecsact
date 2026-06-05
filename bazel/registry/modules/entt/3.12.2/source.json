@@ -3,7 +3,7 @@
     "overlay": {},
     "patch_strip": 0,
     "patches": {
-        "bazel9.patch": "sha256-8tRYKgjaUKYvQ9/WlOJVCehvSsZZfxzVvGT8bS3SO4c="
+        "bazel9.patch": "sha256-dqFoDO7TeIez+jWjLxAdhkTbM6Uqu4hn3BGI+wqK1bA="
     },
     "strip_prefix": "entt-3.12.2",
     "url": "https://github.com/skypjack/entt/archive/refs/tags/v3.12.2.tar.gz"

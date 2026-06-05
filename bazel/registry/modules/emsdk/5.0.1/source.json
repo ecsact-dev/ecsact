@@ -3,9 +3,9 @@
     "overlay": {},
     "patch_strip": 0,
     "patches": {
-        "emar.patch": "sha256-fIvVi6zcJ1rHHuJJIkffjO5KpCGLtnI7A3r/p0HLSWU=",
-        "emcc.patch": "sha256-UCMldkeJxxFZS94yejBEwRNQOaIaqqQm1x3knES+Wio=",
-        "emcc_link.patch": "sha256-RXtnn/PKGqkF/m6YHNEb/7TAxpwtELsu6HiQS40ad4w="
+        "emar.patch": "sha256-dfW9llR3DI8peCivgXM/X8tVNu3MxRZ53I9fyY0p6F0=",
+        "emcc.patch": "sha256-28Dxsc8Oqb1gezB7a1JLdig/HPAzJN5gfRo1f71TXDY=",
+        "emcc_link.patch": "sha256-zcLJnYcsCy5+IAxJsBVojCrEgVeCVCwmja0UHk+Wa5U="
     },
     "strip_prefix": "emsdk-14c18b569f55138fe4963924162244251f454fb0/bazel",
     "url": "https://github.com/emscripten-core/emsdk/archive/14c18b569f55138fe4963924162244251f454fb0.tar.gz"
