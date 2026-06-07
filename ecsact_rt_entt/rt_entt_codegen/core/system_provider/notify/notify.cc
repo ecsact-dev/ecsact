@@ -74,8 +74,10 @@ auto provider::notify::print_system_notify_views(
 	auto system_name = cpp_identifier(decl_full_name(system_id));
 
 	for(auto const& [comp_id, notify_setting] : notify_settings_vec) {
-		if(notify_setting == ECSACT_SYS_NOTIFY_ALWAYS ||
-			 notify_setting == ECSACT_SYS_NOTIFY_NONE) {
+		if(
+			notify_setting == ECSACT_SYS_NOTIFY_ALWAYS ||
+			notify_setting == ECSACT_SYS_NOTIFY_NONE
+		) {
 			break;
 		}
 		auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));

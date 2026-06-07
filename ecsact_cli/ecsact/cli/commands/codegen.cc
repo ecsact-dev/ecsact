@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <boost/dll/shared_library.hpp>
 #include <boost/dll/library_info.hpp>
-#include "docopt.h"
+#include "docoptexpr/docoptexpr.hh"
 #include "ecsact/interpret/eval.hh"
 #include "ecsact/cli/commands/codegen/codegen.hh"
 #include "ecsact/cli/commands/common.hh"
@@ -21,6 +21,8 @@
 #include "ecsact/cli/commands/codegen/codegen_util.hh"
 
 namespace fs = std::filesystem;
+using namespace docoptexpr::literals;
+
 constexpr auto file_readonly_perms = fs::perms::others_read |
 	fs::perms::group_read | fs::perms::owner_read;
 
@@ -37,7 +39,7 @@ Options:
   -f --format=<type>        The format used to report progress of the build [default: text]
   --report_filter=<filter>  Filtering out report logs [default: none]
   --print-output-files      Simply print output file paths to stdout. No codegen will occur.
-)";
+)"_docopt;
 
 static auto stdout_write_fn(
 	int32_t     filename_index,
@@ -50,15 +52,28 @@ static auto stdout_write_fn(
 int ecsact::cli::detail::codegen_command(int argc, const char* argv[]) {
 	using namespace std::string_literals;
 
-	auto args = docopt::docopt(USAGE, {argv + 1, argv + argc});
+	auto res = USAGE.parse(argc, argv);
+	if(!res) {
+		std::cerr << "Error matching arguments: " << res.error() << "\n";
+		std::cerr << USAGE.usage() << "\n";
+		return 1;
+	}
+	auto args = res.value();
+
 	if(auto exit_code = process_common_args(args); exit_code != 0) {
 		return exit_code;
 	}
 
-	auto only_print_output_files = args.at("--print-output-files").asBool();
+	auto only_print_output_files = args.get_bool("--print-output-files");
 
 	auto files_error = false;
-	auto files_str = args.at("<files>").asStringList();
+	auto files_str = std::vector<std::string>{};
+	for(int i = 1; i < argc; ++i) {
+		auto sv = std::string_view(argv[i]);
+		if(sv.ends_with(".ecsact")) {
+			files_str.push_back(std::string(sv));
+		}
+	}
 	auto files = std::vector<fs::path>{};
 	files.reserve(files_str.size());
 
@@ -82,7 +97,20 @@ int ecsact::cli::detail::codegen_command(int argc, const char* argv[]) {
 	auto plugins_not_found = false;
 	auto invalid_plugins = false;
 
-	for(auto plugin_arg : args.at("--plugin").asStringList()) {
+	auto plugins_str = std::vector<std::string>{};
+	for(int i = 1; i < argc; ++i) {
+		auto sv = std::string_view(argv[i]);
+		if(sv.starts_with("--plugin=")) {
+			plugins_str.push_back(std::string(sv.substr(9)));
+		} else if(sv == "-p" || sv == "--plugin") {
+			if(i + 1 < argc) {
+				plugins_str.push_back(argv[i + 1]);
+				i++;
+			}
+		}
+	}
+
+	for(auto plugin_arg : plugins_str) {
 		auto checked_plugin_paths = std::vector<fs::path>{};
 		auto plugin_path = resolve_plugin_path(
 			{
@@ -142,8 +170,8 @@ int ecsact::cli::detail::codegen_command(int argc, const char* argv[]) {
 	}
 
 	std::optional<fs::path> outdir;
-	if(args.at("--outdir").isString()) {
-		outdir = fs::path(args.at("--outdir").asString());
+	if(args.has("--outdir")) {
+		outdir = fs::path(args.get_string("--outdir"));
 		if(!fs::exists(*outdir)) {
 			std::error_code ec;
 			fs::create_directories(*outdir, ec);
@@ -164,13 +192,13 @@ int ecsact::cli::detail::codegen_command(int argc, const char* argv[]) {
 		.only_print_output_files = only_print_output_files,
 	};
 
-	if(args.at("--stdout").asBool()) {
+	if(args.get_bool("--stdout")) {
 		codegen_options.write_fn = &stdout_write_fn;
 	}
 
 	auto exit_code = ecsact::cli::codegen(codegen_options);
 
-	if(args.at("--stdout").asBool()) {
+	if(args.get_bool("--stdout")) {
 		std::cout.flush();
 	}
 

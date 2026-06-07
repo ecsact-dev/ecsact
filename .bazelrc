@@ -20,6 +20,9 @@ common:ci --disk_cache=~/.cache/bazel-disk-cache
 common --//ecsact_cli:use_sdk_version
 
 build:windows --workspace_status_command=bazel/tools/wsc.cmd
+build:windows --cxxopt=/std:c++latest --host_cxxopt=/std:c++latest
 build:linux --workspace_status_command=bazel/tools/wsc.sh
+build:linux --cxxopt=-std=c++23 --host_cxxopt=-std=c++23
+build:macos --cxxopt=-std=c++23 --host_cxxopt=-std=c++23
 
 try-import %workspace%/user.bazelrc

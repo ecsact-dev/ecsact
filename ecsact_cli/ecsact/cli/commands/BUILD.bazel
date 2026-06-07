@@ -20,7 +20,7 @@ cc_library(
 #         ":command",
 #         "//ecsact_cli/ecsact/cli/detail/executable_path",
 #         "@magic_enum",
-#         "@docopt.cpp//:docopt",
+#         "@docoptexpr",
 #         "@boost.dll",
 #         "//ecsact_runtime:core",
 #         "//ecsact_runtime:async",
@@ -41,7 +41,7 @@ cc_library(
         "//ecsact_cli/ecsact/cli:report_message",
         "//ecsact_cli/ecsact/cli/detail:json_report",
         "//ecsact_cli/ecsact/cli/detail:text_report",
-        "@docopt.cpp//:docopt",
+        "@docoptexpr",
     ],
 )
 
@@ -61,7 +61,7 @@ cc_library(
         "//ecsact_runtime:dylib",
         "//ecsact_runtime:meta",
         "@boost.dll",
-        "@docopt.cpp//:docopt",
+        "@docoptexpr",
         "@magic_enum",
     ],
 )
@@ -75,7 +75,7 @@ cc_library(
     deps = [
         ":command",
         "//ecsact_cli/ecsact/cli/detail:argv0",
-        "@docopt.cpp//:docopt",
+        "@docoptexpr",
         "@nlohmann_json//:json",
     ],
 )

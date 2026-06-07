@@ -7,7 +7,7 @@
 #include <charconv>
 #include <string_view>
 #include <string>
-#include "docopt.h"
+#include "docoptexpr/docoptexpr.hh"
 #include "nlohmann/json.hpp"
 #include "nlohmann/adl_serializer.hpp"
 
@@ -25,8 +25,10 @@
 
 using nlohmann::json;
 using namespace std::string_literals;
+using namespace docoptexpr::literals;
 
-constexpr auto USAGE = R"(
+constexpr auto USAGE = R"(Ecsact LSP Server
+
 Usage:
 	ecsact_lsp_server --stdio
 	ecsact_lsp_server --socket [--port=<port>]
@@ -40,7 +42,7 @@ Options:
 
 	-p, --port=<port>
 		Port to communicate over. Only valid while using `--socket`
-)";
+)"_docopt;
 
 auto main(int argc, char* argv[]) -> int {
 #ifdef _WIN32
@@ -49,9 +51,15 @@ auto main(int argc, char* argv[]) -> int {
 	_setmode(_fileno(stderr), _O_BINARY);
 #endif
 
-	auto options = docopt::docopt(USAGE, {argv + 1, argv + argc});
+	auto res = USAGE.parse(argc, argv);
+	if(!res) {
+		std::cerr << "Error matching arguments: " << res.error() << "\n";
+		std::cerr << USAGE.usage() << "\n";
+		return 1;
+	}
+	auto options = res.value();
 
-	if(options["--port"]) {
+	if(options.has("--port")) {
 		std::cerr << "non-stdio communication unimplemented\n";
 		return 1;
 	}
@@ -69,8 +77,10 @@ auto main(int argc, char* argv[]) -> int {
 			manager.set_trace(params["trace"].get<ecsact_lsp::trace_value>());
 		}
 
-		if(params.contains("workspaceFolders") &&
-			 params["workspaceFolders"].is_array()) {
+		if(
+			params.contains("workspaceFolders") &&
+			params["workspaceFolders"].is_array()
+		) {
 			auto workspace_folders =
 				params["workspaceFolders"]
 					.get<std::vector<ecsact_lsp::workspace_folder>>();

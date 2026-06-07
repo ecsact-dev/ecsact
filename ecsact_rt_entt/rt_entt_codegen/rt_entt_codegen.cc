@@ -33,8 +33,10 @@ static auto check_unsupported_features( //
 	for(auto comp_id : details.all_components) {
 		for(auto field_id : ecsact::meta::get_field_ids(comp_id)) {
 			auto field_type = ecsact::meta::get_field_type(comp_id, field_id);
-			if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
-				 field_type.type.builtin == ECSACT_ENTITY_TYPE) {
+			if(
+				field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
+				field_type.type.builtin == ECSACT_ENTITY_TYPE
+			) {
 				auto comp_name = ecsact::meta::decl_full_name(comp_id);
 				auto field_name = ecsact::meta::field_name(comp_id, field_id);
 				ctx.error("Assoc field found {}.{}", comp_name, field_name);
@@ -69,8 +71,10 @@ static auto check_unsupported_features( //
 
 		for(auto field_id : ecsact::meta::get_field_ids(act_id)) {
 			auto field_type = ecsact::meta::get_field_type(act_id, field_id);
-			if(field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
-				 field_type.type.builtin == ECSACT_ENTITY_TYPE) {
+			if(
+				field_type.kind == ECSACT_TYPE_KIND_BUILTIN &&
+				field_type.type.builtin == ECSACT_ENTITY_TYPE
+			) {
 				auto act_name = ecsact::meta::decl_full_name(act_id);
 				auto field_name = ecsact::meta::field_name(act_id, field_id);
 				ctx.error("Assoc field found {}.{}", act_name, field_name);
@@ -299,8 +303,10 @@ void ecsact_codegen_plugin(
 				ecsact_id_cast<ecsact_component_like_id>(comp_id)
 			);
 
-			if(comp_type == ECSACT_COMPONENT_TYPE_STREAM ||
-				 comp_type == ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
+			if(
+				comp_type == ECSACT_COMPONENT_TYPE_STREAM ||
+				comp_type == ECSACT_COMPONENT_TYPE_LAZY_STREAM
+			) {
 				stream_components.insert(comp_id);
 			}
 		}

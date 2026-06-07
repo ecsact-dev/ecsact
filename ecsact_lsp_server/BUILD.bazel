@@ -33,6 +33,6 @@ cc_binary(
     copts = copts,
     deps = [
         ":ecsact_lsp_server_lib",
-        "@docopt.cpp//:docopt",
+        "@docoptexpr",
     ],
 )

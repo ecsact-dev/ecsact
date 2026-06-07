@@ -827,9 +827,11 @@ public:
 		const auto* execution_options_list_data = std::data(execution_options);
 
 		const ecsact_execution_options* c_execution_options_list = nullptr;
-		if constexpr(std::is_same_v<
-									 decltype(execution_options_list_data),
-									 decltype(c_execution_options_list)>) {
+		if constexpr(
+			std::is_same_v<
+				decltype(execution_options_list_data),
+				decltype(c_execution_options_list)>
+		) {
 			return ecsact_execute_systems(
 				_id,
 				static_cast<int32_t>(execution_count),
@@ -878,9 +880,11 @@ public:
 		const ecsact_execution_events_collector evc_c = evc.c();
 
 		const ecsact_execution_options* c_execution_options_list = nullptr;
-		if constexpr(std::is_same_v<
-									 decltype(execution_options_list_data),
-									 decltype(c_execution_options_list)>) {
+		if constexpr(
+			std::is_same_v<
+				decltype(execution_options_list_data),
+				decltype(c_execution_options_list)>
+		) {
 			return ecsact_execute_systems(
 				_id,
 				static_cast<int32_t>(execution_count),

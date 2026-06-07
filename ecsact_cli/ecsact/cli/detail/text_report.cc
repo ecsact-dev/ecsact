@@ -39,9 +39,9 @@ using ecsact::cli::warning_message;
 namespace {
 constexpr auto get_outputstream(auto&& stream, auto&& preferred)
 	-> decltype(auto) {
-	if constexpr(std::is_same_v<
-								 std::nullptr_t,
-								 std::remove_cvref_t<decltype(stream)>>) {
+	if constexpr(
+		std::is_same_v<std::nullptr_t, std::remove_cvref_t<decltype(stream)>>
+	) {
 		return preferred;
 	} else {
 		return stream;

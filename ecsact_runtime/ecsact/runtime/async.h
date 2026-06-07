@@ -207,8 +207,7 @@ ECSACT_ASYNC_API_FN(
 )
 ( //
 	ecsact_async_session_id        session_id,
-	const ecsact_execution_options options
-);
+	const ecsact_execution_options options);
 
 /**
  * Invokes the various callbacks in `execution_events` and `async_events` that
@@ -219,8 +218,7 @@ ECSACT_ASYNC_API_FN(void, ecsact_async_flush_events)
 ( //
 	ecsact_async_session_id                  session_id,
 	const ecsact_execution_events_collector* execution_events,
-	const ecsact_async_events_collector*     async_events
-);
+	const ecsact_async_events_collector*     async_events);
 
 /**
  * @param option_data implementation defined options used to start the async
@@ -238,8 +236,7 @@ ECSACT_ASYNC_API_FN(void, ecsact_async_flush_events)
 ECSACT_ASYNC_API_FN(ecsact_async_session_id, ecsact_async_start)
 ( //
 	const void* option_data,
-	int32_t     option_data_size
-);
+	int32_t     option_data_size);
 
 /**
  * Begins stopping the session. May happen in background.
@@ -247,8 +244,7 @@ ECSACT_ASYNC_API_FN(ecsact_async_session_id, ecsact_async_start)
  */
 ECSACT_ASYNC_API_FN(void, ecsact_async_stop)
 ( //
-	ecsact_async_session_id session_id
-);
+	ecsact_async_session_id session_id);
 
 /**
  * Begins stopping all active sessions. May happen in background.
@@ -268,8 +264,7 @@ ECSACT_ASYNC_API_FN(void, ecsact_async_force_reset)();
  */
 ECSACT_ASYNC_API_FN(int32_t, ecsact_async_get_current_tick)
 ( //
-	ecsact_async_session_id session_id
-);
+	ecsact_async_session_id session_id);
 
 /**
  * Sends Ecsact stream data to the specified registry. Stream data will be
@@ -285,8 +280,7 @@ ECSACT_ASYNC_API_FN(void, ecsact_async_stream)
 	ecsact_entity_id        entity,
 	ecsact_component_id     component_id,
 	const void*             component_data,
-	const void*             indexed_field_values
-);
+	const void*             indexed_field_values);
 
 #ifdef ECSACT_MSVC_TRADITIONAL
 #	define FOR_EACH_ECSACT_ASYNC_API_FN(fn, ...) ECSACT_MSVC_TRADITIONAL_ERROR()

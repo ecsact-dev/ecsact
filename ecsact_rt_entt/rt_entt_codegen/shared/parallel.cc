@@ -201,8 +201,10 @@ static auto can_parent_and_child_system_parallel(
 		for(const auto& [child_comp_id, child_capability] : child_capabilities) {
 			for(const auto& [comp_id, capability] : capabilities) {
 				if(comp_id == child_comp_id) {
-					if(!is_capability_safe(capability) ||
-						 !is_capability_safe(child_capability)) {
+					if(
+						!is_capability_safe(capability) ||
+						!is_capability_safe(child_capability)
+					) {
 						return false;
 					}
 				}

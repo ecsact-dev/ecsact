@@ -405,8 +405,10 @@ static auto add_stream_component_if_needed(
 	for(auto [comp_id, capability] : comp_caps) {
 		auto comp_type = ecsact_meta_component_type(comp_id);
 
-		if(comp_type != ECSACT_COMPONENT_TYPE_STREAM &&
-			 comp_type != ECSACT_COMPONENT_TYPE_LAZY_STREAM) {
+		if(
+			comp_type != ECSACT_COMPONENT_TYPE_STREAM &&
+			comp_type != ECSACT_COMPONENT_TYPE_LAZY_STREAM
+		) {
 			continue;
 		}
 
@@ -471,8 +473,10 @@ static auto print_execute_systems(
 
 	auto context_init_provider = std::shared_ptr<system_provider>{};
 	for(const auto& provider : system_providers) {
-		if(provider->provide_context_init(ctx, names, context_type_name) ==
-			 provider::HANDLED) {
+		if(
+			provider->provide_context_init(ctx, names, context_type_name) ==
+			provider::HANDLED
+		) {
 			context_init_provider = provider;
 			break;
 		}

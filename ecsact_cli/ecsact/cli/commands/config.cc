@@ -3,11 +3,12 @@
 #include <filesystem>
 #include <map>
 #include <string>
-#include "docopt.h"
+#include "docoptexpr/docoptexpr.hh"
 #include "nlohmann/json.hpp"
 #include "ecsact/cli/detail/argv0.hh"
 
 namespace fs = std::filesystem;
+using namespace docoptexpr::literals;
 
 constexpr auto USAGE = R"(Ecsact Config Command
 
@@ -26,8 +27,7 @@ Options:
 			plugin_dir        directory containing built-in Ecsact codegen plugins 
 			builtin_plugins   list of built-in Ecsact codegen plugins available
 			recipe_bundles    directory containing runtime recipe bundles
-
-)";
+)"_docopt;
 
 constexpr auto CANNOT_FIND_INCLUDE_DIR = R"(
 [ERROR] Cannot find Ecsact include directory.
@@ -54,7 +54,22 @@ constexpr auto CANNOT_FIND_RECIPES_DIR = R"(
 int ecsact::cli::detail::config_command(int argc, const char* argv[]) {
 	using namespace std::string_literals;
 
-	auto args = docopt::docopt(USAGE, {argv + 1, argv + argc});
+	for(int i = 1; i < argc; ++i) {
+		if(
+			std::string_view(argv[i]) == "--help" || std::string_view(argv[i]) == "-h"
+		) {
+			std::cout << USAGE.help() << "\n";
+			return 0;
+		}
+	}
+
+	auto res = USAGE.parse(argc, argv);
+	if(!res) {
+		std::cerr << "Error matching arguments: " << res.error() << "\n";
+		std::cerr << USAGE.usage() << "\n";
+		return 1;
+	}
+
 	auto exec_path = canon_argv0(argv[0]);
 	auto install_prefix = exec_path.parent_path().parent_path();
 	auto plugin_dir = install_prefix / "share" / "ecsact" / "plugins";
@@ -153,7 +168,10 @@ int ecsact::cli::detail::config_command(int argc, const char* argv[]) {
 
 	};
 
-	auto keys = args.at("<keys>").asStringList();
+	auto keys = std::vector<std::string>{};
+	for(int i = 2; i < argc; ++i) {
+		keys.push_back(argv[i]);
+	}
 	if(keys.empty()) {
 		for(auto&& [_, key_handler] : key_handlers) {
 			int exit_code = key_handler();
@@ -165,7 +183,7 @@ int ecsact::cli::detail::config_command(int argc, const char* argv[]) {
 		for(auto key : keys) {
 			if(!key_handlers.contains(key)) {
 				std::cerr << "[ERROR] Invalid config key: " << key << "\n\n";
-				std::cerr << USAGE;
+				std::cerr << USAGE.help() << "\n";
 				return 1;
 			}
 

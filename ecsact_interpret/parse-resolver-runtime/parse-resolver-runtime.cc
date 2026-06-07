@@ -553,12 +553,16 @@ ecsact_builtin_type ecsact_meta_enum_storage_type(ecsact_enum_id enum_id) {
 		}
 		return ECSACT_U32;
 	} else {
-		if(min_value >= numeric_limits<int8_t>::min() &&
-			 max_value <= numeric_limits<int8_t>::max()) {
+		if(
+			min_value >= numeric_limits<int8_t>::min() &&
+			max_value <= numeric_limits<int8_t>::max()
+		) {
 			return ECSACT_I8;
 		}
-		if(min_value >= numeric_limits<int16_t>::min() &&
-			 max_value <= numeric_limits<int16_t>::max()) {
+		if(
+			min_value >= numeric_limits<int16_t>::min() &&
+			max_value <= numeric_limits<int16_t>::max()
+		) {
 			return ECSACT_I16;
 		}
 		return ECSACT_I32;
@@ -875,13 +879,13 @@ void ecsact_remove_child_system(
 
 	auto& parent_def = get_system_like(parent);
 	auto  itr = std::find_if(
-    parent_def.execution_order.begin(),
-    parent_def.execution_order.end(),
-    [&](const auto& entry) {
-      auto sys_id = std::get_if<ecsact_system_like_id>(&entry);
-      return sys_id && *sys_id == static_cast<ecsact_system_like_id>(child);
-    }
-  );
+		parent_def.execution_order.begin(),
+		parent_def.execution_order.end(),
+		[&](const auto& entry) {
+			auto sys_id = std::get_if<ecsact_system_like_id>(&entry);
+			return sys_id && *sys_id == static_cast<ecsact_system_like_id>(child);
+		}
+	);
 
 	child_def.parent_system_id = (ecsact_system_like_id)-1;
 	if(itr != parent_def.execution_order.end()) {
@@ -984,9 +988,9 @@ void ecsact_meta_get_dependencies(
 
 	auto& pkg = itr->second;
 	auto  count = std::min(
-    max_dependency_count,
-    static_cast<int32_t>(pkg.dependencies.size())
-  );
+		max_dependency_count,
+		static_cast<int32_t>(pkg.dependencies.size())
+	);
 
 	for(int i = 0; count > i; ++i) {
 		out_dependencies[i] = pkg.dependencies[i];

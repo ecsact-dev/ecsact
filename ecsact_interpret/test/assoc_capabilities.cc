@@ -66,8 +66,9 @@ TEST_F(AssocCapabilities, RemovesExists) {
 	for(auto&& [comp_id, caps] : assoc_caps) {
 		if(comp_id == ecsact_id_cast<ecsact_component_like_id>(*tag_comp)) {
 			ASSERT_EQ(caps, ECSACT_SYS_CAP_INCLUDE);
-		} else if(comp_id ==
-							ecsact_id_cast<ecsact_component_like_id>(*example_comp)) {
+		} else if(
+			comp_id == ecsact_id_cast<ecsact_component_like_id>(*example_comp)
+		) {
 			ASSERT_EQ(caps, ECSACT_SYS_CAP_REMOVES);
 		} else {
 			ASSERT_TRUE(false) << "unknown comp id";

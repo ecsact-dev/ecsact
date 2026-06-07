@@ -43,8 +43,7 @@ typedef struct {
 ECSACT_STATIC_API_FN(void, ecsact_static_components)
 ( //
 	const ecsact_static_component_info** out_components,
-	size_t*                              out_components_count
-);
+	size_t*                              out_components_count);
 
 typedef struct {
 	ecsact_variant_id    variant_id;
@@ -59,8 +58,7 @@ typedef struct {
 ECSACT_STATIC_API_FN(void, ecsact_static_variants)
 ( //
 	const ecsact_static_variant_info** out_variants,
-	size_t*                            out_variants_count
-);
+	size_t*                            out_variants_count);
 
 typedef struct {
 	ecsact_system_id             system_id;
@@ -81,8 +79,7 @@ typedef struct {
 ECSACT_STATIC_API_FN(void, ecsact_static_systems)
 ( //
 	const ecsact_static_system_info** out_systems,
-	size_t*                           out_systems_count
-);
+	size_t*                           out_systems_count);
 
 typedef struct {
 	ecsact_system_id             action_id;
@@ -104,19 +101,16 @@ typedef struct {
 ECSACT_STATIC_API_FN(void, ecsact_static_actions)
 ( //
 	const ecsact_static_action_info** out_actions,
-	size_t*                           out_actions_count
-);
+	size_t*                           out_actions_count);
 
 typedef void (*ecsact_static_reload_callback)(void* user_data);
 ECSACT_STATIC_API_FN(void, ecsact_static_on_reload)
 ( //
 	ecsact_static_reload_callback callback,
-	void*                         callback_user_data
-);
+	void*                         callback_user_data);
 ECSACT_STATIC_API_FN(void, ecsact_static_off_reload)
 ( //
-	ecsact_static_reload_callback callback
-);
+	ecsact_static_reload_callback callback);
 
 // # BEGIN FOR_EACH_ECSACT_STATIC_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL

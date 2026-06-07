@@ -32,8 +32,7 @@
  */
 ECSACT_SERIALIZE_API_FN(int, ecsact_serialize_action_size)
 ( //
-	ecsact_action_id action_id
-);
+	ecsact_action_id action_id);
 
 /**
  * Get the amount of bytes a component with id `component_id` requires to
@@ -41,8 +40,7 @@ ECSACT_SERIALIZE_API_FN(int, ecsact_serialize_action_size)
  */
 ECSACT_SERIALIZE_API_FN(int, ecsact_serialize_component_size)
 ( //
-	ecsact_component_id component_id
-);
+	ecsact_component_id component_id);
 
 /**
  * Serialize action into implementation defined format suitable for sending over
@@ -61,29 +59,25 @@ ECSACT_SERIALIZE_API_FN(int, ecsact_serialize_action)
 ( //
 	ecsact_action_id action_id,
 	const void*      in_action_data,
-	uint8_t*         out_bytes
-);
+	uint8_t*         out_bytes);
 
 ECSACT_SERIALIZE_API_FN(int, ecsact_deserialize_action)
 ( //
 	ecsact_action_id action_id,
 	const uint8_t*   in_bytes,
-	void*            out_action_data
-);
+	void*            out_action_data);
 
 ECSACT_SERIALIZE_API_FN(int, ecsact_serialize_component)
 ( //
 	ecsact_component_id component_id,
 	const void*         in_component_data,
-	uint8_t*            out_bytes
-);
+	uint8_t*            out_bytes);
 
 ECSACT_SERIALIZE_API_FN(int, ecsact_deserialize_component)
 ( //
 	ecsact_component_id component_id,
 	const uint8_t*      in_bytes,
-	void*               out_component_data
-);
+	void*               out_component_data);
 
 typedef void (*ecsact_dump_entities_callback)( //
 	const void* data,
@@ -99,8 +93,7 @@ ECSACT_SERIALIZE_API_FN(void, ecsact_dump_entities)
 ( //
 	ecsact_registry_id            registry,
 	ecsact_dump_entities_callback callback,
-	void*                         callback_user_data
-);
+	void*                         callback_user_data);
 
 typedef int32_t (*ecsact_restore_entities_callback)( //
 	void*   out_data,
@@ -148,8 +141,7 @@ ECSACT_SERIALIZE_API_FN(ecsact_restore_error, ecsact_restore_entities)
 	ecsact_registry_id                       registry,
 	ecsact_restore_entities_callback         callback,
 	const ecsact_execution_events_collector* events_collector,
-	void*                                    callback_user_data
-);
+	void*                                    callback_user_data);
 
 typedef void (*ecsact_restore_as_execution_options_callback)( //
 	const ecsact_execution_options dumped_execution_options,
@@ -169,8 +161,7 @@ ECSACT_SERIALIZE_API_FN(
 	ecsact_restore_entities_callback             callback,
 	void*                                        callback_user_data,
 	ecsact_restore_as_execution_options_callback done_callback,
-	void*                                        done_callback_user_data
-);
+	void*                                        done_callback_user_data);
 
 // # BEGIN FOR_EACH_ECSACT_SERIALIZE_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL

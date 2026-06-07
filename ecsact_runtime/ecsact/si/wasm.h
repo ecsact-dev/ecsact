@@ -89,8 +89,7 @@ typedef enum ecsact_si_wasm_error {
 ECSACT_SI_WASM_API_FN(void, ecsact_si_wasm_last_error_message)
 ( //
 	char*   out_message,
-	int32_t out_message_max_length
-);
+	int32_t out_message_max_length);
 
 ECSACT_SI_WASM_API_FN(int32_t, ecsact_si_wasm_last_error_message_length)();
 
@@ -114,8 +113,7 @@ ECSACT_SI_WASM_API_FN(ecsact_si_wasm_error, ecsact_si_wasm_load_file)
 	const char*            wasm_file_path,
 	int                    systems_count,
 	ecsact_system_like_id* system_ids,
-	const char**           wasm_exports
-);
+	const char**           wasm_exports);
 
 ECSACT_SI_WASM_API_FN(ecsact_si_wasm_error, ecsact_si_wasm_load)
 ( //
@@ -123,8 +121,7 @@ ECSACT_SI_WASM_API_FN(ecsact_si_wasm_error, ecsact_si_wasm_load)
 	int                    wasm_data_size,
 	int                    systems_count,
 	ecsact_system_like_id* system_ids,
-	const char**           wasm_exports
-);
+	const char**           wasm_exports);
 
 /**
  * Unload 1 or more systems. If a system is not already loaded this is a noop.
@@ -135,8 +132,7 @@ ECSACT_SI_WASM_API_FN(ecsact_si_wasm_error, ecsact_si_wasm_load)
 ECSACT_SI_WASM_API_FN(void, ecsact_si_wasm_unload)
 ( //
 	int                    systems_count,
-	ecsact_system_like_id* system_ids
-);
+	ecsact_system_like_id* system_ids);
 
 /**
  * Reset state. Effectively called `ecsact_si_wasm_unload` for each system
@@ -163,8 +159,7 @@ typedef void (*ecsact_si_wasm_trap_handler)( //
  */
 ECSACT_SI_WASM_API_FN(void, ecsact_si_wasm_set_trap_handler)
 ( //
-	ecsact_si_wasm_trap_handler handler
-);
+	ecsact_si_wasm_trap_handler handler);
 
 typedef enum ecsact_si_wasm_log_level {
 	ECSACT_SI_WASM_LOG_LEVEL_INFO = 0,
@@ -187,8 +182,7 @@ typedef void (*ecsact_si_wasm_log_consumer)( //
 ECSACT_SI_WASM_API_FN(void, ecsact_si_wasm_consume_logs)
 ( //
 	ecsact_si_wasm_log_consumer consumer,
-	void*                       consumer_user_data
-);
+	void*                       consumer_user_data);
 
 /**
  * Expose a file on the host for read access during initialization.
@@ -198,8 +192,7 @@ ECSACT_SI_WASM_API_FN(int32_t, ecsact_si_wasm_allow_file_read_access)
 	const char* real_file_path,
 	int32_t     real_file_path_length,
 	const char* virtual_file_path,
-	int32_t     virtual_file_path_length
-);
+	int32_t     virtual_file_path_length);
 
 // # BEGIN FOR_EACH_ECSACT_SI_WASM_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL

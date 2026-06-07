@@ -31,8 +31,10 @@ auto ecsact::rt_entt_codegen::core::print_apply_streaming_data(
 						ecsact_id_cast<ecsact_component_like_id>(component_id)
 					);
 
-					if(comp_type == ECSACT_COMPONENT_TYPE_LAZY_STREAM ||
-						 comp_type == ECSACT_COMPONENT_TYPE_STREAM) {
+					if(
+						comp_type == ECSACT_COMPONENT_TYPE_LAZY_STREAM ||
+						comp_type == ECSACT_COMPONENT_TYPE_STREAM
+					) {
 						auto comp_name = cpp_identifier(decl_full_name(component_id));
 
 						ctx.write("ecsact::entt::detail::apply_component_stream_data<");

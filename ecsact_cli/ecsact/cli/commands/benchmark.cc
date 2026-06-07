@@ -12,7 +12,7 @@
 #include <ranges>
 #include <boost/dll/shared_library.hpp>
 #include <boost/dll/library_info.hpp>
-#include "docopt.h"
+#include "docoptexpr/docoptexpr.hh"
 #include "nlohmann/json.hpp"
 #include "ecsact/runtime/core.h"
 #include "ecsact/runtime/core.hh"
@@ -26,6 +26,7 @@ using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
 
 namespace fs = std::filesystem;
+using namespace docoptexpr::literals;
 using benchmark_clock_t = std::chrono::high_resolution_clock;
 
 constexpr auto USAGE = R"(Ecsact Benchmark Command
@@ -35,9 +36,7 @@ Usage:
 	ecsact benchmark <system_impl>... --runtime=<path> --seed=<path>
 		[--async=<connect_string>] [--events=summary]
 		[--iterations=<count>] [--iteration_report_interval=<count>]
-)";
 
-constexpr auto OPTIONS = R"(
 Options:
 	<system_impl>
 		Path to Ecsact system implementation binaries. If the meta module is not
@@ -61,7 +60,7 @@ Options:
 		number of ticks that pass until disconnect.
 	--iteration_report_interval=<count>  [default: 100]
 		How often an iteration progress is reported.
-)";
+)"_docopt;
 
 struct info_message {
 	static constexpr auto type = "info";
@@ -301,18 +300,21 @@ auto expect_docopt_value_long(
 	const std::string arg_name,
 	long              default_value
 ) -> long {
-	const docopt::value& arg = args.at(arg_name);
+	if(!args.has(arg_name)) {
+		return default_value;
+	}
 
-	if(!arg) {
+	auto val_str = args.get_string(arg_name);
+	if(val_str.empty()) {
 		return default_value;
 	}
 
 	try {
-		return arg.asLong();
+		return std::stol(std::string(val_str));
 	} catch(const std::invalid_argument&) {
 		std::cerr //
-			<< "[ERROR] Expected integer for: " << arg_name << " instead got " << arg
-			<< "\n"
+			<< "[ERROR] Expected integer for: " << arg_name << " instead got "
+			<< val_str << "\n"
 			<< "For details run:\tecsact benchmark --help\n";
 		std::exit(1);
 	}
@@ -600,22 +602,52 @@ int ecsact::cli::detail::benchmark_command(int argc, char* argv[]) {
 	using namespace std::string_literals;
 	using namespace std::chrono_literals;
 
-	auto args = docopt::docopt(USAGE, {argv + 1, argv + argc}, false);
-
-	if(args["--help"] && args["--help"].asBool()) {
-		std::cout << USAGE << OPTIONS;
-		return 0;
+	for(int i = 1; i < argc; ++i) {
+		if(
+			std::string_view(argv[i]) == "--help" || std::string_view(argv[i]) == "-h"
+		) {
+			std::cout << USAGE.help() << "\n";
+			return 0;
+		}
 	}
 
+	auto res = USAGE.parse(argc, argv);
+	if(!res) {
+		std::cerr << "Error matching arguments: " << res.error() << "\n";
+		std::cerr << USAGE.usage() << "\n";
+		return 1;
+	}
+	auto args = res.value();
+
 	auto async = //
-		args["--async"] ? std::optional(args["--async"].asString()) : std::nullopt;
+		args.has("--async") ? std::optional(std::string(args.get_string("--async")))
+												: std::nullopt;
 	auto iterations = expect_docopt_value_long(args, "--iterations", 10000L);
 	auto iteration_report_interval =
 		expect_docopt_value_long(args, "--iteration_report_interval", 100L);
-	auto runtime_path = args["--runtime"].asString();
-	auto seed_path = args["--seed"].asString();
+	auto runtime_path = std::string(args.get_string("--runtime"));
+	auto seed_path = std::string(args.get_string("--seed"));
+
+	auto system_impl_str = std::vector<std::string>{};
+	for(int i = 2; i < argc; ++i) {
+		auto sv = std::string_view(argv[i]);
+		if(sv.starts_with("-")) {
+			if(!sv.contains("=")) {
+				if(
+					sv == "--runtime" || sv == "--seed" || sv == "--async" ||
+					sv == "--iterations" || sv == "--iteration_report_interval" ||
+					sv == "--events"
+				) {
+					i++;
+				}
+			}
+		} else {
+			system_impl_str.push_back(std::string(sv));
+		}
+	}
+
 	auto system_impl_binaries =
-		args["<system_impl>"].asStringList() |
+		system_impl_str |
 		std::views::transform( //
 			[](auto& str) { return system_impl_binary_arg::parse(str); }
 		);

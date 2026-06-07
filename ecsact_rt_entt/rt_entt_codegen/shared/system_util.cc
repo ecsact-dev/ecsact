@@ -20,8 +20,10 @@ auto ecsact::rt_entt_codegen::system_util::is_notify_system(
 	auto notify_settings = ecsact::meta::system_notify_settings(system_id);
 
 	for(const auto [comp_id, notify_setting] : notify_settings) {
-		if(notify_setting == ECSACT_SYS_NOTIFY_ALWAYS ||
-			 notify_setting == ECSACT_SYS_NOTIFY_NONE) {
+		if(
+			notify_setting == ECSACT_SYS_NOTIFY_ALWAYS ||
+			notify_setting == ECSACT_SYS_NOTIFY_NONE
+		) {
 			return false;
 		}
 	}

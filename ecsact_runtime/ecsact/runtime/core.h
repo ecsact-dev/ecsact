@@ -35,8 +35,7 @@
  */
 ECSACT_CORE_API_FN(ecsact_registry_id, ecsact_create_registry)
 ( //
-	const char* registry_name
-);
+	const char* registry_name);
 
 /**
  * Effectively calls `ecsact_destroy_entity` on each entity in the registry. The
@@ -44,8 +43,7 @@ ECSACT_CORE_API_FN(ecsact_registry_id, ecsact_create_registry)
  */
 ECSACT_CORE_API_FN(void, ecsact_destroy_registry)
 ( //
-	ecsact_registry_id registry
-);
+	ecsact_registry_id registry);
 
 /**
  * Creates a new registry from an existing one with all its entities and
@@ -57,8 +55,7 @@ ECSACT_CORE_API_FN(void, ecsact_destroy_registry)
 ECSACT_CORE_API_FN(ecsact_registry_id, ecsact_clone_registry)
 ( //
 	ecsact_registry_id registry,
-	const char*        registry_name
-);
+	const char*        registry_name);
 
 /**
  * Creates a hash of current state of the registry. The algorithm is
@@ -67,24 +64,21 @@ ECSACT_CORE_API_FN(ecsact_registry_id, ecsact_clone_registry)
  */
 ECSACT_CORE_API_FN(uint64_t, ecsact_hash_registry)
 ( //
-	ecsact_registry_id registry
-);
+	ecsact_registry_id registry);
 
 /**
  * Destroy all entities
  */
 ECSACT_CORE_API_FN(void, ecsact_clear_registry)
 ( //
-	ecsact_registry_id registry
-);
+	ecsact_registry_id registry);
 
 /**
  * Create an entity and return the ID
  */
 ECSACT_CORE_API_FN(ecsact_entity_id, ecsact_create_entity)
 ( //
-	ecsact_registry_id registry
-);
+	ecsact_registry_id registry);
 
 /**
  * Ensure an entity with the provided ID exists on the registry. If the entity
@@ -95,8 +89,7 @@ ECSACT_CORE_API_FN(ecsact_entity_id, ecsact_create_entity)
 ECSACT_CORE_API_FN(void, ecsact_ensure_entity)
 ( //
 	ecsact_registry_id registry,
-	ecsact_entity_id   entity
-);
+	ecsact_entity_id   entity);
 
 /**
  * Check if entity exists.
@@ -106,8 +99,7 @@ ECSACT_CORE_API_FN(void, ecsact_ensure_entity)
 ECSACT_CORE_API_FN(bool, ecsact_entity_exists)
 ( //
 	ecsact_registry_id,
-	ecsact_entity_id
-);
+	ecsact_entity_id);
 
 /**
  * Destroys an entity. Effectively removes each component on the specified
@@ -116,16 +108,14 @@ ECSACT_CORE_API_FN(bool, ecsact_entity_exists)
 ECSACT_CORE_API_FN(void, ecsact_destroy_entity)
 ( //
 	ecsact_registry_id registry_id,
-	ecsact_entity_id   entity_id
-);
+	ecsact_entity_id   entity_id);
 
 /**
  * Count number of entities in registry
  */
 ECSACT_CORE_API_FN(int, ecsact_count_entities)
 ( //
-	ecsact_registry_id registry
-);
+	ecsact_registry_id registry);
 
 /**
  * Get list of entities in registry
@@ -135,8 +125,7 @@ ECSACT_CORE_API_FN(void, ecsact_get_entities)
 	ecsact_registry_id registry,
 	int                max_entities_count,
 	ecsact_entity_id*  out_entities,
-	int*               out_entities_count
-);
+	int*               out_entities_count);
 
 /**
  * Adds a component to the specified entity.
@@ -150,8 +139,7 @@ ECSACT_CORE_API_FN(ecsact_add_error, ecsact_add_component)
 	ecsact_registry_id  registry_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	const void*         component_data
-);
+	const void*         component_data);
 
 /**
  * Checks if a given entity has component with id @p component_id
@@ -165,8 +153,7 @@ ECSACT_CORE_API_FN(bool, ecsact_has_component)
 	ecsact_registry_id  registry_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	const void*         indexed_field_values
-);
+	const void*         indexed_field_values);
 
 /**
  * @param indexed_field_values if the component has indexed fields then those
@@ -182,8 +169,7 @@ ECSACT_CORE_API_FN(const void*, ecsact_get_component)
 	ecsact_registry_id  registry_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	const void*         indexed_field_values
-);
+	const void*         indexed_field_values);
 
 /**
  * @returns the number of components added to an entity
@@ -191,8 +177,7 @@ ECSACT_CORE_API_FN(const void*, ecsact_get_component)
 ECSACT_CORE_API_FN(int, ecsact_count_components)
 ( //
 	ecsact_registry_id registry_id,
-	ecsact_entity_id   entity_id
-);
+	ecsact_entity_id   entity_id);
 
 ECSACT_CORE_API_FN(void, ecsact_get_components)
 ( //
@@ -201,8 +186,7 @@ ECSACT_CORE_API_FN(void, ecsact_get_components)
 	int                  max_components_count,
 	ecsact_component_id* out_component_ids,
 	const void**         out_components_data,
-	int*                 out_components_count
-);
+	int*                 out_components_count);
 
 typedef void (*ecsact_each_component_callback)( //
 	ecsact_component_id component_id,
@@ -218,8 +202,7 @@ ECSACT_CORE_API_FN(void, ecsact_each_component)
 	ecsact_registry_id             registry_id,
 	ecsact_entity_id               entity_id,
 	ecsact_each_component_callback callback,
-	void*                          callback_user_data
-);
+	void*                          callback_user_data);
 
 /**
  * Update a component for the specified entity.
@@ -238,8 +221,7 @@ ECSACT_CORE_API_FN(ecsact_update_error, ecsact_update_component)
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
 	const void*         component_data,
-	const void*         indexed_field_values
-);
+	const void*         indexed_field_values);
 
 /**
  * Removes a component from the specified entity.
@@ -257,8 +239,7 @@ ECSACT_CORE_API_FN(void, ecsact_remove_component)
 	ecsact_registry_id  registry_id,
 	ecsact_entity_id    entity_id,
 	ecsact_component_id component_id,
-	const void*         indexed_field_values
-);
+	const void*         indexed_field_values);
 
 /**
  * Execute system implementations for all registered systems and pushed actions
@@ -276,8 +257,7 @@ ECSACT_CORE_API_FN(ecsact_execute_systems_error, ecsact_execute_systems)
 	ecsact_registry_id                       registry_id,
 	int                                      execution_count,
 	const ecsact_execution_options*          execution_options_list,
-	const ecsact_execution_events_collector* events_collector
-);
+	const ecsact_execution_events_collector* events_collector);
 
 /**
  * Gets the current execution status of an entity.
@@ -288,8 +268,7 @@ ECSACT_CORE_API_FN(ecsact_ees, ecsact_get_entity_execution_status)
 ( //
 	ecsact_registry_id    registry_id,
 	ecsact_entity_id      entity_id,
-	ecsact_system_like_id system_like_id
-);
+	ecsact_system_like_id system_like_id);
 
 /**
  * Sends Ecsact stream data to the specified registry. Stream data will be
@@ -306,8 +285,7 @@ ECSACT_CORE_API_FN(ecsact_stream_error, ecsact_stream)
 	ecsact_entity_id    entity,
 	ecsact_component_id component_id,
 	const void*         component_data,
-	const void*         indexed_field_values
-);
+	const void*         indexed_field_values);
 
 // # BEGIN FOR_EACH_ECSACT_CORE_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL

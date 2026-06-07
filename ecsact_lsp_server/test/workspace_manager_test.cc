@@ -51,8 +51,10 @@ struct mock_sender {
 };
 
 static void expect_no_errors(const nlohmann::json& publish_diagnostics) {
-	if(publish_diagnostics.is_null() ||
-		 !publish_diagnostics.contains("diagnostics")) {
+	if(
+		publish_diagnostics.is_null() ||
+		!publish_diagnostics.contains("diagnostics")
+	) {
 		return;
 	}
 	auto diagnostics = publish_diagnostics["diagnostics"];
@@ -222,9 +224,11 @@ cluster {
 	for(auto const& publish_diagnostics : sender.all_diagnostics) {
 		auto diagnostics = publish_diagnostics["diagnostics"];
 		for(auto& diag : diagnostics) {
-			if(diag["message"].get<std::string>().find(
-					 "cannot be part of the same explicit cluster"
-				 ) != std::string::npos) {
+			if(
+				diag["message"].get<std::string>().find(
+					"cannot be part of the same explicit cluster"
+				) != std::string::npos
+			) {
 				found_error = true;
 			}
 		}
