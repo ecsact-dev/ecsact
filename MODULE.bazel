@@ -40,12 +40,6 @@ git_override(
 )
 
 git_override(
-    module_name = "magic_enum",
-    commit = "ec79fd3c059a7f5756020cb82d45a1225bf1b1de",
-    remote = "git@github.com:zaucy/magic_enum.git",
-)
-
-git_override(
     module_name = "docoptexpr",
     commit = "a9f35670a14c4f61855e5c168d483819f6ac693c",
     remote = "git@github.com:zaucy/docoptexpr.git",
@@ -60,7 +54,7 @@ bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "boost.algorithm", version = "1.87.0")
 bazel_dep(name = "boost.regex", version = "1.87.0")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1")
-bazel_dep(name = "magic_enum", version = "0.9.7")
+bazel_dep(name = "magic_enum", version = "0.9.8")
 bazel_dep(name = "libarchive", version = "3.8.1.bcr.2")
 bazel_dep(name = "yaml-cpp", version = "0.9.0")
 bazel_dep(name = "docoptexpr", version = "0.1.0")
