@@ -80,11 +80,18 @@ inline auto add_component( //
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
 
-	auto err = ecsact::entt::check_add_component_error<C>(
-		reg,
-		entity,
-		*static_cast<const C*>(component_data)
-	);
+	auto err = ECSACT_ADD_OK;
+	if constexpr(std::is_empty_v<C>) {
+		C dummy{};
+		err = ecsact::entt::check_add_component_error<C>(reg, entity, dummy);
+	} else {
+		assert(component_data != nullptr);
+		err = ecsact::entt::check_add_component_error<C>(
+			reg,
+			entity,
+			*static_cast<const C*>(component_data)
+		);
+	}
 
 	if(err == ECSACT_ADD_OK) {
 		if constexpr(std::is_empty_v<C>) {
@@ -119,11 +126,18 @@ inline auto add_component_exec_options( //
 	auto  entity = ecsact::entt::entity_id{entity_id};
 	assert(C::id == component_id);
 
-	auto err = ecsact::entt::check_add_component_error<C>(
-		reg,
-		entity,
-		*static_cast<const C*>(component_data)
-	);
+	auto err = ECSACT_ADD_OK;
+	if constexpr(std::is_empty_v<C>) {
+		C dummy{};
+		err = ecsact::entt::check_add_component_error<C>(reg, entity, dummy);
+	} else {
+		assert(component_data != nullptr);
+		err = ecsact::entt::check_add_component_error<C>(
+			reg,
+			entity,
+			*static_cast<const C*>(component_data)
+		);
+	}
 
 	assert(err == ECSACT_ADD_OK);
 
