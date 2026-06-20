@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <boost/process.hpp>
+#include <boost/asio.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include "tools/cpp/runfiles/runfiles.h"
 
@@ -34,31 +35,44 @@ TEST(Codegen, Stdout) {
 		fs::remove(bad_generated_file_path);
 	}
 
-	auto proc_stdout = bp::ipstream{};
-	auto proc = bp::child{
-		bp::exe(test_ecsact_cli),
-		bp::args({
+	auto ioc = boost::asio::io_context{};
+	auto proc_stdout = boost::asio::readable_pipe{ioc};
+	auto proc = bp::process{
+		ioc,
+		test_ecsact_cli,
+		{
 			"codegen"s,
 			std::string{test_ecsact_file_path},
 			std::format("--plugin={}", test_codegen_plugin_path),
 			"--print-output-files"s,
-		}),
-		bp::std_out > proc_stdout
+		},
+		bp::process_stdio{nullptr, proc_stdout, nullptr},
 	};
 
+	auto output_files = std::vector<std::string>{};
+	boost::system::error_code ec;
+	boost::asio::streambuf buffer;
+	while(!ec) {
+		auto read_bytes = boost::asio::read_until(proc_stdout, buffer, '\n', ec);
+		if (read_bytes > 0 || buffer.size() > 0) {
+			std::istream is(&buffer);
+			auto line = std::string{};
+			while(std::getline(is, line)) {
+				if(line.ends_with("\r")) {
+					line.pop_back();
+				}
+				if (!line.empty()) {
+					output_files.emplace_back(fs::relative(fs::path{line}).generic_string());
+				}
+			}
+		}
+	}
+
+	ioc.run();
 	proc.wait();
 
 	auto exit_code = proc.exit_code();
 	ASSERT_EQ(exit_code, 0);
-
-	auto output_files = std::vector<std::string>{};
-	auto line = std::string{};
-	while(std::getline(proc_stdout, line)) {
-		if(line.ends_with("\r")) {
-			line.pop_back();
-		}
-		output_files.emplace_back(fs::relative(fs::path{line}).generic_string());
-	}
 
 	EXPECT_EQ(output_files.size(), 2);
 

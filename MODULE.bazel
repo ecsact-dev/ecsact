@@ -3,8 +3,8 @@ module(
     version = "0.9.0",
 )
 
-bazel_dep(name = "emsdk", version = "5.0.1", dev_dependency = True)
-bazel_dep(name = "rules_python", version = "0.36.0", dev_dependency = True)
+bazel_dep(name = "emsdk", version = "6.0.0", dev_dependency = True)
+bazel_dep(name = "rules_python", version = "2.1.0-rc0", dev_dependency = True)
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 
 # only needed for emsdk and version 3.11 is hardcoded in the patch files so if
@@ -26,13 +26,6 @@ use_repo(emsdk, "emscripten_bin_win")
 emscripten_cache = use_extension("@emsdk//:emscripten_cache.bzl", "emscripten_cache", dev_dependency = True)
 use_repo(emscripten_cache, "emscripten_cache")
 
-bazel_dep(name = "aspect_rules_lint", version = "1.5.3", dev_dependency = True)
-bazel_dep(name = "toolchains_llvm", version = "1.4.0", dev_dependency = True)
-
-llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
-llvm.toolchain(llvm_version = "19.1.0")
-use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
-
 git_override(
     module_name = "hedron_compile_commands",
     commit = "fc76d0bd6a57447ca14eebb2e7009666ed915ece",
@@ -45,33 +38,34 @@ git_override(
     remote = "git@github.com:zaucy/docoptexpr.git",
 )
 
-bazel_dep(name = "rules_cc", version = "0.2.16")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "boost.mp11", version = "1.87.0")
-bazel_dep(name = "boost.dll", version = "1.87.0")
-bazel_dep(name = "boost.process", version = "1.87.0")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
-bazel_dep(name = "boost.algorithm", version = "1.87.0")
-bazel_dep(name = "boost.regex", version = "1.87.0")
+bazel_dep(name = "rules_cc", version = "0.2.19")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "boost.mp11", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.dll", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.process", version = "1.90.0.bcr.1")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "boost.algorithm", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.regex", version = "1.90.0.bcr.1")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1")
 bazel_dep(name = "magic_enum", version = "0.9.8")
 bazel_dep(name = "libarchive", version = "3.8.1.bcr.2")
 bazel_dep(name = "yaml-cpp", version = "0.9.0")
 bazel_dep(name = "docoptexpr", version = "0.1.0")
-bazel_dep(name = "boringssl", version = "0.20260211.0")
+bazel_dep(name = "boringssl", version = "0.20260616.0")
 bazel_dep(name = "tracy", version = "0.11.1.edr.2")
 bazel_dep(name = "xxhash", version = "0.8.3.bcr.1")
-bazel_dep(name = "boost.url", version = "1.87.0")
+bazel_dep(name = "boost.url", version = "1.90.0.bcr.1")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "lexy", version = "2022.05.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "rules_wasmer", version = "0.1.2")
+bazel_dep(name = "llvm", version = "0.8.9")
 
 wasmer = use_extension("@rules_wasmer//wasmer:extensions.bzl", "wasmer")
 use_repo(wasmer, "wasmer")
 
 register_toolchains(
-    "@llvm_toolchain//:all",
+    "@llvm//:all",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux_arm64",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_mac",

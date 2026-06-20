@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <span>
 #include <boost/process.hpp>
+#include <boost/asio.hpp>
 #include "ecsact/cli/report.hh"
 
 namespace bp = boost::process;
@@ -14,7 +15,7 @@ using ecsact::cli::subcommand_start_message;
 
 auto ecsact::cli::detail::which(std::string_view prog)
 	-> std::optional<fs::path> {
-	auto result = bp::search_path(prog);
+	auto result = bp::environment::find_executable(prog);
 
 	if(result.empty()) {
 		return std::nullopt;
@@ -23,21 +24,40 @@ auto ecsact::cli::detail::which(std::string_view prog)
 	}
 }
 
+namespace {
+template<typename ReporterFn>
+auto read_pipe_lines(boost::asio::readable_pipe& pipe, ReporterFn reporter_fn) -> void {
+	boost::system::error_code ec;
+	boost::asio::streambuf buffer;
+	while(!ec) {
+		auto read_bytes = boost::asio::read_until(pipe, buffer, '\n', ec);
+		if (read_bytes > 0 || buffer.size() > 0) {
+			std::istream is(&buffer);
+			auto line = std::string{};
+			while(std::getline(is, line)) {
+				reporter_fn(line);
+			}
+		}
+	}
+}
+} // namespace
+
 auto ecsact::cli::detail::spawn_and_report( //
 	std::filesystem::path    exe,
 	std::vector<std::string> args,
 	spawn_reporter&          reporter,
 	std::filesystem::path    start_dir
 ) -> int {
-	auto proc_stdout = bp::ipstream{};
-	auto proc_stderr = bp::ipstream{};
+	auto ioc = boost::asio::io_context{};
+	auto proc_stdout = boost::asio::readable_pipe{ioc};
+	auto proc_stderr = boost::asio::readable_pipe{ioc};
 
-	auto proc = bp::child{
-		bp::exe(fs::absolute(exe).string()),
-		bp::start_dir(start_dir.string()),
-		bp::args(args),
-		bp::std_out > proc_stdout,
-		bp::std_err > proc_stderr,
+	auto proc = bp::process{
+		ioc,
+		fs::absolute(exe).string(),
+		args,
+		bp::process_start_dir{start_dir.string()},
+		bp::process_stdio{nullptr, proc_stdout, proc_stderr},
 	};
 
 	auto subcommand_id = static_cast<subcommand_id_t>(proc.id());
@@ -50,9 +70,7 @@ auto ecsact::cli::detail::spawn_and_report( //
 		}
 	);
 
-	auto line = std::string{};
-
-	while(proc_stdout && std::getline(proc_stdout, line)) {
+	read_pipe_lines(proc_stdout, [&](const std::string& line) {
 		auto msg = reporter.on_std_out(line).value_or(
 			subcommand_stdout_message{
 				.id = subcommand_id,
@@ -60,9 +78,9 @@ auto ecsact::cli::detail::spawn_and_report( //
 			}
 		);
 		ecsact::cli::report(msg);
-	}
+	});
 
-	while(proc_stderr && std::getline(proc_stderr, line)) {
+	read_pipe_lines(proc_stderr, [&](const std::string& line) {
 		auto msg = reporter.on_std_err(line).value_or(
 			subcommand_stderr_message{
 				.id = subcommand_id,
@@ -70,7 +88,7 @@ auto ecsact::cli::detail::spawn_and_report( //
 			}
 		);
 		ecsact::cli::report(msg);
-	}
+	});
 
 	proc.wait();
 
@@ -91,15 +109,16 @@ auto ecsact::cli::detail::spawn_and_report_output( //
 	std::vector<std::string> args,
 	std::filesystem::path    start_dir
 ) -> int {
-	auto proc_stdout = bp::ipstream{};
-	auto proc_stderr = bp::ipstream{};
+	auto ioc = boost::asio::io_context{};
+	auto proc_stdout = boost::asio::readable_pipe{ioc};
+	auto proc_stderr = boost::asio::readable_pipe{ioc};
 
-	auto proc = bp::child{
-		bp::exe(fs::absolute(exe).string()),
-		bp::start_dir(start_dir.string()),
-		bp::args(args),
-		bp::std_out > proc_stdout,
-		bp::std_err > proc_stderr,
+	auto proc = bp::process{
+		ioc,
+		fs::absolute(exe).string(),
+		args,
+		bp::process_start_dir{start_dir.string()},
+		bp::process_stdio{nullptr, proc_stdout, proc_stderr},
 	};
 
 	auto subcommand_id = static_cast<subcommand_id_t>(proc.id());
@@ -112,8 +131,22 @@ auto ecsact::cli::detail::spawn_and_report_output( //
 		}
 	);
 
-	ecsact::cli::report_stdout(subcommand_id, proc_stdout);
-	ecsact::cli::report_stderr(subcommand_id, proc_stderr);
+	read_pipe_lines(proc_stdout, [&](const std::string& line) {
+		ecsact::cli::report(
+			subcommand_stdout_message{
+				.id = subcommand_id,
+				.line = line,
+			}
+		);
+	});
+	read_pipe_lines(proc_stderr, [&](const std::string& line) {
+		ecsact::cli::report(
+			subcommand_stderr_message{
+				.id = subcommand_id,
+				.line = line,
+			}
+		);
+	});
 
 	proc.wait();
 
@@ -134,20 +167,24 @@ auto ecsact::cli::detail::spawn_get_stdout( //
 	std::vector<std::string> args,
 	fs::path                 start_dir
 ) -> std::optional<std::string> {
-	auto proc_stdout = bp::ipstream{};
-	auto proc = bp::child{
-		bp::exe(fs::absolute(exe).string()),
-		bp::args(args),
-		bp::start_dir(start_dir.string()),
-		bp::std_out > proc_stdout,
+	auto ioc = boost::asio::io_context{};
+	auto proc_stdout = boost::asio::readable_pipe{ioc};
+	auto proc = bp::process{
+		ioc,
+		fs::absolute(exe).string(),
+		args,
+		bp::process_start_dir{start_dir.string()},
+		bp::process_stdio{nullptr, proc_stdout, nullptr},
 	};
 
 	auto proc_stdout_string = std::string{};
-
-	while(proc_stdout) {
-		auto line = std::string{};
-		std::getline(proc_stdout, line);
-		proc_stdout_string += line;
+	boost::system::error_code ec;
+	char buf[1024];
+	while(!ec) {
+		auto read_amount = proc_stdout.read_some(boost::asio::buffer(buf), ec);
+		if(read_amount > 0) {
+			proc_stdout_string.append(buf, read_amount);
+		}
 	}
 
 	proc.wait();
@@ -164,34 +201,34 @@ auto ecsact::cli::detail::spawn_get_stdout_bytes( //
 	std::vector<std::string> args,
 	fs::path                 start_dir
 ) -> std::optional<std::vector<std::byte>> {
-	auto proc_stdout = bp::ipstream{};
-	auto proc = bp::child{
-		bp::exe(fs::absolute(exe).string()),
-		bp::args(args),
-		bp::start_dir(start_dir.string()),
-		bp::std_out > proc_stdout,
+	auto ioc = boost::asio::io_context{};
+	auto proc_stdout = boost::asio::readable_pipe{ioc};
+	auto proc = bp::process{
+		ioc,
+		fs::absolute(exe).string(),
+		args,
+		bp::process_start_dir{start_dir.string()},
+		bp::process_stdio{nullptr, proc_stdout, nullptr},
 	};
 
 	auto proc_stdout_bytes = std::vector<std::byte>{};
 	auto proc_stdout_bytes_buf = std::array<std::byte, 1024>{};
 
-	while(proc_stdout) {
-		proc_stdout.read(
-			reinterpret_cast<char*>(proc_stdout_bytes_buf.data()),
-			proc_stdout_bytes_buf.size()
-		);
+	boost::system::error_code ec;
+	while(!ec) {
+		auto read_amount = proc_stdout.read_some(boost::asio::buffer(proc_stdout_bytes_buf), ec);
+		if(read_amount > 0) {
+			auto read_bytes = std::span{
+				proc_stdout_bytes_buf.data(),
+				static_cast<size_t>(read_amount),
+			};
 
-		auto read_amount = proc_stdout.gcount();
-		auto read_bytes = std::span{
-			proc_stdout_bytes_buf.data(),
-			static_cast<size_t>(read_amount),
-		};
-
-		proc_stdout_bytes.insert(
-			proc_stdout_bytes.end(),
-			read_bytes.data(),
-			read_bytes.data() + read_bytes.size()
-		);
+			proc_stdout_bytes.insert(
+				proc_stdout_bytes.end(),
+				read_bytes.data(),
+				read_bytes.data() + read_bytes.size()
+			);
+		}
 	}
 
 	proc.wait();
