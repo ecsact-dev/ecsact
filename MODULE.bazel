@@ -29,11 +29,11 @@ use_repo(emscripten_cache, "emscripten_cache")
 git_override(
     module_name = "hedron_compile_commands",
     commit = "fc76d0bd6a57447ca14eebb2e7009666ed915ece",
-    remote = "https://github.com/zaucy/bazel-compile-commands-extractor.git",
     patch_cmds = [
         "powershell.exe -Command \"(Get-Content BUILD) -replace '\\/std:c\\+\\+17', '-std=c++17' | Set-Content BUILD\"",
         "powershell.exe -Command \"(Get-Content refresh_compile_commands.bzl) -replace '\\/std:c\\+\\+17', '-std=c++17' | Set-Content refresh_compile_commands.bzl\"",
     ],
+    remote = "https://github.com/zaucy/bazel-compile-commands-extractor.git",
 )
 
 git_override(
