@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_WRAPPER_CORE_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_WRAPPER_CORE_HH_
 
 #include <cassert>
 #include <type_traits>
@@ -602,3 +603,5 @@ auto ecsact_stream(
 	return ECSACT_STREAM_OK;
 }
 } // namespace ecsact::entt::wrapper::core
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_WRAPPER_CORE_HH_

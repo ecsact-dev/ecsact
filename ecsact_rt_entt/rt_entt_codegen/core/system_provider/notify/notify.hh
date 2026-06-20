@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_NOTIFY_NOTIFY_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_NOTIFY_NOTIFY_HH_
 
 #include "rt_entt_codegen/core/system_provider/system_provider.hh"
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
@@ -31,3 +32,5 @@ private:
 	) -> void;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_NOTIFY_NOTIFY_HH_

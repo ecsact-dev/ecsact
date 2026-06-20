@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_SYSTEM_PROVIDER_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_SYSTEM_PROVIDER_HH_
 
 #include <string_view>
 #include <vector>
@@ -131,3 +132,5 @@ protected:
 	const ecsact_entt_system_details system_details;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_SYSTEM_PROVIDER_HH_

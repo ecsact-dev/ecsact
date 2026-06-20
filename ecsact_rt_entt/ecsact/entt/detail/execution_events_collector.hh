@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_EXECUTION_EVENTS_COLLECTOR_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_EXECUTION_EVENTS_COLLECTOR_HH_
 
 #include <type_traits>
 #include "ecsact/runtime/core.h"
@@ -124,3 +125,5 @@ struct execution_events_collector {
 };
 
 } // namespace ecsact::entt::detail
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_EXECUTION_EVENTS_COLLECTOR_HH_

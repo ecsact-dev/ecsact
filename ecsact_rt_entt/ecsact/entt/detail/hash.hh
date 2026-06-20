@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_HASH_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_HASH_HH_
 
 #include <cstdint>
 #include <cstddef>
@@ -16,3 +17,5 @@ auto bytes_hash( //
 	int        data_length
 ) -> std::uint64_t;
 } // namespace ecsact::entt::detail
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_HASH_HH_

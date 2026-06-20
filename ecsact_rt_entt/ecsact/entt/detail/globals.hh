@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_GLOBALS_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_GLOBALS_HH_
 
 #include <unordered_map>
 #include <unordered_set>
@@ -119,3 +120,5 @@ extern const std::unordered_map<
 	exec_ctx_action_fns;
 
 } // namespace ecsact::entt::detail::globals
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_GLOBALS_HH_

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_ID_MAP_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_ID_MAP_HH_
 
 #include <type_traits>
 #include <concepts>
@@ -52,3 +53,5 @@ public:
 	}
 };
 } // namespace ecsact::entt::detail
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_ID_MAP_HH_

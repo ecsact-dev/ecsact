@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_SYSTEM_CTX_FUNCTIONS_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_SYSTEM_CTX_FUNCTIONS_HH_
 
 #include "rt_entt_codegen/core/sys_exec/sys_exec.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
@@ -59,3 +60,5 @@ auto context_other_impl(
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void;
 } // namespace ecsact::rt_entt_codegen::core::provider
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_SYSTEM_CTX_FUNCTIONS_HH_

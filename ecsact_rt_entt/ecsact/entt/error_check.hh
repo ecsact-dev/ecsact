@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_ERROR_CHECK_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_ERROR_CHECK_HH_
 
 #include <vector>
 #include <unordered_map>
@@ -62,3 +63,5 @@ auto check_action_error( //
 }
 
 } // namespace ecsact::entt
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_ERROR_CHECK_HH_

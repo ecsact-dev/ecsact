@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_SYSTEM_UTIL_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_SYSTEM_UTIL_HH_
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/lang-support/lang-cc.hh"
@@ -40,3 +41,5 @@ static auto create_context_var_name( //
 }
 
 } // namespace ecsact::rt_entt_codegen::system_util
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_SYSTEM_UTIL_HH_

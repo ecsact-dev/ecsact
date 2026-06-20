@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_APPLY_COMPONENT_STREAM_DATA_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_APPLY_COMPONENT_STREAM_DATA_HH_
 
 #include <entt/entt.hpp>
 
@@ -35,3 +36,5 @@ auto apply_component_stream_data(
 	}
 }
 } // namespace ecsact::entt::detail
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_APPLY_COMPONENT_STREAM_DATA_HH_

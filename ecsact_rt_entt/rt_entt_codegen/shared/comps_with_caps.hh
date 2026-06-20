@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_COMPS_WITH_CAPS_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_COMPS_WITH_CAPS_HH_
 
 #include <unordered_map>
 #include <ranges>
@@ -75,3 +76,5 @@ inline auto comps_with_caps(
 }
 
 } // namespace ecsact::rt_entt_codegen
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_COMPS_WITH_CAPS_HH_

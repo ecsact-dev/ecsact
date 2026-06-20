@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_SYSTEM_EXECUTION_CONTEXT_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_SYSTEM_EXECUTION_CONTEXT_HH_
 
 #include <stdexcept>
 #include <type_traits>
@@ -76,3 +77,4 @@ struct ecsact_system_execution_context {
 		ecsact_system_assoc_id assoc_id
 	) -> ecsact_system_execution_context* = 0;
 };
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_SYSTEM_EXECUTION_CONTEXT_HH_

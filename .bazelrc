@@ -5,6 +5,7 @@ build --enable_platform_specific_config
 build --incompatible_enable_cc_toolchain_resolution
 build --incompatible_strict_action_env
 build --enable_runfiles
+build --@@boost.context+//:win-compile=win-mingw
 
 # for ecsact_si_wasmer tests
 # NOTE: we probably could use the wasmer from rules_wasmer for the tests instead

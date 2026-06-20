@@ -16,18 +16,9 @@ auto provider::parallel::entity_iteration(
 	using namespace std::string_literals;
 	using ecsact::meta::get_system_parallel_execution;
 
-	auto execution_tag = "std::execution::par_unseq"s;
-	if(get_system_parallel_execution(sys_like_id) == ECSACT_PAR_EXEC_DENY) {
-		execution_tag = "std::execution::seq"s;
-	}
-
 	block(
 		ctx,
-		std::format(
-			"std::for_each({}, view.begin(), "
-			"view.end(), [&](auto entity)",
-			execution_tag
-		),
+		"std::for_each(view.begin(), view.end(), [&](auto entity)",
 		[&] { iter_func(); }
 	);
 	ctx.write(");\n");

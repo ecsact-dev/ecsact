@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_ENTITY_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_ENTITY_HH_
 
 #include <cstdint>
 #include "ecsact/runtime/common.h"
@@ -61,3 +62,5 @@ public:
 };
 
 } // namespace ecsact::entt
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_ENTITY_HH_

@@ -30,12 +30,51 @@ git_override(
     module_name = "hedron_compile_commands",
     commit = "fc76d0bd6a57447ca14eebb2e7009666ed915ece",
     remote = "https://github.com/zaucy/bazel-compile-commands-extractor.git",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD) -replace '\\/std:c\\+\\+17', '-std=c++17' | Set-Content BUILD\"",
+        "powershell.exe -Command \"(Get-Content refresh_compile_commands.bzl) -replace '\\/std:c\\+\\+17', '-std=c++17' | Set-Content refresh_compile_commands.bzl\"",
+    ],
 )
 
 git_override(
     module_name = "docoptexpr",
     commit = "a9f35670a14c4f61855e5c168d483819f6ac693c",
     remote = "git@github.com:zaucy/docoptexpr.git",
+)
+
+single_version_override(
+    module_name = "libarchive",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content libarchive_bazel_windows_config.h) -replace '^#define (mode_t|pid_t|ssize_t).*', '' | Set-Content libarchive_bazel_windows_config.h\"",
+    ],
+)
+
+single_version_override(
+    module_name = "rules_wasmer",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content wasmer/private/templates/wasmer.windows.BUILD.bazel -Raw) -replace 'static_library = \\\"lib/wasmer.lib\\\"', ('shared_library = \\\"lib/wasmer.dll\\\",' + [Environment]::NewLine + '    interface_library = \\\"lib/wasmer.dll.lib\\\"') | Set-Content wasmer/private/templates/wasmer.windows.BUILD.bazel -NoNewline\"",
+    ],
+)
+
+single_version_override(
+    module_name = "boost.asio",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD.bazel -Raw) -replace '-DEFAULTLIB:ws2_32', '-lws2_32' -replace '-DEFAULTLIB:mswsock', '-lmswsock\\\", \\\"-lbcrypt' | Set-Content BUILD.bazel -NoNewline\"",
+    ],
+)
+
+single_version_override(
+    module_name = "boost.process",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD.bazel -Raw) -replace '-DEFAULTLIB:shell32', '-lshell32\\\", \\\"-lntdll' | Set-Content BUILD.bazel -NoNewline\"",
+    ],
+)
+
+single_version_override(
+    module_name = "tracy",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD.bazel -Raw) -replace '    includes = ', ('    linkopts = select({\\\"@@platforms//os:windows\\\": [\\\"-lws2_32\\\", \\\"-ldbghelp\\\", \\\"-luser32\\\", \\\"-ladvapi32\\\"], \\\"//conditions:default\\\": []}),' + [Environment]::NewLine + '    includes = ') | Set-Content BUILD.bazel -NoNewline\"",
+    ],
 )
 
 bazel_dep(name = "rules_cc", version = "0.2.19")
@@ -65,7 +104,7 @@ wasmer = use_extension("@rules_wasmer//wasmer:extensions.bzl", "wasmer")
 use_repo(wasmer, "wasmer")
 
 register_toolchains(
-    "@llvm//:all",
+    "@llvm//toolchain:all",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux_arm64",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_mac",

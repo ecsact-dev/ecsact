@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_EXECUTION_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_EXECUTION_HH_
 
 #include <vector>
 #include <unordered_map>
@@ -167,3 +168,5 @@ auto entity_matches_system(ecsact::entt::registry_t&, ecsact::entt::entity_id)
 }
 
 } // namespace ecsact::entt
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_EXECUTION_HH_

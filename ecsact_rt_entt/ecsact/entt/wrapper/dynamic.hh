@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_WRAPPER_DYNAMIC_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_WRAPPER_DYNAMIC_HH_
 
 #include <cassert>
 #include <type_traits>
@@ -242,3 +243,5 @@ auto context_generate_add(
 }
 
 } // namespace ecsact::entt::wrapper::dynamic
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_WRAPPER_DYNAMIC_HH_

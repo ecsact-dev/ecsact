@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_UTIL_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_UTIL_HH_
 
 #include <string_view>
 #include <vector>
@@ -374,3 +375,5 @@ auto make_id_map_type(std::string value_type) -> std::string {
 	);
 }
 } // namespace ecsact::rt_entt_codegen::util
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_UTIL_HH_

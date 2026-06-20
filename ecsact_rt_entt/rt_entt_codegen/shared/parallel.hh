@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_PARALLEL_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_PARALLEL_HH_
 
 #include "ecsact/codegen/plugin.hh"
 #include "rt_entt_codegen/shared/ecsact_entt_details.hh"
@@ -25,3 +26,5 @@ auto print_parallel_execution_cluster(
 auto can_entities_parallel(const system_like_id_variant sys_like_id) -> bool;
 
 } // namespace ecsact::rt_entt_codegen::parallel
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_PARALLEL_HH_

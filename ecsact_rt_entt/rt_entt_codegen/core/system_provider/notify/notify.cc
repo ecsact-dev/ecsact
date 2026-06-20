@@ -1,6 +1,7 @@
 #include "notify.hh"
 
 #include <map>
+#include <algorithm>
 
 #include "ecsact/lang-support/lang-cc.hh"
 #include "rt_entt_codegen/shared/util.hh"

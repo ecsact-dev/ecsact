@@ -56,6 +56,16 @@ cc_library(
     srcs = [":sources"],
     hdrs = [":headers"],
     copts = copts,
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-lws2_32",
+            "-lbcrypt",
+            "-luserenv",
+            "-ladvapi32",
+            "-lntdll",
+        ],
+        "//conditions:default": [],
+    }),
     strip_include_prefix = "/ecsact_si_wasmer",
     deps = [
         "//ecsact_runtime:dynamic",
@@ -73,6 +83,16 @@ cc_library(
         "ecsact/si/wasmer/detail/minst/minst.hh",
     ],
     copts = copts,
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-lws2_32",
+            "-lbcrypt",
+            "-luserenv",
+            "-ladvapi32",
+            "-lntdll",
+        ],
+        "//conditions:default": [],
+    }),
     strip_include_prefix = "/ecsact_si_wasmer",
     deps = [
         ":cpp_util",

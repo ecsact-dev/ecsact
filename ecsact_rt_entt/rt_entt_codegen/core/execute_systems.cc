@@ -29,7 +29,7 @@ auto ecsact::rt_entt_codegen::core::print_parallel_system_execute(
 
 	block(
 		ctx,
-		"std::for_each(std::execution::par_unseq, system_arr.begin(), "
+		"std::for_each(system_arr.begin(), "
 		"system_arr.end(), [&registry](exec_entry_t pair)",
 		[&]() {
 			ctx.write("auto fn_ptr = pair.first;\n");

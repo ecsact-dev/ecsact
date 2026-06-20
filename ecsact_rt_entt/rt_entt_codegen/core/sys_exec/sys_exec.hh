@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYS_EXEC_SYS_EXEC_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYS_EXEC_SYS_EXEC_HH_
 
 #include <string>
 #include <optional>
@@ -21,3 +22,5 @@ auto print_child_systems(
 	const system_like_id_variant&                     sys_like_id
 ) -> void;
 } // namespace ecsact::rt_entt_codegen::core
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYS_EXEC_SYS_EXEC_HH_

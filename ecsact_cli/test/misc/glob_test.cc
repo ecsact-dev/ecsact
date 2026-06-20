@@ -8,7 +8,7 @@ using bazel::tools::cpp::runfiles::Runfiles;
 using ecsact::cli::detail::expand_path_globs;
 using ecsact::cli::detail::path_before_glob;
 using ecsact::cli::detail::path_matches_glob;
-using std::ranges::find;
+#include <algorithm>
 
 namespace fs = std::filesystem;
 
@@ -45,7 +45,7 @@ TEST_F(Glob, SimpleWildcard) {
 	};
 
 	for(auto p : paths) {
-		EXPECT_TRUE(find(expected_paths, p) != expected_paths.end())
+		EXPECT_TRUE(std::find(expected_paths.begin(), expected_paths.end(), p) != expected_paths.end())
 			<< "Unexpected path: " << p.generic_string() << "\n"
 			<< glob_pattern.generic_string() << "\n";
 	}
@@ -62,7 +62,7 @@ TEST_F(Glob, WildcardWithSuffix) {
 	};
 
 	for(auto p : paths) {
-		EXPECT_TRUE(find(expected_paths, p) != expected_paths.end())
+		EXPECT_TRUE(std::find(expected_paths.begin(), expected_paths.end(), p) != expected_paths.end())
 			<< "Unexpected path: " << p.generic_string() << "\n"
 			<< "Glob pattern: " << glob_pattern.generic_string() << "\n";
 	}
@@ -94,7 +94,7 @@ TEST_F(Glob, SimpleRecursiveWildcard) {
 	};
 
 	for(auto p : paths) {
-		EXPECT_TRUE(find(expected_paths, p) != expected_paths.end())
+		EXPECT_TRUE(std::find(expected_paths.begin(), expected_paths.end(), p) != expected_paths.end())
 			<< "Unexpected path: " << p.generic_string() << "\n"
 			<< glob_pattern.generic_string() << "\n";
 	}
@@ -115,7 +115,7 @@ TEST_F(Glob, RecursiveWildcardSuffix) {
 	};
 
 	for(auto p : paths) {
-		EXPECT_TRUE(find(expected_paths, p) != expected_paths.end())
+		EXPECT_TRUE(std::find(expected_paths.begin(), expected_paths.end(), p) != expected_paths.end())
 			<< "Unexpected path: " << p.generic_string() << "\n"
 			<< glob_pattern.generic_string() << "\n";
 	}

@@ -4,6 +4,7 @@
 #include <set>
 #include <typeindex>
 #include <version>
+#include <algorithm>
 #include <random>
 #include <thread>
 #include <ranges>
