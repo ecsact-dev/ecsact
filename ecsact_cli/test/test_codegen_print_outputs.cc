@@ -49,20 +49,22 @@ TEST(Codegen, Stdout) {
 		bp::process_stdio{nullptr, proc_stdout, nullptr},
 	};
 
-	auto output_files = std::vector<std::string>{};
+	auto                      output_files = std::vector<std::string>{};
 	boost::system::error_code ec;
-	boost::asio::streambuf buffer;
+	boost::asio::streambuf    buffer;
 	while(!ec) {
 		auto read_bytes = boost::asio::read_until(proc_stdout, buffer, '\n', ec);
-		if (read_bytes > 0 || buffer.size() > 0) {
+		if(read_bytes > 0 || buffer.size() > 0) {
 			std::istream is(&buffer);
-			auto line = std::string{};
+			auto         line = std::string{};
 			while(std::getline(is, line)) {
 				if(line.ends_with("\r")) {
 					line.pop_back();
 				}
-				if (!line.empty()) {
-					output_files.emplace_back(fs::relative(fs::path{line}).generic_string());
+				if(!line.empty()) {
+					output_files.emplace_back(
+						fs::relative(fs::path{line}).generic_string()
+					);
 				}
 			}
 		}

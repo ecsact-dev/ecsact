@@ -22,7 +22,7 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_add_fn(
 		auto comp_cpp_ident = cc_lang_support::cpp_identifier(comp_name);
 		auto sorting_structs_covered = std::set<ecsact_system_id>{};
 
-		ctx.write("template<>\n");
+		ctx.writef("{}", "template<>\n");
 		auto printer =
 			method_printer{
 				ctx,
@@ -54,7 +54,8 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_add_fn(
 				auto system_sorting_struct_name =
 					std::format("system_sorted<{}>", system_cpp_ident);
 
-				ctx.write(
+				ctx.writef(
+					"{}{}{}",
 					"reg.emplace_or_replace<",
 					system_sorting_struct_name,
 					">(entity);"
@@ -73,7 +74,7 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_remove_fn(
 		auto comp_cpp_ident = cc_lang_support::cpp_identifier(comp_name);
 		auto sorting_structs_covered = std::set<ecsact_system_id>{};
 
-		ctx.write("template<>\n");
+		ctx.writef("{}", "template<>\n");
 		auto printer =
 			method_printer{
 				ctx,
@@ -84,7 +85,7 @@ auto ecsact::rt_entt_codegen::core::print_system_marker_remove_fn(
 				.parameter("ecsact::entt::entity_id", "entity")
 				.return_type("void");
 
-		ctx.write("//TODO\n");
+		ctx.writef("{}", "//TODO\n");
 	}
 }
 
@@ -100,7 +101,7 @@ auto ecsact::rt_entt_codegen::core::print_add_sys_beforestorage_fn(
 	for(auto comp_id : details.all_components) {
 		auto comp_name = cpp_identifier(decl_full_name(comp_id));
 
-		ctx.write("template<>\n");
+		ctx.writef("{}", "template<>\n");
 		auto printer =
 			method_printer{
 				ctx,
@@ -123,10 +124,9 @@ auto ecsact::rt_entt_codegen::core::print_add_sys_beforestorage_fn(
 							break;
 						}
 						already_printed_.insert(comp_id);
-						ctx.write(std::format( //
+						ctx.writef(//
 							"reg.emplace<exec_itr_beforechange_storage<{}>>(entity);\n",
-							comp_name
-						));
+							comp_name);
 						break;
 					}
 				}

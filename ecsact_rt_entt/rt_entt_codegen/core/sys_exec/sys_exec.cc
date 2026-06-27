@@ -30,7 +30,8 @@ auto ecsact::rt_entt_codegen::core::print_child_systems(
 
 			auto child_system_name = cpp_identifier(decl_full_name(child_sys_id));
 
-			ctx.write(
+			ctx.writef(
+				"{}{}{}",
 				"ecsact::entt::execute_system<::" + child_system_name + ">(",
 				names.registry_var_name,
 				", &context, {});\n"
@@ -48,5 +49,5 @@ auto ecsact::rt_entt_codegen::core::print_child_systems(
 		);
 	}
 
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 }

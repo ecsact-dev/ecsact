@@ -45,7 +45,7 @@ static auto print_check_add_component_error_template_specialization(
 	const auto method_name =
 		"ecsact::entt::check_add_component_error<" + cpp_component_ident + ">";
 
-	ctx.write("template<>\n");
+	ctx.writef("{}", "template<>\n");
 
 	auto printer = //
 		method_printer{ctx, method_name}
@@ -57,11 +57,11 @@ static auto print_check_add_component_error_template_specialization(
 	for_each_entity_field(component_id, [&](auto field_name) {
 		auto field_var = "ecsact::entt::entity_id{component." + field_name + "}";
 		block(ctx, "if(!registry.valid(" + field_var + "))", [&] {
-			ctx.write("return ECSACT_ADD_ERR_ENTITY_INVALID;\n");
+			ctx.writef("{}", "return ECSACT_ADD_ERR_ENTITY_INVALID;\n");
 		});
 	});
 
-	ctx.write("return ECSACT_ADD_OK;");
+	ctx.writef("{}", "return ECSACT_ADD_OK;");
 }
 
 static auto print_check_update_component_error_template_specialization(
@@ -78,7 +78,7 @@ static auto print_check_update_component_error_template_specialization(
 	const auto method_name =
 		"ecsact::entt::check_update_component_error<" + cpp_component_ident + ">";
 
-	ctx.write("template<>\n");
+	ctx.writef("{}", "template<>\n");
 
 	auto printer = //
 		method_printer{ctx, method_name}
@@ -90,11 +90,11 @@ static auto print_check_update_component_error_template_specialization(
 	for_each_entity_field(component_id, [&](auto field_name) {
 		auto field_var = "ecsact::entt::entity_id{component." + field_name + "}";
 		block(ctx, "if(!registry.valid(" + field_var + "))", [&] {
-			ctx.write("return ECSACT_UPDATE_ERR_ENTITY_INVALID;\n");
+			ctx.writef("{}", "return ECSACT_UPDATE_ERR_ENTITY_INVALID;\n");
 		});
 	});
 
-	ctx.write("return ECSACT_UPDATE_OK;");
+	ctx.writef("{}", "return ECSACT_UPDATE_OK;");
 }
 
 static auto print_check_action_error_template_specialization(
@@ -111,7 +111,7 @@ static auto print_check_action_error_template_specialization(
 	const auto method_name =
 		"ecsact::entt::check_action_error<" + cpp_action_ident + ">";
 
-	ctx.write("template<>\n");
+	ctx.writef("{}", "template<>\n");
 
 	auto printer = //
 		method_printer{ctx, method_name}
@@ -119,16 +119,16 @@ static auto print_check_action_error_template_specialization(
 			.parameter(cpp_action_ident + " const&", "action")
 			.return_type("ecsact_execute_systems_error");
 
-	ctx.write("auto err = ECSACT_EXEC_SYS_OK;\n");
+	ctx.writef("{}", "auto err = ECSACT_EXEC_SYS_OK;\n");
 
 	for_each_entity_field(action_id, [&](auto field_name) {
 		auto field_var = "ecsact::entt::entity_id{action." + field_name + "}";
 		block(ctx, "if(!registry.valid(" + field_var + "))", [&] {
-			ctx.write("return ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID;\n");
+			ctx.writef("{}", "return ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_INVALID;\n");
 		});
 	});
 
-	ctx.write("return err;\n");
+	ctx.writef("{}", "return err;\n");
 }
 
 auto ecsact::rt_entt_codegen::core::print_check_error_template_specializations(

@@ -26,7 +26,7 @@ auto ecsact::rt_entt_codegen::core::print_entity_match_fn(
 		auto method_name =
 			"ecsact::entt::entity_matches_system<" + system_cpp_ident + ">";
 
-		ctx.write("template<>\n");
+		ctx.writef("{}", "template<>\n");
 		auto printer = //
 			method_printer{ctx, method_name}
 				.parameter("ecsact::entt::registry_t&", "reg")
@@ -39,7 +39,7 @@ auto ecsact::rt_entt_codegen::core::print_entity_match_fn(
 		);
 
 		block(ctx, std::format("if(!reg.all_of<{}>(entity))", get_comps_str), [&] {
-			ctx.write("return false;");
+			ctx.writef("{}", "return false;");
 		});
 
 		if(!sys_details.exclude_comps.empty()) {
@@ -51,10 +51,10 @@ auto ecsact::rt_entt_codegen::core::print_entity_match_fn(
 			block(
 				ctx,
 				std::format("if(reg.any_of<{}>(entity))", exclude_comps_str),
-				[&] { ctx.write("return false;"); }
+				[&] { ctx.writef("{}", "return false;"); }
 			);
 		}
 
-		ctx.write("return true;\n");
+		ctx.writef("{}", "return true;\n");
 	}
 }

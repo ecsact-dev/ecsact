@@ -48,8 +48,8 @@ TEST(Codegen, Stdout) {
 		bp::process_stdio{nullptr, proc_stdout, nullptr}
 	};
 
-	auto proc_stdout_str = std::string{};
-	boost::asio::streambuf buffer;
+	auto                      proc_stdout_str = std::string{};
+	boost::asio::streambuf    buffer;
 	boost::system::error_code ec;
 	boost::asio::read_until(proc_stdout, buffer, '\n', ec);
 	std::istream is(&buffer);

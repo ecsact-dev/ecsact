@@ -29,39 +29,44 @@ static void write_fields(
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
 		auto attr_str = csharp_field_attribute_str(field_type);
 		if(!attr_str.empty()) {
-			ctx.write(indentation, attr_str, "\n");
+			ctx.writef("{}{}{}", indentation, attr_str, "\n");
 		}
 
-		ctx.write(indentation, "public ");
+		ctx.writef("{}{}", indentation, "public ");
 		switch(field_type.kind) {
 			case ECSACT_TYPE_KIND_BUILTIN:
-				ctx.write(csharp_type_str(field_type.type.builtin));
+				ctx.writef("{}", csharp_type_str(field_type.type.builtin));
 				break;
 			case ECSACT_TYPE_KIND_ENUM:
-				ctx.write(ecsact_meta_enum_name(field_type.type.enum_id));
+				ctx.writef("{}", ecsact_meta_enum_name(field_type.type.enum_id));
 				break;
 		}
-		ctx.write(" "s, field_name);
+		ctx.writef("{}{}", " "s, field_name);
 
 		if(field_type.length > 1) {
-			ctx.write("[]");
+			ctx.writef("{}", "[]");
 		}
-		ctx.write(";\n");
+		ctx.writef("{}", ";\n");
 	}
 
-	ctx.write("\n");
-	ctx.write(indentation, "public override bool Equals(object? obj) {\n");
-	ctx.write(indentation, "\tif(obj == null) return false;\n");
-	ctx.write(indentation, "\tvar other_ = (", full_name, ")obj;\n");
-	ctx.write(indentation, "\treturn true");
+	ctx.writef("{}", "\n");
+	ctx.writef(
+		"{}{}",
+		indentation,
+		"public override bool Equals(object? obj) {\n"
+	);
+	ctx.writef("{}{}", indentation, "\tif(obj == null) return false;\n");
+	ctx.writef("{}{}{}{}", indentation, "\tvar other_ = (", full_name, ")obj;\n");
+	ctx.writef("{}{}", indentation, "\treturn true");
 	for(auto field_id : field_ids) {
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
 
 		if(field_type.length > 1) {
 			for(int index = 0; field_type.length > index; ++index) {
-				ctx.write("\n", indentation, "\t\t");
-				ctx.write(
+				ctx.writef("{}{}{}", "\n", indentation, "\t\t");
+				ctx.writef(
+					"{}{}{}{}{}{}{}{}{}{}{}",
 					"&& other_.",
 					field_name,
 					"[",
@@ -76,32 +81,39 @@ static void write_fields(
 				);
 			}
 		} else {
-			ctx.write("\n", indentation, "\t\t");
-			ctx.write("&& other_.", field_name, ".Equals(this.", field_name, ")");
+			ctx.writef("{}{}{}", "\n", indentation, "\t\t");
+			ctx.writef(
+				"{}{}{}{}{}",
+				"&& other_.",
+				field_name,
+				".Equals(this.",
+				field_name,
+				")"
+			);
 		}
 	}
-	ctx.write(";\n");
-	ctx.write(indentation, "}\n");
+	ctx.writef("{}", ";\n");
+	ctx.writef("{}{}", indentation, "}\n");
 
-	ctx.write("\n");
-	ctx.write(indentation, "public override int GetHashCode() {\n");
-	ctx.write(indentation, "\tint hashCode_ = 17;\n");
+	ctx.writef("{}", "\n");
+	ctx.writef("{}{}", indentation, "public override int GetHashCode() {\n");
+	ctx.writef("{}{}", indentation, "\tint hashCode_ = 17;\n");
 	for(auto field_id : field_ids) {
 		auto field_type = ecsact_meta_field_type(compo_id, field_id);
 		auto field_name = ecsact_meta_field_name(compo_id, field_id);
 
 		if(field_type.length > 1) {
 			for(int index = 0; field_type.length > index; ++index) {
-				ctx.write(indentation, "\thashCode_ = hashCode_ * 23 + ");
-				ctx.write(field_name, "[", index, "].GetHashCode();\n");
+				ctx.writef("{}{}", indentation, "\thashCode_ = hashCode_ * 23 + ");
+				ctx.writef("{}{}{}{}", field_name, "[", index, "].GetHashCode();\n");
 			}
 		} else {
-			ctx.write(indentation, "\thashCode_ = hashCode_ * 23 + ");
-			ctx.write(field_name, ".GetHashCode();\n");
+			ctx.writef("{}{}", indentation, "\thashCode_ = hashCode_ * 23 + ");
+			ctx.writef("{}{}", field_name, ".GetHashCode();\n");
 		}
 	}
-	ctx.write(indentation, "\treturn hashCode_;\n");
-	ctx.write(indentation, "}\n");
+	ctx.writef("{}{}", indentation, "\treturn hashCode_;\n");
+	ctx.writef("{}{}", indentation, "}\n");
 }
 
 template<typename T>
@@ -110,7 +122,8 @@ static void write_id_property(
 	T                               id,
 	std::string_view                indentation
 ) {
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}",
 		indentation,
 		"public static readonly global::System.Int32 id = ",
 		static_cast<int32_t>(ecsact_id_cast<ecsact_decl_id>(id)),
@@ -128,13 +141,13 @@ static void write_system_struct(
 
 	std::string sys_name = ecsact_meta_system_name(sys_id);
 	if(!sys_name.empty()) {
-		ctx.write(indentation, "public struct ", sys_name);
-		ctx.write(" : global::Ecsact.System {\n");
+		ctx.writef("{}{}{}", indentation, "public struct ", sys_name);
+		ctx.writef("{}", " : global::Ecsact.System {\n");
 		write_id_property(ctx, sys_id, indentation + "\t");
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
 			write_system_struct(ctx, child_system_id, indentation + "\t");
 		}
-		ctx.write(indentation, "}\n"s);
+		ctx.writef("{}{}", indentation, "}\n"s);
 	} else {
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
 			write_system_struct(ctx, child_system_id, indentation);
@@ -157,48 +170,80 @@ void ecsact_codegen_plugin(
 
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
-	ctx.write("// GENERATED FILE - DO NOT EDIT\n\n");
-	ctx.write("#nullable enable\n\n");
-	ctx.write("namespace ", ecsact_meta_package_name(package_id), " {\n");
+	ctx.writef("{}", "// GENERATED FILE - DO NOT EDIT\n\n");
+	ctx.writef("{}", "#nullable enable\n\n");
+	ctx.writef(
+		"{}{}{}",
+		"namespace ",
+		ecsact_meta_package_name(package_id),
+		" {\n"
+	);
 
 	for(auto enum_id : get_enum_ids(ctx.package_id)) {
-		ctx.write("\npublic enum ", ecsact_meta_enum_name(enum_id), " {\n");
+		ctx.writef(
+			"{}{}{}",
+			"\npublic enum ",
+			ecsact_meta_enum_name(enum_id),
+			" {\n"
+		);
 
 		for(auto& enum_value : get_enum_values(enum_id)) {
-			ctx.write("\t", enum_value.name, " = ", enum_value.value, ",\n");
+			ctx.writef(
+				"{}{}{}{}{}",
+				"\t",
+				enum_value.name,
+				" = ",
+				enum_value.value,
+				",\n"
+			);
 		}
 
-		ctx.write("}\n");
+		ctx.writef("{}", "}\n");
 	}
 
 	for(auto comp_id : get_component_ids(package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
 		auto comp_name = ecsact_meta_component_name(comp_id);
-		ctx.write("\npublic struct ", comp_name, " : global::Ecsact.Component {\n");
+		ctx.writef(
+			"{}{}{}",
+			"\npublic struct ",
+			comp_name,
+			" : global::Ecsact.Component {\n"
+		);
 		write_id_property(ctx, comp_id, "\t");
 		write_fields(ctx, compo_id, "\t");
-		ctx.write("}\n");
+		ctx.writef("{}", "}\n");
 	}
 
 	for(auto trans_id : get_transient_ids(package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(trans_id);
 		auto comp_name = ecsact_meta_transient_name(trans_id);
-		ctx.write("\npublic struct ", comp_name, " : global::Ecsact.Transient {\n");
+		ctx.writef(
+			"{}{}{}",
+			"\npublic struct ",
+			comp_name,
+			" : global::Ecsact.Transient {\n"
+		);
 		write_id_property(ctx, trans_id, "\t");
 		write_fields(ctx, compo_id, "\t");
-		ctx.write("}\n");
+		ctx.writef("{}", "}\n");
 	}
 
 	for(auto act_id : get_action_ids(package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(act_id);
 		auto action_name = ecsact_meta_action_name(act_id);
-		ctx.write("\npublic struct ", action_name, " : global::Ecsact.Action {\n");
+		ctx.writef(
+			"{}{}{}",
+			"\npublic struct ",
+			action_name,
+			" : global::Ecsact.Action {\n"
+		);
 		write_id_property(ctx, act_id, "\t");
 		for(auto child_system_id : get_child_system_ids(act_id)) {
 			write_system_struct(ctx, child_system_id, "\t");
 		}
 		write_fields(ctx, compo_id, "\t");
-		ctx.write("}\n");
+		ctx.writef("{}", "}\n");
 	}
 
 	for(auto sys_id : get_system_ids(ctx.package_id)) {
@@ -209,5 +254,5 @@ void ecsact_codegen_plugin(
 		write_system_struct(ctx, sys_id, "");
 	}
 
-	ctx.write("\n}\n");
+	ctx.writef("{}", "\n}\n");
 }

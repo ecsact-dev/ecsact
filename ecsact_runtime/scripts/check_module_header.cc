@@ -326,100 +326,102 @@ int main(int argc, char* argv[]) {
 			bp::process_stdio{nullptr, diff_output, nullptr}
 		);
 
-		auto line = std::string{};
-		auto found_line_info = false;
+		auto                      line = std::string{};
+		auto                      found_line_info = false;
 		boost::system::error_code ec;
-		boost::asio::streambuf buffer;
+		boost::asio::streambuf    buffer;
 		while(!found_line_info && !ec) {
 			auto read_bytes = boost::asio::read_until(diff_output, buffer, '\n', ec);
-			if (read_bytes > 0 || buffer.size() > 0) {
+			if(read_bytes > 0 || buffer.size() > 0) {
 				std::istream is(&buffer);
 				while(!found_line_info && std::getline(is, line)) {
-			if(!line.starts_with("@@")) {
-				continue;
-			}
+					if(!line.starts_with("@@")) {
+						continue;
+					}
 
-			found_line_info = true;
-			auto line_start = line.find('-');
-			auto line_end = line.find(' ', line_start);
-			auto line_num = line.substr(line_start + 1, line_end - line_start - 1);
+					found_line_info = true;
+					auto line_start = line.find('-');
+					auto line_end = line.find(' ', line_start);
+					auto line_num =
+						line.substr(line_start + 1, line_end - line_start - 1);
 
-			std::cout //
-				<< "::error file=" << relative_header_path.string()
-				<< ",line=" << line_num << ",title=Out of date FOR_EACH macro for "
-				<< relative_header_path.string()
-				<< "::When adding or removing an Ecsact function from the API "
-				<< "headers you must also update the FOR_EACH_ macro.\n";
-			exit_code += 1;
-		}
+					std::cout //
+						<< "::error file=" << relative_header_path.string()
+						<< ",line=" << line_num << ",title=Out of date FOR_EACH macro for "
+						<< relative_header_path.string()
+						<< "::When adding or removing an Ecsact function from the API "
+						<< "headers you must also update the FOR_EACH_ macro.\n";
+					exit_code += 1;
+				}
 
-		auto removed_fns = std::unordered_set<std::string>{};
-		auto added_fns = std::unordered_set<std::string>{};
-		
-		std::istream is_remainder(&buffer);
-		while(std::getline(is_remainder, line)) {
-			auto fn_start_idx = line.find("fn(");
+				auto removed_fns = std::unordered_set<std::string>{};
+				auto added_fns = std::unordered_set<std::string>{};
 
-			if(fn_start_idx == std::string::npos) {
-				continue;
-			}
+				std::istream is_remainder(&buffer);
+				while(std::getline(is_remainder, line)) {
+					auto fn_start_idx = line.find("fn(");
 
-			auto fn_name = line.substr(
-				fn_start_idx + 3,
-				line.find(',', fn_start_idx + 3) - fn_start_idx - 3
-			);
+					if(fn_start_idx == std::string::npos) {
+						continue;
+					}
 
-			if(line.starts_with('-')) {
-				removed_fns.insert(fn_name);
-			} else if(line.starts_with('+')) {
-				added_fns.insert(fn_name);
-			}
-		}
+					auto fn_name = line.substr(
+						fn_start_idx + 3,
+						line.find(',', fn_start_idx + 3) - fn_start_idx - 3
+					);
 
-		while(!ec) {
-			auto read_bytes = boost::asio::read_until(diff_output, buffer, '\n', ec);
-			if (read_bytes > 0 || buffer.size() > 0) {
-				std::istream is(&buffer);
-				while(std::getline(is, line)) {
-			auto fn_start_idx = line.find("fn(");
+					if(line.starts_with('-')) {
+						removed_fns.insert(fn_name);
+					} else if(line.starts_with('+')) {
+						added_fns.insert(fn_name);
+					}
+				}
 
-			if(fn_start_idx == std::string::npos) {
-				continue;
-			}
+				while(!ec) {
+					auto read_bytes =
+						boost::asio::read_until(diff_output, buffer, '\n', ec);
+					if(read_bytes > 0 || buffer.size() > 0) {
+						std::istream is(&buffer);
+						while(std::getline(is, line)) {
+							auto fn_start_idx = line.find("fn(");
 
-			auto fn_name = line.substr(
-				fn_start_idx + 3,
-				line.find(',', fn_start_idx + 3) - fn_start_idx - 3
-			);
+							if(fn_start_idx == std::string::npos) {
+								continue;
+							}
 
-				if(line.starts_with('-')) {
-					removed_fns.insert(fn_name);
-				} else if(line.starts_with('+')) {
-					added_fns.insert(fn_name);
+							auto fn_name = line.substr(
+								fn_start_idx + 3,
+								line.find(',', fn_start_idx + 3) - fn_start_idx - 3
+							);
+
+							if(line.starts_with('-')) {
+								removed_fns.insert(fn_name);
+							} else if(line.starts_with('+')) {
+								added_fns.insert(fn_name);
+							}
+						}
+					}
+				}
+
+				diff_proc.wait();
+
+				for(auto added_fn : added_fns) {
+					if(removed_fns.contains(added_fn)) {
+						continue;
+					}
+
+					report_needs_for_each_added(header_file, added_fn);
+				}
+
+				for(auto removed_fn : removed_fns) {
+					if(added_fns.contains(removed_fn)) {
+						continue;
+					}
+
+					report_needs_for_each_removal(header_file, removed_fn);
 				}
 			}
-			}
+
+			std::cout << "::debug::Done\n";
+			return exit_code;
 		}
-
-		diff_proc.wait();
-
-		for(auto added_fn : added_fns) {
-			if(removed_fns.contains(added_fn)) {
-				continue;
-			}
-
-			report_needs_for_each_added(header_file, added_fn);
-		}
-
-		for(auto removed_fn : removed_fns) {
-			if(added_fns.contains(removed_fn)) {
-				continue;
-			}
-
-			report_needs_for_each_removal(header_file, removed_fn);
-		}
-	}
-
-	std::cout << "::debug::Done\n";
-	return exit_code;
-}

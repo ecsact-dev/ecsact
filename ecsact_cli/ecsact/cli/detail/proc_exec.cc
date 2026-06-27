@@ -26,14 +26,15 @@ auto ecsact::cli::detail::which(std::string_view prog)
 
 namespace {
 template<typename ReporterFn>
-auto read_pipe_lines(boost::asio::readable_pipe& pipe, ReporterFn reporter_fn) -> void {
+auto read_pipe_lines(boost::asio::readable_pipe& pipe, ReporterFn reporter_fn)
+	-> void {
 	boost::system::error_code ec;
-	boost::asio::streambuf buffer;
+	boost::asio::streambuf    buffer;
 	while(!ec) {
 		auto read_bytes = boost::asio::read_until(pipe, buffer, '\n', ec);
-		if (read_bytes > 0 || buffer.size() > 0) {
+		if(read_bytes > 0 || buffer.size() > 0) {
 			std::istream is(&buffer);
-			auto line = std::string{};
+			auto         line = std::string{};
 			while(std::getline(is, line)) {
 				reporter_fn(line);
 			}
@@ -177,9 +178,9 @@ auto ecsact::cli::detail::spawn_get_stdout( //
 		bp::process_stdio{nullptr, proc_stdout, nullptr},
 	};
 
-	auto proc_stdout_string = std::string{};
+	auto                      proc_stdout_string = std::string{};
 	boost::system::error_code ec;
-	char buf[1024];
+	char                      buf[1024];
 	while(!ec) {
 		auto read_amount = proc_stdout.read_some(boost::asio::buffer(buf), ec);
 		if(read_amount > 0) {
@@ -216,7 +217,8 @@ auto ecsact::cli::detail::spawn_get_stdout_bytes( //
 
 	boost::system::error_code ec;
 	while(!ec) {
-		auto read_amount = proc_stdout.read_some(boost::asio::buffer(proc_stdout_bytes_buf), ec);
+		auto read_amount =
+			proc_stdout.read_some(boost::asio::buffer(proc_stdout_bytes_buf), ec);
 		if(read_amount > 0) {
 			auto read_bytes = std::span{
 				proc_stdout_bytes_buf.data(),

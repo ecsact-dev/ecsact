@@ -19,7 +19,8 @@ auto ecsact::rt_entt_codegen::core::print_apply_streaming_data(
 		ctx,
 		"auto apply_streaming_data(::entt::registry& main_reg) -> void",
 		[&] {
-			ctx.write(
+			ctx.writef(
+				"{}",
 				"auto stream_registries = "
 				"ecsact::entt::detail::globals::stream_registries.get_stream_"
 				"registries();\n"
@@ -37,9 +38,12 @@ auto ecsact::rt_entt_codegen::core::print_apply_streaming_data(
 					) {
 						auto comp_name = cpp_identifier(decl_full_name(component_id));
 
-						ctx.write("ecsact::entt::detail::apply_component_stream_data<");
-						ctx.write(comp_name);
-						ctx.write(">(main_reg, *stream_reg);\n");
+						ctx.writef(
+							"{}",
+							"ecsact::entt::detail::apply_component_stream_data<"
+						);
+						ctx.writef("{}", comp_name);
+						ctx.writef("{}", ">(main_reg, *stream_reg);\n");
 					}
 				}
 			});

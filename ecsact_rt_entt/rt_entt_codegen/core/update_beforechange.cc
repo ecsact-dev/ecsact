@@ -22,7 +22,7 @@ auto ecsact::rt_entt_codegen::core::print_update_all_beforechange_storage(
 			.parameter("ecsact_registry_id", "registry_id")
 			.return_type("void");
 
-	ctx.write("auto& reg = ecsact::entt::get_registry(registry_id);\n\n");
+	ctx.writef("{}", "auto& reg = ecsact::entt::get_registry(registry_id);\n\n");
 
 	for(auto comp_id : details.all_components) {
 		if(ecsact::meta::get_field_ids(comp_id).empty()) {
@@ -39,18 +39,17 @@ auto ecsact::rt_entt_codegen::core::print_update_all_beforechange_storage(
 		auto view_name = std::format("{}_view", comp_name);
 		auto comp_list = std::format("{}, {}", cpp_comp_name, comp_change_name);
 
-		ctx.write( //
+		ctx.writef(
+			"{}", //
 			std::format("auto {} = reg.view<{}>();\n", view_name, comp_list)
 		);
 
 		block(ctx, std::format("for(auto entity: {})", view_name), [&]() {
-			ctx.write(
-				std::format(
-					"ecsact::entt::wrapper::core::update_exec_itr_beforechange<{}>("
-					"entity, "
-					"reg);\n",
-					cpp_comp_name
-				)
+			ctx.writef(
+				"ecsact::entt::wrapper::core::update_exec_itr_beforechange<{}>("
+				"entity, "
+				"reg);\n",
+				cpp_comp_name
 			);
 		});
 	}

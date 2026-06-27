@@ -222,7 +222,7 @@ static auto write_context_stream_toggle_decl(
 	std::string_view                          sys_like_full_name,
 	const std::set<ecsact_component_like_id>& stream_components
 ) -> void {
-	ctx.write("template<typename T, typename... AssocFields>\n");
+	ctx.writef("{}", "template<typename T, typename... AssocFields>\n");
 	block(
 		ctx,
 		"auto stream_toggle(bool stream_enable, AssocFields&&... assoc_fields) -> "
@@ -241,7 +241,7 @@ static auto write_context_stream_toggle_decl(
 			);
 		}
 	);
-	ctx.write("\n\n");
+	ctx.writef("{}", "\n\n");
 }
 
 static auto write_context_other_decl(
@@ -511,16 +511,14 @@ static auto write_context_stream_toggle_specialize(
 			cpp_full_name
 		),
 		[&] {
-			ctx.write(
-				std::format(
-					"return _ctx.stream_toggle<{}>(enable_stream);\n",
-					cpp_full_name
-				)
+			ctx.writef(
+				"return _ctx.stream_toggle<{}>(enable_stream);\n",
+				cpp_full_name
 			);
 		}
 	);
 
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 }
 
 static auto write_context_other_specialize(

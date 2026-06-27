@@ -168,24 +168,25 @@ void ecsact_codegen_plugin(
 	using ecsact::meta::package_name;
 
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
-	ctx.write("{\n");
+	ctx.writef("{}", "{\n");
 
-	ctx.write(
+	ctx.writef(
+		"{}{}{}",
 		"\t\"source_file_path\": \"",
 		fs::path{ecsact_meta_package_file_path(ctx.package_id)}.generic_string(),
 		"\",\n"
 	);
 
-	ctx.write("\t\"name\": \"", package_name(ctx.package_id), "\",\n");
-	ctx.write("\t\"imports\": [");
+	ctx.writef("{}{}{}", "\t\"name\": \"", package_name(ctx.package_id), "\",\n");
+	ctx.writef("{}", "\t\"imports\": [");
 	ctx.write_each(
 		", ",
 		get_dependencies(ctx.package_id),
 		[&](ecsact_package_id dep_id) {
-			ctx.write("\"", package_name(dep_id), "\"");
+			ctx.writef("{}{}{}", "\"", package_name(dep_id), "\"");
 		}
 	);
-	ctx.write("],\n");
+	ctx.writef("{}", "],\n");
 
 	{
 		auto actions = "[]"_json;
@@ -195,7 +196,7 @@ void ecsact_codegen_plugin(
 			actions.emplace_back(std::move(action));
 		}
 
-		ctx.write("\t\"actions\": ", actions.dump(), ",\n");
+		ctx.writef("{}{}{}", "\t\"actions\": ", actions.dump(), ",\n");
 	}
 
 	{
@@ -206,7 +207,7 @@ void ecsact_codegen_plugin(
 			systems.emplace_back(std::move(system));
 		}
 
-		ctx.write("\t\"systems\": ", systems.dump(), ",\n");
+		ctx.writef("{}{}{}", "\t\"systems\": ", systems.dump(), ",\n");
 	}
 
 	{
@@ -217,7 +218,7 @@ void ecsact_codegen_plugin(
 			components.emplace_back(std::move(component));
 		}
 
-		ctx.write("\t\"components\": ", components.dump(), ",\n");
+		ctx.writef("{}{}{}", "\t\"components\": ", components.dump(), ",\n");
 	}
 
 	{
@@ -228,8 +229,8 @@ void ecsact_codegen_plugin(
 			transients.emplace_back(std::move(transient));
 		}
 
-		ctx.write("\t\"transients\": ", transients.dump(), "\n");
+		ctx.writef("{}{}{}", "\t\"transients\": ", transients.dump(), "\n");
 	}
 
-	ctx.write("}");
+	ctx.writef("{}", "}");
 }

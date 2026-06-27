@@ -19,7 +19,7 @@ auto ecsact::rt_entt_codegen::core::print_parallel_system_execute(
 	using ecsact::cpp_codegen_plugin_util::block;
 	using ecsact::rt_entt_codegen::util::method_printer;
 
-	ctx.write("template<std::size_t N>\n");
+	ctx.writef("{}", "template<std::size_t N>\n");
 	auto printer = //
 		method_printer{ctx, "execute_parallel_cluster"} //
 			.parameter("ecsact::entt::registry_t&", "registry")
@@ -32,12 +32,12 @@ auto ecsact::rt_entt_codegen::core::print_parallel_system_execute(
 		"std::for_each(system_arr.begin(), "
 		"system_arr.end(), [&registry](exec_entry_t pair)",
 		[&]() {
-			ctx.write("auto fn_ptr = pair.first;\n");
-			ctx.write("auto& actions_map = pair.second;\n");
-			ctx.write("fn_ptr(registry, nullptr, actions_map);");
+			ctx.writef("{}", "auto fn_ptr = pair.first;\n");
+			ctx.writef("{}", "auto& actions_map = pair.second;\n");
+			ctx.writef("{}", "fn_ptr(registry, nullptr, actions_map);");
 		}
 	);
-	ctx.write(");\n");
+	ctx.writef("{}", ");\n");
 }
 
 auto ecsact::rt_entt_codegen::core::print_execute_systems( //
@@ -56,37 +56,40 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 			.parameter("const ecsact_execution_events_collector*", "evc")
 			.return_type("ecsact_execute_systems_error");
 
-	ctx.write(
+	ctx.writef(
+		"{}{}{}",
 		"#ifdef TRACY_ENABLE\n",
 		"\tZoneScopedN(\"execute_all_systems\");\n",
 		"#endif\n"
 	);
 
-	ctx.write(METHOD_BODY_TOP);
+	ctx.writef("{}", METHOD_BODY_TOP);
 
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 
-	ctx.write("apply_streaming_data(registry);\n");
+	ctx.writef("{}", "apply_streaming_data(registry);\n");
 
-	ctx.write("for(auto i=0; execution_count > i; ++i) {");
+	ctx.writef("{}", "for(auto i=0; execution_count > i; ++i) {");
 	ctx.indentation += 1;
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 
-	ctx.write( //
+	ctx.writef(
+		"{}", //
 		"actions_map.collect(i, execution_count, execution_options_list);\n"
 	);
 
 	block(ctx, "if(execution_options_list != nullptr)", [&] {
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"auto err = handle_execution_options(registry_id, "
 			"execution_options_list[i]);\n\n"
 		);
 		block(ctx, "if(err != ECSACT_EXEC_SYS_OK)", [&] {
-			ctx.write("return err;");
+			ctx.writef("{}", "return err;");
 		});
 	});
 
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 
 	auto parallel_system_cluster =
 		ecsact::rt_entt_codegen::parallel::get_parallel_execution_cluster(ctx);
@@ -96,33 +99,36 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 		parallel_system_cluster
 	);
 
-	ctx.write("\nupdate_all_beforechange_storage(registry_id);\n");
-	ctx.write("cleanup_system_notifies(registry_id);\n");
+	ctx.writef("{}", "\nupdate_all_beforechange_storage(registry_id);\n");
+	ctx.writef("{}", "cleanup_system_notifies(registry_id);\n");
 
 	ctx.indentation -= 1;
-	ctx.write("\n}\n\n");
+	ctx.writef("{}", "\n}\n\n");
 
 	block(ctx, "if(evc != nullptr)", [&] {
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"auto events_collector = "
 			"ecsact::entt::detail::execution_events_collector{};\n"
 		);
-		ctx.write("events_collector.target = evc;\n\n");
+		ctx.writef("{}", "events_collector.target = evc;\n\n");
 
 		block(ctx, "if(execution_options_list == nullptr)", [&] {
-			ctx.write(
+			ctx.writef(
+				"{}",
 				"trigger_component_events_minimal(registry_id, events_collector);\n\n"
 			);
 		});
 
 		block(ctx, "else", [&] {
-			ctx.write(
+			ctx.writef(
+				"{}",
 				"trigger_component_events_all(registry_id, events_collector);\n\n"
 			);
 		});
 	});
 
-	ctx.write("cleanup_component_events(registry_id);\n");
+	ctx.writef("{}", "cleanup_component_events(registry_id);\n");
 
-	ctx.write("return ECSACT_EXEC_SYS_OK;");
+	ctx.writef("{}", "return ECSACT_EXEC_SYS_OK;");
 }
