@@ -66,6 +66,13 @@ cc_library(
         "//ecsact_cli/ecsact/cli:report",
         "@boost.process",
     ],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-DEFAULTLIB:user32.lib",
+            "-DEFAULTLIB:ntdll.lib",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(

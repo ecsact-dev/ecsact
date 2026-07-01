@@ -126,36 +126,13 @@ struct codegen_plugin_context {
 		}
 	}
 
-	template<typename T>
-	[[deprecated("use writef instead")]]
-	void write(T&& arg) {
-		using NoRefT = std::remove_cvref_t<T>;
-
-		if constexpr(std::is_same_v<NoRefT, std::string_view>) {
-			write_(arg.data(), static_cast<int32_t>(arg.size()));
-		} else if constexpr(std::is_same_v<NoRefT, std::string>) {
-			write_(arg.data(), static_cast<int32_t>(arg.size()));
-		} else if constexpr(std::is_convertible_v<NoRefT, const char*>) {
-			write_(arg, std::strlen(arg));
-		} else {
-			auto str = std::to_string(std::forward<T>(arg));
-			write_(str.data(), static_cast<int32_t>(str.size()));
-		}
-	}
-
-	template<typename... T>
-	[[deprecated("use writef instead")]]
-	void write(T&&... args) {
-		(write<T>(std::forward<T>(args)), ...);
-	}
-
 	void write_each(auto&& delim, auto&& range, auto&& callback) {
 		auto begin = std::begin(range);
 		auto end = std::end(range);
 		if(begin != end) {
 			callback(*begin);
 			for(auto itr = std::next(begin); itr != end; ++itr) {
-				write(delim);
+				writef("{}", delim);
 				callback(*itr);
 			}
 		}

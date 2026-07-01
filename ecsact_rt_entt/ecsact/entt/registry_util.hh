@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_REGISTRY_UTIL_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_REGISTRY_UTIL_HH_
 
 #include <cassert>
 #include "entt/entity/registry.hpp"
@@ -43,3 +44,5 @@ auto copy_components( //
 auto hash_registry(const ::entt::registry& reg) -> std::uint64_t;
 
 } // namespace ecsact::entt
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_REGISTRY_UTIL_HH_

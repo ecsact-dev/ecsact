@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_BASIC_BASIC_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_BASIC_BASIC_HH_
 
 #include <string>
 #include <unordered_map>
@@ -102,3 +103,5 @@ private:
 	std::string view_type_name;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_BASIC_BASIC_HH_

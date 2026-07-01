@@ -1,6 +1,7 @@
 #include "notify.hh"
 
 #include <map>
+#include <algorithm>
 
 #include "ecsact/lang-support/lang-cc.hh"
 #include "rt_entt_codegen/shared/util.hh"
@@ -102,9 +103,7 @@ auto provider::notify::print_system_notify_views(
 			);
 
 			block(ctx, std::format("for(auto entity: {})", view_name), [&]() {
-				ctx.write(
-					std::format("registry.emplace<{}>(entity);\n", run_system_comp)
-				);
+				ctx.writef("registry.emplace<{}>(entity);\n", run_system_comp);
 			});
 		}
 
@@ -124,9 +123,7 @@ auto provider::notify::print_system_notify_views(
 			);
 
 			block(ctx, std::format("for(auto entity: {})", view_name), [&]() {
-				ctx.write(
-					std::format("registry.emplace<{}>(entity);\n", run_system_comp)
-				);
+				ctx.writef("registry.emplace<{}>(entity);\n", run_system_comp);
 			});
 		}
 
@@ -143,9 +140,7 @@ auto provider::notify::print_system_notify_views(
 			);
 
 			block(ctx, std::format("for(auto entity: {})", view_name), [&]() {
-				ctx.write(
-					std::format("registry.emplace<{}>(entity);\n", run_system_comp)
-				);
+				ctx.writef("registry.emplace<{}>(entity);\n", run_system_comp);
 			});
 		}
 
@@ -174,12 +169,10 @@ auto provider::notify::print_system_notify_views(
 						" registry))",
 						cpp_comp_name
 					),
-					[&] { ctx.write("continue;\n"); }
+					[&] { ctx.writef("{}", "continue;\n"); }
 				);
 
-				ctx.write(
-					std::format("registry.emplace<{}>(entity);\n", run_system_comp)
-				);
+				ctx.writef("registry.emplace<{}>(entity);\n", run_system_comp);
 			});
 		}
 	}

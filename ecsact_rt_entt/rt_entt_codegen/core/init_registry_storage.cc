@@ -16,29 +16,26 @@ auto ecsact::rt_entt_codegen::core::print_init_registry_storage(
 			.parameter("::entt::registry&", "registry")
 			.return_type("void");
 
-	ctx.write(
+	ctx.writef(
+		"{}",
 		"registry.template storage<ecsact::entt::detail::destroyed_entity>();\n\n"
 	);
 
 	for(auto comp_id : details.all_components) {
 		auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
 
-		ctx.write(
-			std::format(
-				"ecsact::entt::wrapper::core::prepare_component<{}>(registry);\n",
-				cpp_comp_name
-			)
+		ctx.writef(
+			"ecsact::entt::wrapper::core::prepare_component<{}>(registry);\n",
+			cpp_comp_name
 		);
 	}
 
 	for(auto system_id : details.all_systems) {
 		auto cpp_sys_name = cpp_identifier(decl_full_name(system_id));
 
-		ctx.write(
-			std::format(
-				"ecsact::entt::wrapper::core::prepare_system<{}>(registry);\n",
-				cpp_sys_name
-			)
+		ctx.writef(
+			"ecsact::entt::wrapper::core::prepare_system<{}>(registry);\n",
+			cpp_sys_name
 		);
 	}
 }

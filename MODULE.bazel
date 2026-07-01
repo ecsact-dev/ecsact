@@ -26,16 +26,13 @@ use_repo(emsdk, "emscripten_bin_win")
 emscripten_cache = use_extension("@emsdk//:emscripten_cache.bzl", "emscripten_cache", dev_dependency = True)
 use_repo(emscripten_cache, "emscripten_cache")
 
-bazel_dep(name = "aspect_rules_lint", version = "1.5.3", dev_dependency = True)
-bazel_dep(name = "toolchains_llvm", version = "1.4.0", dev_dependency = True)
-
-llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
-llvm.toolchain(llvm_version = "19.1.0")
-use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
-
 git_override(
     module_name = "hedron_compile_commands",
     commit = "fc76d0bd6a57447ca14eebb2e7009666ed915ece",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD) -replace '\\/std:c\\+\\+17', '-std=c++17' | Set-Content BUILD\"",
+        "powershell.exe -Command \"(Get-Content refresh_compile_commands.bzl) -replace '\\/std:c\\+\\+17', '-std=c++17' | Set-Content refresh_compile_commands.bzl\"",
+    ],
     remote = "https://github.com/zaucy/bazel-compile-commands-extractor.git",
 )
 
@@ -45,33 +42,69 @@ git_override(
     remote = "git@github.com:zaucy/docoptexpr.git",
 )
 
-bazel_dep(name = "rules_cc", version = "0.2.16")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "boost.mp11", version = "1.87.0")
-bazel_dep(name = "boost.dll", version = "1.87.0")
-bazel_dep(name = "boost.process", version = "1.87.0")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
-bazel_dep(name = "boost.algorithm", version = "1.87.0")
-bazel_dep(name = "boost.regex", version = "1.87.0")
+single_version_override(
+    module_name = "libarchive",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content libarchive_bazel_windows_config.h) -replace '^#define (mode_t|pid_t|ssize_t).*', '' | Set-Content libarchive_bazel_windows_config.h\"",
+    ],
+)
+
+single_version_override(
+    module_name = "rules_wasmer",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content wasmer/private/templates/wasmer.windows.BUILD.bazel -Raw) -replace 'static_library = \\\"lib/wasmer.lib\\\"', ('shared_library = \\\"lib/wasmer.dll\\\",' + [Environment]::NewLine + '    interface_library = \\\"lib/wasmer.dll.lib\\\"') | Set-Content wasmer/private/templates/wasmer.windows.BUILD.bazel -NoNewline\"",
+    ],
+)
+
+single_version_override(
+    module_name = "boost.asio",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD.bazel -Raw) -replace '-DEFAULTLIB:ws2_32', '-lws2_32' -replace '-DEFAULTLIB:mswsock', '-lmswsock\\\", \\\"-lbcrypt' | Set-Content BUILD.bazel -NoNewline\"",
+    ],
+)
+
+single_version_override(
+    module_name = "boost.process",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD.bazel -Raw) -replace '-DEFAULTLIB:shell32', '-lshell32\\\", \\\"-lntdll' | Set-Content BUILD.bazel -NoNewline\"",
+    ],
+)
+
+single_version_override(
+    module_name = "tracy",
+    patch_cmds = [
+        "powershell.exe -Command \"(Get-Content BUILD.bazel -Raw) -replace '    includes = ', ('    linkopts = select({\\\"@@platforms//os:windows\\\": [\\\"-lws2_32\\\", \\\"-ldbghelp\\\", \\\"-luser32\\\", \\\"-ladvapi32\\\"], \\\"//conditions:default\\\": []}),' + [Environment]::NewLine + '    includes = ') | Set-Content BUILD.bazel -NoNewline\"",
+    ],
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.19")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "boost.mp11", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.dll", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.process", version = "1.90.0.bcr.1")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "boost.algorithm", version = "1.90.0.bcr.1")
+bazel_dep(name = "boost.regex", version = "1.90.0.bcr.1")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1")
 bazel_dep(name = "magic_enum", version = "0.9.8")
 bazel_dep(name = "libarchive", version = "3.8.1.bcr.2")
 bazel_dep(name = "yaml-cpp", version = "0.9.0")
 bazel_dep(name = "docoptexpr", version = "0.1.0")
-bazel_dep(name = "boringssl", version = "0.20260211.0")
+bazel_dep(name = "boringssl", version = "0.20260616.0")
 bazel_dep(name = "tracy", version = "0.11.1.edr.2")
 bazel_dep(name = "xxhash", version = "0.8.3.bcr.1")
-bazel_dep(name = "boost.url", version = "1.87.0")
+bazel_dep(name = "boost.url", version = "1.90.0.bcr.1")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "lexy", version = "2022.05.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "rules_wasmer", version = "0.1.2")
+bazel_dep(name = "llvm", version = "0.8.9")
 
 wasmer = use_extension("@rules_wasmer//wasmer:extensions.bzl", "wasmer")
 use_repo(wasmer, "wasmer")
 
 register_toolchains(
-    "@llvm_toolchain//:all",
+    "@llvm//toolchain:all",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_linux_arm64",
     "@emsdk//emscripten_toolchain:cc-toolchain-wasm-emscripten_mac",

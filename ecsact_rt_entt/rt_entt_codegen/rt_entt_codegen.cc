@@ -116,10 +116,10 @@ void ecsact_codegen_plugin(
 
 	ecsact::codegen_plugin_context ctx{package_id, 0, write_fn, report_fn};
 
-	ctx.write(GENERATED_FILE_DISCLAIMER);
+	ctx.writef("{}", GENERATED_FILE_DISCLAIMER);
 
 	if(ecsact_meta_main_package() != package_id) {
-		ctx.write(MAIN_PACKAGE_ONLY_DISCLAIMER);
+		ctx.writef("{}", MAIN_PACKAGE_ONLY_DISCLAIMER);
 		return;
 	}
 
@@ -144,18 +144,19 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/error_check.hh");
 	inc_header(ctx, "ecsact/entt/detail/id_map.hh");
 	inc_header(ctx, "xxhash.h");
-	ctx.write("#include <execution>\n");
+	ctx.writef("{}", "#include <execution>\n");
 
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 	inc_package_header(ctx, package_id);
 	for(auto dep : ecsact::meta::get_dependencies(package_id)) {
 		assert(package_id != dep);
 		inc_package_header(ctx, dep);
 	}
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 
-	ctx.write("// test1234\n");
-	ctx.write(
+	ctx.writef("{}", "// test1234\n");
+	ctx.writef(
+		"{}",
 		"using exec_entry_t = std::pair<ecsact::entt::execute_fn_t, const "
 		"ecsact::entt::actions_map&>;\n\n"
 	);
@@ -169,11 +170,16 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		ctx.write("result.reserve(", details.all_components.size(), ");\n");
+		ctx.writef(
+			"{}{}{}",
+			"result.reserve(",
+			details.all_components.size(),
+			");\n"
+		);
 
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write("result.insert(", cpp_comp_name, "::id);\n");
+			ctx.writef("{}{}{}", "result.insert(", cpp_comp_name, "::id);\n");
 		}
 	});
 
@@ -182,11 +188,17 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		ctx.write("result.reserve(", details.all_components.size(), ");\n");
+		ctx.writef(
+			"{}{}{}",
+			"result.reserve(",
+			details.all_components.size(),
+			");\n"
+		);
 
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}{}",
 				"result.insert({::",
 				cpp_comp_name,
 				"::id, ",
@@ -202,7 +214,8 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}",
 			"result.reserve(",
 			std::ranges::distance(details.all_components),
 			");\n"
@@ -210,7 +223,8 @@ void ecsact_codegen_plugin(
 
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}{}",
 				"result.insert({::",
 				cpp_comp_name,
 				"::id, ",
@@ -232,7 +246,8 @@ void ecsact_codegen_plugin(
 				return !ecsact::meta::get_field_ids(comp_id).empty();
 			});
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}",
 			"result.reserve(",
 			std::ranges::distance(non_tag_component_ids),
 			");\n"
@@ -240,7 +255,8 @@ void ecsact_codegen_plugin(
 
 		for(auto comp_id : non_tag_component_ids) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}{}",
 				"result.insert({::",
 				cpp_comp_name,
 				"::id, ",
@@ -256,11 +272,17 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		ctx.write("result.reserve(", details.all_components.size(), ");\n");
+		ctx.writef(
+			"{}{}{}",
+			"result.reserve(",
+			details.all_components.size(),
+			");\n"
+		);
 
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}{}",
 				"result.insert({::",
 				cpp_comp_name,
 				"::id, ",
@@ -276,11 +298,17 @@ void ecsact_codegen_plugin(
 			return;
 		}
 
-		ctx.write("result.reserve(", details.all_components.size(), ");\n");
+		ctx.writef(
+			"{}{}{}",
+			"result.reserve(",
+			details.all_components.size(),
+			");\n"
+		);
 
 		for(auto comp_id : details.all_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}{}",
 				"result.insert({::",
 				cpp_comp_name,
 				"::id, ",
@@ -311,11 +339,12 @@ void ecsact_codegen_plugin(
 			}
 		}
 
-		ctx.write("result.reserve(", stream_components.size(), ");\n");
+		ctx.writef("{}{}{}", "result.reserve(", stream_components.size(), ");\n");
 
 		for(auto comp_id : stream_components) {
 			auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}{}",
 				"result.insert({::",
 				cpp_comp_name,
 				"::id, ",
@@ -326,7 +355,7 @@ void ecsact_codegen_plugin(
 		}
 	});
 
-	ctx.write("\n");
+	ctx.writef("{}", "\n");
 
 	for(auto comp_id : details.all_components) {
 		auto cpp_comp_name = cpp_identifier(decl_full_name(comp_id));
@@ -337,14 +366,15 @@ void ecsact_codegen_plugin(
 				cpp_comp_name
 			),
 			[&] {
-				ctx.write("using type = ::", cpp_comp_name, ";\n");
-				ctx.write("static constexpr bool in_place_delete = true;\n");
-				ctx.write(
+				ctx.writef("{}{}{}", "using type = ::", cpp_comp_name, ";\n");
+				ctx.writef("{}", "static constexpr bool in_place_delete = true;\n");
+				ctx.writef(
+					"{}",
 					"static constexpr std::size_t page_size = ENTT_PACKED_PAGE;\n"
 				);
 			}
 		);
-		ctx.write(";\n");
+		ctx.writef("{}", ";\n");
 	}
 
 	{ // Print core Ecsact API methods

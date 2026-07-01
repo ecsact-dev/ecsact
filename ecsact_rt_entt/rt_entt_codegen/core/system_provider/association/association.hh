@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_ASSOCIATION_ASSOCIATION_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_ASSOCIATION_ASSOCIATION_HH_
 
 #include <string>
 #include <map>
@@ -98,3 +99,5 @@ private:
 	) -> void;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_ASSOCIATION_ASSOCIATION_HH_

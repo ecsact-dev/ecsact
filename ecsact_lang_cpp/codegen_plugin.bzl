@@ -97,7 +97,23 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
 
     name_hash = hash(name)
     cc_binary(
-        name = "{}__bin".format(name_hash),
+        name = "{}__bin.so".format(name_hash),
+        srcs = srcs + [
+            "@ecsact//ecsact_runtime/dylib:dylib.cc",
+            ":{}__src".format(name_hash),
+        ],
+        deps = deps + [
+            "@ecsact//ecsact_runtime:dylib",
+            "@ecsact//ecsact_runtime/dylib:meta",
+            "@ecsact//ecsact_codegen:plugin",
+        ],
+        defines = defines + ["ECSACT_META_API_LOAD_AT_RUNTIME"],
+        linkshared = True,
+        **kwargs
+    )
+
+    cc_binary(
+        name = "{}__bin.dll".format(name_hash),
         srcs = srcs + [
             "@ecsact//ecsact_runtime/dylib:dylib.cc",
             ":{}__src".format(name_hash),
@@ -124,7 +140,10 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
 
     _cc_ecsact_codegen_plugin(
         name = name,
-        cc_binary = ":{}__bin".format(name_hash),
+        cc_binary = select({
+            "@platforms//os:windows": ":{}__bin.dll".format(name_hash),
+            "//conditions:default": ":{}__bin.so".format(name_hash),
+        }),
         output_extension = output_extension,
         outputs = outputs,
     )

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_INTERNAL_MARKERS_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_INTERNAL_MARKERS_HH_
 
 #include <cstdint>
 #include <type_traits>
@@ -126,3 +127,4 @@ auto add_exec_itr_beforechange_if_needed( //
 }
 
 } // namespace ecsact::entt::detail
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_INTERNAL_MARKERS_HH_

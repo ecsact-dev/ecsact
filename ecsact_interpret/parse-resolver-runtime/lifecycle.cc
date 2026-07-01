@@ -1,6 +1,7 @@
 #include "ecsact_interpret/parse-resolver-runtime/lifecycle.hh"
 
 #include <array>
+#include <vector>
 #include "ecsact/runtime/common.h"
 
 using ecsact::interpret::details::castable_destroyable_ids_t;

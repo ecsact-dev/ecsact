@@ -1,6 +1,7 @@
 #include "ecsact/cli/detail/archive.hh"
 
 #include <memory>
+#include <vector>
 #include <stdexcept>
 #include <format>
 #include <filesystem>

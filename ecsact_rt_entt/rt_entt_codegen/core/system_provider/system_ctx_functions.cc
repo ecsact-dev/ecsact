@@ -17,7 +17,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 ) -> void {
 	if(sys_like_id.is_action()) {
 		auto action_name = cpp_identifier(decl_full_name(sys_like_id));
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}",
 			"\t#ifdef TRACY_ENABLE\n",
 			"ZoneScopedNC(\"context_action ",
 			action_name,
@@ -25,7 +26,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 			"#endif\n"
 		);
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}",
 			"*static_cast<",
 			action_name,
 			"*>(out_action_data) = *static_cast<const ",
@@ -34,7 +36,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_action_impl(
 		);
 	} else {
 		// TODO(Kelwan): Trying to access .action() without a valid action
-		ctx.write("\n");
+		ctx.writef("{}", "\n");
 	}
 }
 
@@ -61,7 +63,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_add_impl(
 	if(adds_comps.size() == 1) {
 		const auto& comp_id = adds_comps.front();
 		auto        type_name = cpp_identifier(decl_full_name(comp_id));
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}{}",
 			"wrapper::dynamic::context_add<::",
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
@@ -81,7 +84,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_add_impl(
 			for(int i = 0; i < adds_comps.size(); ++i) {
 				const auto comp_id = adds_comps[i];
 				auto       type_name = cpp_identifier(decl_full_name(comp_id));
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}{}{}",
 					"{",
 					"ecsact_id_cast<ecsact_component_like_id>(",
 					type_name,
@@ -94,9 +98,12 @@ auto ecsact::rt_entt_codegen::core::provider::context_add_impl(
 		}
 	);
 
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 
-	ctx.write("add_fns.at(component_id)(this, component_id, component_data);\n");
+	ctx.writef(
+		"{}",
+		"add_fns.at(component_id)(this, component_id, component_data);\n"
+	);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
@@ -125,7 +132,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 		const auto& comp_id = remove_comps.front();
 
 		auto type_name = cpp_identifier(decl_full_name(comp_id));
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}",
 			"wrapper::dynamic::context_remove<::",
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
@@ -134,24 +142,24 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 		);
 		return;
 	}
-	ctx.write(
-		std::format(
-			"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
-			"ecsact_component_like_id, const void*, {}_t&);\n",
-			view_type_name
-		)
+	ctx.writef(
+		"using remove_fn_t = void (*)(ecsact_system_execution_context*, "
+		"ecsact_component_like_id, const void*, {}_t&);\n",
+		view_type_name
 	);
 
-	ctx.write("static const auto remove_fns = []()\n");
+	ctx.writef("{}", "static const auto remove_fns = []()\n");
 
 	block(ctx, "", [&] {
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"auto result = std::unordered_map<ecsact_component_like_id, "
 			"remove_fn_t>{};\n"
 		);
 		for(const auto comp_id : details.removable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}",
 				"result[ecsact_id_cast<ecsact_component_like_id>(",
 				type_name,
 				"::id)] = &wrapper::dynamic::context_remove<",
@@ -160,10 +168,11 @@ auto ecsact::rt_entt_codegen::core::provider::context_remove_impl(
 			);
 		}
 
-		ctx.write("return result;\n");
+		ctx.writef("{}", "return result;\n");
 	});
-	ctx.write("();\n");
-	ctx.write(
+	ctx.writef("{}", "();\n");
+	ctx.writef(
+		"{}",
 		"remove_fns.at(component_id)(this, component_id, nullptr, *view);\n"
 	);
 }
@@ -191,7 +200,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 		return;
 	}
 	auto system_name = decl_full_name(sys_like_id);
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}",
 		"#ifdef TRACY_ENABLE\n"
 		"\tZoneScopedNC(\"context_get ",
 		system_name,
@@ -205,12 +215,14 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 		auto comp_name = decl_full_name(comp_id);
 		auto type_name = cpp_identifier(comp_name);
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}",
 			"assert(ecsact_id_cast<ecsact_component_like_id>(::",
 			type_name,
 			"::id) == component_id);\n"
 		);
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}",
 			"*static_cast<::",
 			type_name,
 			"*>(out_component_data) = view->get<::",
@@ -220,15 +232,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 		return;
 	}
 
-	ctx.write(
-		std::format(
-			"using get_fn_t = void (*)(ecsact_system_execution_context*, "
-			"ecsact_component_like_id, void *, const void*, {}_t&);\n",
-			view_type_name
-		)
+	ctx.writef(
+		"using get_fn_t = void (*)(ecsact_system_execution_context*, "
+		"ecsact_component_like_id, void *, const void*, {}_t&);\n",
+		view_type_name
 	);
 
-	ctx.write("static const auto get_fns = []()\n");
+	ctx.writef("{}", "static const auto get_fns = []()\n");
 
 	block(ctx, "", [&] {
 		ctx.writef(
@@ -237,7 +247,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 		);
 		for(const auto comp_id : details.readable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}",
 				"result[ecsact_id_cast<ecsact_component_like_id>(",
 				type_name,
 				"::id)] = &wrapper::dynamic::context_get<",
@@ -246,11 +257,12 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 			);
 		}
 
-		ctx.write("return result;\n");
+		ctx.writef("{}", "return result;\n");
 	});
-	ctx.write("();\n");
+	ctx.writef("{}", "();\n");
 
-	ctx.write(
+	ctx.writef(
+		"{}",
 		"get_fns[component_id]"
 		"(this, component_id, out_component_data, nullptr, *view"
 		");\n"
@@ -268,7 +280,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 	}
 
 	auto system_name = decl_full_name(sys_like_id);
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}{}",
 		"#ifdef TRACY_ENABLE\n",
 		"\tZoneScopedNC(\"context_update ",
 		system_name,
@@ -281,7 +294,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 		auto        comp_name = decl_full_name(comp_id);
 		auto        type_name = cpp_identifier(comp_name);
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}{}",
 			"wrapper::dynamic::context_update<::",
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
@@ -292,15 +306,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 		return;
 	}
 
-	ctx.write(
-		std::format(
-			"using update_fn_t = void (*)(ecsact_system_execution_context*, "
-			"ecsact_component_like_id, const void *, const void*, {}_t&);\n",
-			view_type_name
-		)
+	ctx.writef(
+		"using update_fn_t = void (*)(ecsact_system_execution_context*, "
+		"ecsact_component_like_id, const void *, const void*, {}_t&);\n",
+		view_type_name
 	);
 
-	ctx.write("static const auto update_fns = []()\n");
+	ctx.writef("{}", "static const auto update_fns = []()\n");
 
 	block(ctx, "", [&] {
 		ctx.writef(
@@ -309,7 +321,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 		);
 		for(const auto comp_id : details.writable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.write(
+			ctx.writef(
+				"{}{}{}{}{}",
 				"result[ecsact_id_cast<ecsact_component_like_id>(",
 				type_name,
 				"::id)] = &wrapper::dynamic::context_update<",
@@ -318,11 +331,12 @@ auto ecsact::rt_entt_codegen::core::provider::context_update_impl(
 			);
 		}
 
-		ctx.write("return result;\n");
+		ctx.writef("{}", "return result;\n");
 	});
-	ctx.write("();\n");
+	ctx.writef("{}", "();\n");
 
-	ctx.write(
+	ctx.writef(
+		"{}",
 		"update_fns[component_id]"
 		"(this, component_id, component_data, nullptr, *view);\n"
 	);
@@ -334,12 +348,13 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details
 ) -> void {
 	if(details.writable_comps.size() == 0) {
-		ctx.write("return false;");
+		ctx.writef("{}", "return false;");
 		return;
 	}
 
 	auto system_name = decl_full_name(sys_like_id);
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}{}",
 		"#ifdef TRACY_ENABLE\n",
 		"\tZoneScopedNC(\"context_has ",
 		system_name,
@@ -352,7 +367,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 		auto        type_name = cpp_identifier(decl_full_name(comp_id));
 		auto        comp_name = decl_full_name(comp_id);
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}",
 			"return wrapper::dynamic::context_has<::",
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_like_id>(",
@@ -368,7 +384,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 		[&] {
 			for(const auto comp_id : details.readable_comps) {
 				auto type_name = cpp_identifier(decl_full_name(comp_id));
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}",
 					"{ecsact_id_cast<ecsact_component_like_id>(",
 					type_name,
 					"::id), &wrapper::dynamic::context_has<",
@@ -378,9 +395,12 @@ auto ecsact::rt_entt_codegen::core::provider::context_has_impl(
 			}
 		}
 	);
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 
-	ctx.write("return has_fns.at(component_id)(this, component_id, nullptr);\n");
+	ctx.writef(
+		"{}",
+		"return has_fns.at(component_id)(this, component_id, nullptr);\n"
+	);
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
@@ -394,7 +414,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 	}
 
 	auto system_name = decl_full_name(sys_like_id);
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}{}",
 		"#ifdef TRACY_ENABLE\n",
 		"\tZoneScopedNC(\"context_generate ",
 		system_name,
@@ -414,7 +435,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 					auto comp_name = decl_full_name(comp_id);
 					auto type_name = cpp_identifier(comp_name);
 
-					ctx.write(
+					ctx.writef(
+						"{}{}{}{}{}",
 						"{",
 						type_name,
 						"::id, &wrapper::dynamic::context_generate_add<",
@@ -425,23 +447,25 @@ auto ecsact::rt_entt_codegen::core::provider::context_generate_impl(
 			}
 		}
 	);
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 
 	// NOTE(Kelwan): Multiple generates blocks are allowed in Ecsact systems but
 	// currently the interpreter won't allow this. More testing required after the
 	// issue is resolved https://github.com/ecsact-dev/ecsact_interpret/issues/185
-	ctx.write("auto entity = registry->create();\n");
+	ctx.writef("{}", "auto entity = registry->create();\n");
 
-	ctx.write(
+	ctx.writef(
+		"{}",
 		"registry->template emplace<ecsact::entt::detail::created_entity>(entity, "
 		"ecsact_generated_entity);\n"
 	);
 
 	block(ctx, "for(int i = 0; i < component_count; ++i)", [&] {
-		ctx.write("const auto component_id = component_ids[i];\n");
-		ctx.write("const void* component_data = components_data[i];\n");
+		ctx.writef("{}", "const auto component_id = component_ids[i];\n");
+		ctx.writef("{}", "const void* component_data = components_data[i];\n");
 
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"generate_fns.at(component_id)(this, component_id, "
 			"component_data, nullptr, entity);\n"
 		);
@@ -460,7 +484,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 	}
 
 	auto system_name = decl_full_name(sys_like_id);
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}{}",
 		"#ifdef TRACY_ENABLE\n",
 		"\tZoneScopedNC(\"context_stream_toggle ",
 		system_name,
@@ -472,7 +497,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 		const auto& comp_id = stream_comps.begin();
 		auto        type_name = cpp_identifier(decl_full_name(*comp_id));
 
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}",
 			"wrapper::dynamic::context_stream_toggle<::",
 			type_name,
 			">(this, ecsact_id_cast<ecsact_component_id>(",
@@ -490,7 +516,8 @@ auto ecsact::rt_entt_codegen::core::provider::context_stream_toggle_impl(
 		[&] {
 			for(const auto comp_id : stream_comps) {
 				auto type_name = cpp_identifier(decl_full_name(comp_id));
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}{}",
 					"{",
 					type_name,
 					"::id, ",
@@ -514,7 +541,7 @@ auto ecsact::rt_entt_codegen::core::provider::context_parent_impl(
 	ecsact::codegen_plugin_context& ctx,
 	const system_like_id_variant&   sys_like_id
 ) -> void {
-	ctx.write("return this->parent_ctx;\n");
+	ctx.writef("{}", "return this->parent_ctx;\n");
 }
 
 auto ecsact::rt_entt_codegen::core::provider::context_other_impl(

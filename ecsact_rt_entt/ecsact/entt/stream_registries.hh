@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_STREAM_REGISTRIES_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_STREAM_REGISTRIES_HH_
 
 #include <thread>
 #include <map>
@@ -82,3 +83,5 @@ public:
 	auto add_registry(ecsact_registry_id) -> void;
 };
 } // namespace ecsact::entt::stream
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_STREAM_REGISTRIES_HH_

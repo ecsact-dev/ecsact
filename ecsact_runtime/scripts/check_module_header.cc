@@ -9,6 +9,7 @@
 #include <string_view>
 #include <unordered_set>
 #include <boost/process.hpp>
+#include <boost/asio.hpp>
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
@@ -316,72 +317,111 @@ int main(int argc, char* argv[]) {
 			return format_exit_code;
 		}
 
-		auto diff_output = bp::ipstream{};
-		auto diff_proc = bp::child(
-			bp::exe(bp::search_path("git")),
-			bp::args({"diff"s, "-U0", header_file.string()}),
-			bp::std_out > diff_output
+		auto ioc = boost::asio::io_context{};
+		auto diff_output = boost::asio::readable_pipe{ioc};
+		auto diff_proc = bp::process(
+			ioc,
+			bp::environment::find_executable("git"),
+			{"diff"s, "-U0", header_file.string()},
+			bp::process_stdio{nullptr, diff_output, nullptr}
 		);
 
-		auto line = std::string{};
-		auto found_line_info = false;
-		while(!found_line_info && std::getline(diff_output, line)) {
-			if(!line.starts_with("@@")) {
-				continue;
+		auto                      line = std::string{};
+		auto                      found_line_info = false;
+		boost::system::error_code ec;
+		boost::asio::streambuf    buffer;
+		while(!found_line_info && !ec) {
+			auto read_bytes = boost::asio::read_until(diff_output, buffer, '\n', ec);
+			if(read_bytes > 0 || buffer.size() > 0) {
+				std::istream is(&buffer);
+				while(!found_line_info && std::getline(is, line)) {
+					if(!line.starts_with("@@")) {
+						continue;
+					}
+
+					found_line_info = true;
+					auto line_start = line.find('-');
+					auto line_end = line.find(' ', line_start);
+					auto line_num =
+						line.substr(line_start + 1, line_end - line_start - 1);
+
+					std::cout //
+						<< "::error file=" << relative_header_path.string()
+						<< ",line=" << line_num << ",title=Out of date FOR_EACH macro for "
+						<< relative_header_path.string()
+						<< "::When adding or removing an Ecsact function from the API "
+						<< "headers you must also update the FOR_EACH_ macro.\n";
+					exit_code += 1;
+				}
+
+				auto removed_fns = std::unordered_set<std::string>{};
+				auto added_fns = std::unordered_set<std::string>{};
+
+				std::istream is_remainder(&buffer);
+				while(std::getline(is_remainder, line)) {
+					auto fn_start_idx = line.find("fn(");
+
+					if(fn_start_idx == std::string::npos) {
+						continue;
+					}
+
+					auto fn_name = line.substr(
+						fn_start_idx + 3,
+						line.find(',', fn_start_idx + 3) - fn_start_idx - 3
+					);
+
+					if(line.starts_with('-')) {
+						removed_fns.insert(fn_name);
+					} else if(line.starts_with('+')) {
+						added_fns.insert(fn_name);
+					}
+				}
+
+				while(!ec) {
+					auto read_bytes =
+						boost::asio::read_until(diff_output, buffer, '\n', ec);
+					if(read_bytes > 0 || buffer.size() > 0) {
+						std::istream is(&buffer);
+						while(std::getline(is, line)) {
+							auto fn_start_idx = line.find("fn(");
+
+							if(fn_start_idx == std::string::npos) {
+								continue;
+							}
+
+							auto fn_name = line.substr(
+								fn_start_idx + 3,
+								line.find(',', fn_start_idx + 3) - fn_start_idx - 3
+							);
+
+							if(line.starts_with('-')) {
+								removed_fns.insert(fn_name);
+							} else if(line.starts_with('+')) {
+								added_fns.insert(fn_name);
+							}
+						}
+					}
+				}
+
+				diff_proc.wait();
+
+				for(auto added_fn : added_fns) {
+					if(removed_fns.contains(added_fn)) {
+						continue;
+					}
+
+					report_needs_for_each_added(header_file, added_fn);
+				}
+
+				for(auto removed_fn : removed_fns) {
+					if(added_fns.contains(removed_fn)) {
+						continue;
+					}
+
+					report_needs_for_each_removal(header_file, removed_fn);
+				}
 			}
 
-			found_line_info = true;
-			auto line_start = line.find('-');
-			auto line_end = line.find(' ', line_start);
-			auto line_num = line.substr(line_start + 1, line_end - line_start - 1);
-
-			std::cout //
-				<< "::error file=" << relative_header_path.string()
-				<< ",line=" << line_num << ",title=Out of date FOR_EACH macro for "
-				<< relative_header_path.string()
-				<< "::When adding or removing an Ecsact function from the API "
-				<< "headers you must also update the FOR_EACH_ macro.\n";
-			exit_code += 1;
+			std::cout << "::debug::Done\n";
+			return exit_code;
 		}
-
-		auto removed_fns = std::unordered_set<std::string>{};
-		auto added_fns = std::unordered_set<std::string>{};
-		while(std::getline(diff_output, line)) {
-			auto fn_start_idx = line.find("fn(");
-
-			if(fn_start_idx == std::string::npos) {
-				continue;
-			}
-
-			auto fn_name = line.substr(
-				fn_start_idx + 3,
-				line.find(',', fn_start_idx + 3) - fn_start_idx - 3
-			);
-
-			if(line.starts_with('-')) {
-				removed_fns.insert(fn_name);
-			} else if(line.starts_with('+')) {
-				added_fns.insert(fn_name);
-			}
-		}
-
-		for(auto added_fn : added_fns) {
-			if(removed_fns.contains(added_fn)) {
-				continue;
-			}
-
-			report_needs_for_each_added(header_file, added_fn);
-		}
-
-		for(auto removed_fn : removed_fns) {
-			if(added_fns.contains(removed_fn)) {
-				continue;
-			}
-
-			report_needs_for_each_removal(header_file, removed_fn);
-		}
-	}
-
-	std::cout << "::debug::Done\n";
-	return exit_code;
-}

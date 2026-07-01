@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_CORE_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_CORE_HH_
 
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen/plugin.hh"
@@ -102,3 +103,5 @@ auto print_hash_registry(
 ) -> void;
 
 } // namespace ecsact::rt_entt_codegen::core
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_CORE_HH_

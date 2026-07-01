@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_BYTES_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_BYTES_HH_
 
 #include <concepts>
 #include <array>
@@ -102,3 +103,5 @@ auto bytes_copy( //
 }
 
 } // namespace ecsact::entt::detail
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_BYTES_HH_

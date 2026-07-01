@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_ECSACT_ENTT_DETAILS_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_ECSACT_ENTT_DETAILS_HH_
 
 #include <vector>
 #include <unordered_set>
@@ -85,3 +86,5 @@ struct ecsact_entt_details {
 };
 
 } // namespace ecsact::rt_entt_codegen
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_ECSACT_ENTT_DETAILS_HH_

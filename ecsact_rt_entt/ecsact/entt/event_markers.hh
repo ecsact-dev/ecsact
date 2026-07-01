@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_EVENT_MARKERS_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_EVENT_MARKERS_HH_
 
 #include <type_traits>
 
@@ -17,3 +18,5 @@ template<typename C>
 struct component_removed {};
 
 } // namespace ecsact::entt
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_EVENT_MARKERS_HH_

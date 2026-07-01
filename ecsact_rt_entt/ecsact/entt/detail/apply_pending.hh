@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_APPLY_PENDING_HH_
+#define ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_APPLY_PENDING_HH_
 
 #include <entt/entt.hpp>
 #include "ecsact/entt/wrapper/core.hh"
@@ -37,3 +38,5 @@ auto apply_pending_remove(ecsact::entt::registry_t& registry) -> void {
 }
 
 } // namespace ecsact::entt::detail
+
+#endif // ECSACT_RT_ENTT_ECSACT_ENTT_DETAIL_APPLY_PENDING_HH_

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_UTIL_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_UTIL_HH_
 
 #include <string_view>
 #include <vector>
@@ -24,7 +25,8 @@ public:
 		auto&&                          global_name
 	)
 		: ctx(ctx) {
-		ctx.write(
+		ctx.writef(
+			"{}{}{}{}{}{}{}{}{}",
 			"decltype(ecsact::entt::detail::globals::",
 			global_name,
 			") ",
@@ -37,8 +39,9 @@ public:
 			")> {"
 		);
 		ctx.indentation += 1;
-		ctx.write("\n");
-		ctx.write(
+		ctx.writef("{}", "\n");
+		ctx.writef(
+			"{}{}{}",
 			"auto result = "
 			"std::remove_cvref_t<decltype(ecsact::entt::detail::globals::",
 			global_name,
@@ -57,9 +60,9 @@ public:
 			return;
 		}
 		disposed = true;
-		ctx.write("return result;");
+		ctx.writef("{}", "return result;");
 		ctx.indentation -= 1;
-		ctx.write("\n}();\n\n");
+		ctx.writef("{}", "\n}();\n\n");
 	}
 };
 
@@ -82,7 +85,8 @@ inline auto init_global( //
 	// globals can only be initialized at the top
 	assert(ctx.indentation == 0);
 
-	ctx.write(
+	ctx.writef(
+		"{}{}{}{}{}",
 		"decltype(ecsact::entt::detail::globals::",
 		global_name,
 		") ecsact::entt::detail::globals::",
@@ -104,7 +108,7 @@ inline auto inc_header( //
 	ecsact::codegen_plugin_context& ctx,
 	auto&&                          header_path
 ) -> void {
-	ctx.write("#include \"", header_path, "\"\n");
+	ctx.writef("{}{}{}", "#include \"", header_path, "\"\n");
 }
 
 inline auto inc_package_header( //
@@ -182,23 +186,23 @@ class method_printer {
 		}
 
 		if(!parameters->empty()) {
-			ctx.write("\n");
+			ctx.writef("{}", "\n");
 		}
 
 		for(auto i = 0; parameters->size() > i; ++i) {
 			auto&& [param_type, param_name] = parameters->at(i);
-			ctx.write("\t", param_type, " ", param_name);
+			ctx.writef("{}{}{}{}", "\t", param_type, " ", param_name);
 			if(i + 1 < parameters->size()) {
-				ctx.write(",");
+				ctx.writef("{}", ",");
 			}
-			ctx.write("\n");
+			ctx.writef("{}", "\n");
 		}
 
 		parameters = std::nullopt;
 
-		ctx.write(") -> ", type, " {");
+		ctx.writef("{}{}{}", ") -> ", type, " {");
 		ctx.indentation += 1;
-		ctx.write("\n");
+		ctx.writef("{}", "\n");
 	}
 
 public:
@@ -208,7 +212,7 @@ public:
 	)
 		: ctx(ctx) {
 		parameters.emplace();
-		ctx.write("auto ", method_name, "(");
+		ctx.writef("{}{}{}", "auto ", method_name, "(");
 	}
 
 	method_printer(method_printer&& other) : ctx(other.ctx) {
@@ -253,7 +257,7 @@ public:
 		}
 		disposed = true;
 		ctx.indentation -= 1;
-		ctx.write("\n}\n\n");
+		ctx.writef("{}", "\n}\n\n");
 	}
 };
 
@@ -284,11 +288,21 @@ auto make_view( //
 	using ecsact::rt_entt_codegen::util::decl_cpp_ident;
 	using std::views::transform;
 
-	ctx.write("auto ", view_var_name, " = ", registry_var_name, ".view<");
+	ctx.writef(
+		"{}{}{}{}{}",
+		"auto ",
+		view_var_name,
+		" = ",
+		registry_var_name,
+		".view<"
+	);
 
-	ctx.write(comma_delim(
-		details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
-	));
+	ctx.writef(
+		"{}",
+		comma_delim(
+			details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
+		)
+	);
 
 	for(auto comp_id : details.writable_comps) {
 		auto comp_name = decl_cpp_ident(comp_id);
@@ -302,11 +316,11 @@ auto make_view( //
 	}
 
 	if(!additional_components.empty()) {
-		ctx.write(", ");
-		ctx.write(comma_delim(additional_components));
+		ctx.writef("{}", ", ");
+		ctx.writef("{}", comma_delim(additional_components));
 	}
 
-	ctx.write(">(");
+	ctx.writef("{}", ">(");
 
 	auto exclude_comps = details.exclude_comps |
 		transform(decl_cpp_ident<ecsact_component_like_id>);
@@ -318,14 +332,15 @@ auto make_view( //
 	);
 
 	if(!additional_exclude_components.empty()) {
-		ctx.write(
+		ctx.writef(
+			"{}{}{}",
 			"::entt::exclude<",
 			comma_delim(additional_exclude_components),
 			">"
 		);
 	}
 
-	ctx.write(");\n");
+	ctx.writef("{}", ");\n");
 }
 
 template<typename ID>
@@ -374,3 +389,5 @@ auto make_id_map_type(std::string value_type) -> std::string {
 	);
 }
 } // namespace ecsact::rt_entt_codegen::util
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_UTIL_HH_

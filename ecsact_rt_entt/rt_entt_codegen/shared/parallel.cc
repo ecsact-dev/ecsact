@@ -111,23 +111,19 @@ auto ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(
 			);
 
 			if(single_system_like_variant->is_action()) {
-				ctx.write(
-					std::format(
-						"ecsact::entt::execute_actions<{}>(registry, {}, "
-						"actions_map);\n",
-						sync_sys_name,
-						"nullptr"
-					)
+				ctx.writef(
+					"ecsact::entt::execute_actions<{}>(registry, {}, "
+					"actions_map);\n",
+					sync_sys_name,
+					"nullptr"
 				);
 			}
 			if(single_system_like_variant->is_system()) {
-				ctx.write(
-					std::format(
-						"ecsact::entt::execute_system<{}>(registry, {}, "
-						"actions_map);\n",
-						sync_sys_name,
-						"nullptr"
-					)
+				ctx.writef(
+					"ecsact::entt::execute_system<{}>(registry, {}, "
+					"actions_map);\n",
+					sync_sys_name,
+					"nullptr"
 				);
 			}
 			continue;
@@ -135,34 +131,31 @@ auto ecsact::rt_entt_codegen::parallel::print_parallel_execution_cluster(
 		if(systems_to_parallel.size() == 0) {
 		}
 
-		ctx.write("execute_parallel_cluster(registry, nullptr, ");
-		ctx.write(
-			std::format(
-				"std::array<exec_entry_t, {}> {{\n",
-				systems_to_parallel.size()
-			)
-		);
+		ctx.writef("{}", "execute_parallel_cluster(registry, nullptr, ");
+		ctx.writef("std::array<exec_entry_t, {}> {{\n", systems_to_parallel.size());
 		for(const auto system_like_id_variant : systems_to_parallel) {
 			auto cpp_decl_name =
 				cpp_identifier(ecsact::meta::decl_full_name(system_like_id_variant));
 
 			if(system_like_id_variant.is_action()) {
-				ctx.write(
+				ctx.writef(
+					"{}{}{}",
 					"\texec_entry_t{&ecsact::entt::execute_actions<",
 					cpp_decl_name,
 					">, actions_map},\n"
 				);
 			} else if(system_like_id_variant.is_system()) {
-				ctx.write(
+				ctx.writef(
+					"{}{}{}",
 					"\texec_entry_t{&ecsact::entt::execute_system<",
 					cpp_decl_name,
 					">, actions_map},\n"
 				);
 			} else {
-				ctx.write("// ??? unhandled ??? ", cpp_decl_name, "\n");
+				ctx.writef("{}{}{}", "// ??? unhandled ??? ", cpp_decl_name, "\n");
 			}
 		}
-		ctx.write("});\n");
+		ctx.writef("{}", "});\n");
 	}
 }
 

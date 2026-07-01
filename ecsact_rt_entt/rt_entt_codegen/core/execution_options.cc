@@ -20,7 +20,8 @@ inline auto print_static_maps(
 		[&] {
 			for(auto component_id : details.all_components) {
 				auto type_name = cpp_identifier(decl_full_name(component_id));
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}{}{}{}",
 					"{",
 					"ecsact_id_cast<ecsact_component_like_id>(",
 					type_name,
@@ -33,7 +34,7 @@ inline auto print_static_maps(
 			}
 		}
 	);
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 
 	block(
 		ctx,
@@ -49,7 +50,8 @@ inline auto print_static_maps(
 				if(field_count == 0) {
 					continue;
 				}
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}{}{}",
 					"{",
 					"ecsact_id_cast<ecsact_component_like_id>(",
 					type_name,
@@ -62,7 +64,7 @@ inline auto print_static_maps(
 			}
 		}
 	);
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 
 	block(
 		ctx,
@@ -72,7 +74,8 @@ inline auto print_static_maps(
 		[&] {
 			for(auto component_id : details.all_components) {
 				auto type_name = cpp_identifier(decl_full_name(component_id));
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}{}{}{}",
 					"{",
 					"ecsact_id_cast<ecsact_component_like_id>(",
 					type_name,
@@ -85,7 +88,7 @@ inline auto print_static_maps(
 			}
 		}
 	);
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 
 	block(
 		ctx,
@@ -95,7 +98,8 @@ inline auto print_static_maps(
 		[&] {
 			for(auto action_id : details.all_actions) {
 				auto type_name = cpp_identifier(decl_full_name(action_id));
-				ctx.write(
+				ctx.writef(
+					"{}{}{}{}{}{}{}{}",
 					"{",
 					"ecsact_id_cast<ecsact_action_id>(",
 					type_name,
@@ -109,7 +113,7 @@ inline auto print_static_maps(
 		}
 	);
 
-	ctx.write(";\n");
+	ctx.writef("{}", ";\n");
 }
 
 auto ecsact::rt_entt_codegen::core::print_execution_options(
@@ -128,22 +132,24 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 			.return_type("ecsact_execute_systems_error");
 
 	print_static_maps(ctx, details);
-	ctx.write("auto& reg = ecsact::entt::get_registry(registry_id);\n");
+	ctx.writef("{}", "auto& reg = ecsact::entt::get_registry(registry_id);\n");
 
 	block(ctx, "for(int i = 0; i < options.actions_length; i++)", [&] {
-		ctx.write("auto action = options.actions[i];\n");
-		ctx.write(
+		ctx.writef("{}", "auto action = options.actions[i];\n");
+		ctx.writef(
+			"{}",
 			"auto err = action_error_fns.at(action.action_id)(registry_id, "
 			"action.action_data);\n"
 		);
 		block(ctx, "if(err != ECSACT_EXEC_SYS_OK)", [&] {
-			ctx.write("return err;\n");
+			ctx.writef("{}", "return err;\n");
 		});
 	});
 
 	block(ctx, "for(int i = 0; i < options.create_entities_length; i++)", [&] {
-		ctx.write("auto entity = ecsact::entt::entity_id(reg.create());\n");
-		ctx.write(
+		ctx.writef("{}", "auto entity = ecsact::entt::entity_id(reg.create());\n");
+		ctx.writef(
+			"{}",
 			"reg.template emplace<ecsact::entt::detail::created_entity>(entity, "
 			"options.create_entities[i]);\n"
 		);
@@ -152,10 +158,12 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 			"for(int j = 0; j < options.create_entities_components_length[i]; "
 			"j++)",
 			[&] {
-				ctx.write(
+				ctx.writef(
+					"{}",
 					"auto& component = options.create_entities_components[i][j];\n"
 				);
-				ctx.write(
+				ctx.writef(
+					"{}",
 					"execution_add_fns.at(ecsact_id_cast<ecsact_component_like_id>("
 					"component.component_id))(registry_id, "
 					"entity, "
@@ -166,10 +174,11 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 	});
 
 	block(ctx, "for(int i = 0; i < options.add_components_length; i++)", [&] {
-		ctx.write("auto& component = options.add_components[i];\n");
-		ctx.write("auto entity = options.add_components_entities[i];\n\n");
+		ctx.writef("{}", "auto& component = options.add_components[i];\n");
+		ctx.writef("{}", "auto entity = options.add_components_entities[i];\n\n");
 
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"execution_add_fns.at(ecsact_id_cast<ecsact_component_like_id>("
 			"component.component_id))(registry_id, "
 			"ecsact::entt::entity_id(entity), "
@@ -178,10 +187,14 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 	});
 
 	block(ctx, "for(int i = 0; i < options.update_components_length; i++)", [&] {
-		ctx.write("auto& component = options.update_components[i];\n");
-		ctx.write("auto entity = options.update_components_entities[i];\n\n");
+		ctx.writef("{}", "auto& component = options.update_components[i];\n");
+		ctx.writef(
+			"{}",
+			"auto entity = options.update_components_entities[i];\n\n"
+		);
 
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"execution_update_fns.at(ecsact_id_cast<ecsact_component_like_id>("
 			"component.component_id))(registry_id, "
 			"ecsact::entt::entity_id(entity), "
@@ -190,10 +203,14 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 	});
 
 	block(ctx, "for(int i = 0; i < options.remove_components_length; i++)", [&] {
-		ctx.write("auto& component_id = options.remove_components[i];\n");
-		ctx.write("auto entity = options.remove_components_entities[i];\n\n");
+		ctx.writef("{}", "auto& component_id = options.remove_components[i];\n");
+		ctx.writef(
+			"{}",
+			"auto entity = options.remove_components_entities[i];\n\n"
+		);
 
-		ctx.write(
+		ctx.writef(
+			"{}",
 			"execution_remove_fns.at(ecsact_id_cast<ecsact_component_like_id>("
 			"component_id))(registry_id, "
 			"ecsact::entt::entity_id(entity), "
@@ -202,14 +219,15 @@ auto ecsact::rt_entt_codegen::core::print_execution_options(
 	});
 
 	block(ctx, "for(int i = 0; i < options.destroy_entities_length; i++)", [&] {
-		ctx.write("auto entity = options.destroy_entities[i];\n");
-		ctx.write("reg.destroy(ecsact::entt::entity_id(entity));\n");
-		ctx.write(
+		ctx.writef("{}", "auto entity = options.destroy_entities[i];\n");
+		ctx.writef("{}", "reg.destroy(ecsact::entt::entity_id(entity));\n");
+		ctx.writef(
+			"{}",
 			"reg.template "
 			"emplace<ecsact::entt::detail::destroyed_entity>(ecsact::entt::entity_id("
 			"entity));\n"
 		);
 	});
 
-	ctx.write("return ECSACT_EXEC_SYS_OK;\n");
+	ctx.writef("{}", "return ECSACT_EXEC_SYS_OK;\n");
 }

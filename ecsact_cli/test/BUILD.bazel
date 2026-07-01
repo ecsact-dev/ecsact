@@ -99,6 +99,13 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-DEFAULTLIB:user32.lib",
+            "-DEFAULTLIB:ntdll.lib",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_test(
@@ -121,6 +128,13 @@ cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
+    linkopts = select({
+        "@platforms//os:windows": [
+            "-DEFAULTLIB:user32.lib",
+            "-DEFAULTLIB:ntdll.lib",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_test(

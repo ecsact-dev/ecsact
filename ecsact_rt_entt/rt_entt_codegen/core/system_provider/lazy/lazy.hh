@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_LAZY_LAZY_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_LAZY_LAZY_HH_
 
 #include <cstdint>
 #include <string>
@@ -45,3 +46,5 @@ private:
 	int32_t lazy_iteration_rate;
 };
 } // namespace ecsact::rt_entt_codegen::core::provider
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_CORE_SYSTEM_PROVIDER_LAZY_LAZY_HH_

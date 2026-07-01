@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_SYSTEM_VARIANT_HH_
+#define ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_SYSTEM_VARIANT_HH_
 
 #include <variant>
 #include <cassert>
@@ -56,3 +57,5 @@ ecsact_id_cast<ecsact_decl_id, ecsact::rt_entt_codegen::system_like_id_variant>(
 ) {
 	return ecsact_id_cast<ecsact_decl_id>(v.get_sys_like_id());
 }
+
+#endif // ECSACT_RT_ENTT_RT_ENTT_CODEGEN_SHARED_SYSTEM_VARIANT_HH_
