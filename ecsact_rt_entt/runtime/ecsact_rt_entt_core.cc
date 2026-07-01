@@ -40,6 +40,22 @@ auto ecsact_clone_registry( //
 	return cloned_reg_id;
 }
 
+void ecsact_copy_registry(
+	ecsact_registry_id src_id,
+	ecsact_registry_id dst_id
+) {
+	auto& src_reg = ecsact::entt::get_registry(src_id);
+	auto& dst_reg = ecsact::entt::get_registry(dst_id);
+	dst_reg = {};
+	ecsact::entt::ecsact_init_registry_storage(dst_reg);
+	for(auto&& [entity_id] : src_reg.template storage<entt::entity>().each()) {
+		[[maybe_unused]] auto cloned_entity_id = dst_reg.create(entity_id);
+		assert(cloned_entity_id == entity_id);
+	}
+	ecsact::entt::copy_components(src_reg, dst_reg);
+}
+
+
 auto ecsact_hash_registry(ecsact_registry_id reg_id) -> uint64_t {
 	auto& reg = ecsact::entt::get_registry(reg_id);
 	return ecsact::entt::hash_registry(reg);
