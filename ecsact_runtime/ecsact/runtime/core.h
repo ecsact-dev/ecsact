@@ -52,10 +52,19 @@ ECSACT_CORE_API_FN(void, ecsact_destroy_registry)
  * If `ecsact_hash_registry` is defined then the cloned registry hash must
  * match the original registry.
  */
-ECSACT_CORE_API_FN(ecsact_registry_id, ecsact_clone_registry)
-( //
+ECSACT_CORE_API_FN(ecsact_registry_id, ecsact_clone_registry)(
 	ecsact_registry_id registry,
-	const char*        registry_name);
+	const char*        registry_name
+);
+
+/**
+ * Copies all entities and components from a source registry to a destination
+ * registry. The destination registry is cleared before copy.
+ */
+ECSACT_CORE_API_FN(void, ecsact_copy_registry)(
+	ecsact_registry_id src_registry,
+	ecsact_registry_id dest_registry
+);
 
 /**
  * Creates a hash of current state of the registry. The algorithm is
@@ -295,6 +304,7 @@ ECSACT_CORE_API_FN(ecsact_stream_error, ecsact_stream)
 		fn(ecsact_create_registry, __VA_ARGS__);             \
 		fn(ecsact_destroy_registry, __VA_ARGS__);            \
 		fn(ecsact_clone_registry, __VA_ARGS__);              \
+		fn(ecsact_copy_registry, __VA_ARGS__);               \
 		fn(ecsact_hash_registry, __VA_ARGS__);               \
 		fn(ecsact_clear_registry, __VA_ARGS__);              \
 		fn(ecsact_create_entity, __VA_ARGS__);               \

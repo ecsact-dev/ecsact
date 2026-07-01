@@ -648,6 +648,11 @@ public:
 		return cloned_registry;
 	}
 
+	ECSACT_ALWAYS_INLINE auto copy_to(const registry& dest) const -> void {
+		ecsact_copy_registry(_id, dest.id());
+	}
+
+
 	ECSACT_ALWAYS_INLINE auto hash() const -> uint64_t {
 		return ecsact_hash_registry(_id);
 	}
