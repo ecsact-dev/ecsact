@@ -84,41 +84,6 @@ std::string system_name(ecsact_system_like_id sys_id) {
 	return "UNKNOWN SYSTEM OR ACTION";
 }
 
-std::string component_name(ecsact_component_id comp_id) {
-	if(comp_id == example::WillRemove::id) {
-		return "example.WillRemove";
-	}
-	if(comp_id == example::WillAdd::id) {
-		return "example.WillAdd";
-	}
-	if(comp_id == example::WillAdd::id) {
-		return "example.WillAdd";
-	}
-	if(comp_id == example::Spawner::id) {
-		return "example.Spawner";
-	}
-	if(comp_id == example::ExampleComponent::id) {
-		return "example.ExampleComponent";
-	}
-	if(comp_id == example::ExampleParallelComponent::id) {
-		return "example.ExampleParallelComponent";
-	}
-
-	return "UNKNOWN COMPONENT";
-}
-
-void print_event(
-	ecsact_event        event,
-	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id,
-	const void*         component_data,
-	void*               user_data
-) {
-	std::cout //
-		<< "[EVENT]: " << magic_enum::enum_name(event) << " "
-		<< component_name(component_id) << "\n";
-}
-
 std::atomic_bool wasm_trap_happened = false;
 
 void trap_handler(ecsact_system_like_id system_id, const char* trap_message) {
@@ -224,16 +189,7 @@ int main(int argc, char* argv[]) {
 	for(int i = 0; 10 > i; ++i) {
 		std::cout << "\n==== EXECUTION (" << i << ") ====\n";
 
-		ecsact_execution_events_collector ev_collector{
-			.init_callback = &print_event,
-			.init_callback_user_data = nullptr,
-			.update_callback = &print_event,
-			.update_callback_user_data = nullptr,
-			.remove_callback = &print_event,
-			.remove_callback_user_data = nullptr,
-		};
-
-		ecsact_execute_systems(test_registry.id(), 1, nullptr, &ev_collector);
+		ecsact_execute_systems(test_registry.id(), 1, nullptr);
 		ecsact::si::wasm::consume_and_print_logs();
 
 		std::cout //

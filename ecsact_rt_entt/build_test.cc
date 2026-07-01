@@ -2,7 +2,6 @@
 #include "entt/entt.hpp" // IWYU pragma: keep
 #include "ecsact/entt/detail/apply_pending.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/bytes.hh" // IWYU pragma: keep
-#include "ecsact/entt/detail/execution_events_collector.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/globals.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/hash.hh" // IWYU pragma: keep
 #include "ecsact/entt/detail/internal_markers.hh" // IWYU pragma: keep

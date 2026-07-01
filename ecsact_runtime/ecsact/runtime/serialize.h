@@ -138,10 +138,9 @@ typedef enum ecsact_restore_error {
  */
 ECSACT_SERIALIZE_API_FN(ecsact_restore_error, ecsact_restore_entities)
 ( //
-	ecsact_registry_id                       registry,
-	ecsact_restore_entities_callback         callback,
-	const ecsact_execution_events_collector* events_collector,
-	void*                                    callback_user_data);
+	ecsact_registry_id               registry,
+	ecsact_restore_entities_callback callback,
+	void*                            callback_user_data);
 
 typedef void (*ecsact_restore_as_execution_options_callback)( //
 	const ecsact_execution_options dumped_execution_options,

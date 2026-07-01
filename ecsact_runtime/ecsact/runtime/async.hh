@@ -209,19 +209,7 @@ ECSACT_ALWAYS_INLINE auto stop(ecsact_async_session_id id) -> void {
 ECSACT_ALWAYS_INLINE auto flush_events( //
 	ecsact_async_session_id session_id
 ) -> void {
-	ecsact_async_flush_events(session_id, nullptr, nullptr);
-}
-
-template<typename ExecutionEventsCollector>
-	requires(std::convertible_to<
-					 decltype(std::declval<ExecutionEventsCollector>().c()),
-					 const ecsact_execution_events_collector>)
-ECSACT_ALWAYS_INLINE auto flush_events( //
-	ecsact_async_session_id    session_id,
-	ExecutionEventsCollector&& evc
-) -> void {
-	const ecsact_execution_events_collector evc_c = evc.c();
-	ecsact_async_flush_events(session_id, &evc_c, nullptr);
+	ecsact_async_flush_events(session_id, nullptr);
 }
 
 template<typename AsyncEventsCollector>
@@ -233,17 +221,6 @@ ECSACT_ALWAYS_INLINE auto flush_events( //
 	AsyncEventsCollector&&  async_evc
 ) -> void {
 	const ecsact_async_events_collector async_evc_c = async_evc.c();
-	ecsact_async_flush_events(session_id, nullptr, &async_evc_c);
-}
-
-template<typename ExecutionEventsCollector, typename AsyncEventsCollector>
-ECSACT_ALWAYS_INLINE auto flush_events(
-	ecsact_async_session_id    session_id,
-	ExecutionEventsCollector&& evc,
-	AsyncEventsCollector&&     async_evc
-) -> void {
-	const ecsact_execution_events_collector evc_c = evc.c();
-	const ecsact_async_events_collector     async_evc_c = async_evc.c();
-	ecsact_async_flush_events(session_id, &evc_c, &async_evc_c);
+	ecsact_async_flush_events(session_id, &async_evc_c);
 }
 } // namespace ecsact::async

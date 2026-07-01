@@ -13,8 +13,7 @@
 
 void ecsact_destroy_registry(ecsact_registry_id reg_id) {
 	auto& reg = ecsact::entt::get_registry(reg_id);
-	reg = {};
-	assert(reg.template storage<entt::entity>().in_use() == 0);
+	reg.clear();
 }
 
 auto ecsact_create_registry(const char* registry_name) -> ecsact_registry_id {
@@ -55,7 +54,6 @@ void ecsact_copy_registry(
 	ecsact::entt::copy_components(src_reg, dst_reg);
 }
 
-
 auto ecsact_hash_registry(ecsact_registry_id reg_id) -> uint64_t {
 	auto& reg = ecsact::entt::get_registry(reg_id);
 	return ecsact::entt::hash_registry(reg);
@@ -63,7 +61,7 @@ auto ecsact_hash_registry(ecsact_registry_id reg_id) -> uint64_t {
 
 void ecsact_clear_registry(ecsact_registry_id reg_id) {
 	auto& reg = ecsact::entt::get_registry(reg_id);
-	reg = {};
+	reg.clear();
 	assert(reg.template storage<entt::entity>().in_use() == 0);
 }
 

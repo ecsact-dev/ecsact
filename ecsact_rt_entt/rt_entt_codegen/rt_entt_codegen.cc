@@ -392,8 +392,6 @@ void ecsact_codegen_plugin(
 		core::print_copy_components(ctx, details);
 		core::print_hash_registry(ctx, details);
 		core::print_apply_streaming_data(ctx, details);
-		core::print_trigger_ecsact_events_minimal(ctx, details);
-		core::print_trigger_ecsact_events_all(ctx, details);
 		core::print_cleanup_ecsact_component_events(ctx, details);
 		core::print_execution_options(ctx, details);
 		core::print_cleanup_system_notifies(ctx, details);

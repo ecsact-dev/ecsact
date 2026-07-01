@@ -342,12 +342,11 @@ auto report_entity_event_summary(
 }
 
 struct common_benchmark_options {
-	boost::dll::shared_library&        runtime;
-	stdout_json_benchmark_reporter&    reporter;
-	ecsact_execution_events_collector& evc;
-	FILE*                              seed_file;
-	long                               iterations;
-	long                               iteration_report_interval;
+	boost::dll::shared_library&     runtime;
+	stdout_json_benchmark_reporter& reporter;
+	FILE*                           seed_file;
+	long                            iterations;
+	long                            iteration_report_interval;
 };
 
 auto start_async_benchmark(
@@ -474,7 +473,10 @@ auto start_async_benchmark(
 
 	while(!vars.connected) {
 		std::this_thread::yield();
-		async_flush_fn(&options.evc, &async_evc);
+		async_flush_fn(
+			static_cast<ecsact_async_session_id>(vars.connect_req_id),
+			&async_evc
+		);
 	}
 
 	if(vars.done) {
@@ -508,7 +510,10 @@ auto start_async_benchmark(
 	while(!vars.done) {
 		std::this_thread::yield();
 
-		async_flush_fn(&options.evc, &async_evc);
+		async_flush_fn(
+			static_cast<ecsact_async_session_id>(vars.connect_req_id),
+			&async_evc
+		);
 		auto tick = async_get_current_tick();
 
 		if(tick % options.iteration_report_interval == 0) {
@@ -579,7 +584,7 @@ auto start_core_benchmark(const common_benchmark_options& options)
 
 	for(auto i = 0; options.iterations > i; ++i) {
 		auto before = benchmark_clock_t::now();
-		exec_systems_fn(reg_id, 1, nullptr, &options.evc);
+		exec_systems_fn(reg_id, 1, nullptr);
 		auto after = benchmark_clock_t::now();
 
 		auto exec_duration = duration_cast<nanoseconds>(after - before);
@@ -702,25 +707,9 @@ int ecsact::cli::detail::benchmark_command(int argc, char* argv[]) {
 		}
 	}
 
-	auto evc = ecsact_execution_events_collector{};
-	auto event_summary = std::optional<event_summary_report_message>{};
-
 	if(args["--events"]) {
-		auto event_summary_ptr = &event_summary.emplace();
-		evc.init_callback = &report_component_event_summary;
-		evc.init_callback_user_data = event_summary_ptr;
-
-		evc.update_callback = &report_component_event_summary;
-		evc.update_callback_user_data = event_summary_ptr;
-
-		evc.remove_callback = &report_component_event_summary;
-		evc.remove_callback_user_data = event_summary_ptr;
-
-		evc.entity_created_callback = &report_entity_event_summary;
-		evc.entity_created_callback_user_data = event_summary_ptr;
-
-		evc.entity_destroyed_callback = &report_entity_event_summary;
-		evc.entity_destroyed_callback_user_data = event_summary_ptr;
+		std::cerr << "Warning: --events option is no longer supported since "
+								 "ecsact_execution_events_collector was removed.\n";
 	}
 
 	auto seed_file = std::fopen(seed_path.c_str(), "r");
@@ -732,7 +721,6 @@ int ecsact::cli::detail::benchmark_command(int argc, char* argv[]) {
 	auto benchmark_options = common_benchmark_options{
 		.runtime = runtime,
 		.reporter = reporter,
-		.evc = evc,
 		.seed_file = seed_file,
 		.iterations = iterations,
 		.iteration_report_interval = iteration_report_interval,
@@ -744,10 +732,6 @@ int ecsact::cli::detail::benchmark_command(int argc, char* argv[]) {
 		result_message = start_async_benchmark(async.value(), benchmark_options);
 	} else {
 		result_message = start_core_benchmark(benchmark_options);
-	}
-
-	if(event_summary.has_value()) {
-		reporter.report(event_summary.value());
 	}
 
 	if(result_message) {
