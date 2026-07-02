@@ -374,6 +374,12 @@ static void write_context_get_specialize(
 ) {
 	using ecsact::cc_lang_support::cpp_identifier;
 
+	auto field_count =
+		ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(comp_id));
+	if(field_count == 0) {
+		return;
+	}
+
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
@@ -440,6 +446,12 @@ static auto write_context_update_specialize(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_component_like_id        comp_id
 ) -> void {
+	auto field_count =
+		ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(comp_id));
+	if(field_count == 0) {
+		return;
+	}
+
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
