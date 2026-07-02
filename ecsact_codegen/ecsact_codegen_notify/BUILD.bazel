@@ -10,7 +10,8 @@ cc_ecsact_codegen_plugin(
     no_validate_test = True,
     output_extension = "notify.ecsact",
     deps = [
-        "//ecsact_runtime:meta",
+        "//ecsact_lang_cpp:support",
         "//ecsact_runtime:common",
+        "//ecsact_runtime:meta",
     ],
 )

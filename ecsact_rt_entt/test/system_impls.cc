@@ -1,6 +1,7 @@
 #include <iostream>
 #include "runtime_test.ecsact.hh"
 #include "runtime_test.ecsact.systems.hh"
+#include "notify_codegen_test.ecsact.notify.ecsact.systems.hh"
 
 void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();
@@ -173,21 +174,4 @@ void runtime_test::StreamTestSystemCounter::impl(context& ctx) {
 
 	toggle_comp.val += 10;
 	ctx.update(toggle_comp);
-}
-
-#include "notify_codegen_test.ecsact.notify.ecsact.systems.hh"
-
-void ecsact::notify::notifycodegentestNotifyCodegenComponentOnInit::impl(
-	context& ctx
-) {
-}
-
-void ecsact::notify::notifycodegentestNotifyCodegenComponentOnChange::impl(
-	context& ctx
-) {
-}
-
-void ecsact::notify::notifycodegentestNotifyCodegenComponentOnRemove::impl(
-	context& ctx
-) {
 }

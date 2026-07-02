@@ -1097,21 +1097,15 @@ TEST(Core, NotifyCodegenPlugin) {
 	on_remove_calls = 0;
 
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(
-			ecsact::notify::notifycodegentestNotifyCodegenComponentOnInit::id
-		),
+		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnInit::id),
 		&my_on_init_impl
 	);
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(
-			ecsact::notify::notifycodegentestNotifyCodegenComponentOnChange::id
-		),
+		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnChange::id),
 		&my_on_change_impl
 	);
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(
-			ecsact::notify::notifycodegentestNotifyCodegenComponentOnRemove::id
-		),
+		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnRemove::id),
 		&my_on_remove_impl
 	);
 
@@ -1152,21 +1146,15 @@ TEST(Core, NotifyCodegenPlugin) {
 
 	// Cleanup
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(
-			ecsact::notify::notifycodegentestNotifyCodegenComponentOnInit::id
-		),
+		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnInit::id),
 		nullptr
 	);
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(
-			ecsact::notify::notifycodegentestNotifyCodegenComponentOnChange::id
-		),
+		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnChange::id),
 		nullptr
 	);
 	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(
-			ecsact::notify::notifycodegentestNotifyCodegenComponentOnRemove::id
-		),
+		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnRemove::id),
 		nullptr
 	);
 }

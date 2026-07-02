@@ -2,7 +2,6 @@ main package runtime_test;
 
 import imported.test_pkg;
 import notify_codegen_test;
-import ecsact.notify;
 
 component ComponentA {
 	i32 a;

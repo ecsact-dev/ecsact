@@ -48,14 +48,6 @@ static void word_wrap(std::string& str, int max_length) {
 	}
 }
 
-static void insert_prefix(std::string& str, std::string_view prefix) {
-	for(auto itr = str.begin(); itr != str.end(); ++itr) {
-		if(*itr == '\n' && itr != str.begin()) {
-			itr = str.insert(std::next(itr), prefix.begin(), prefix.end());
-		}
-	}
-}
-
 static auto write_static_assert_codegen_error(
 	ecsact::codegen_plugin_context& ctx,
 	std::string_view                err_title,
