@@ -453,12 +453,22 @@ static auto print_execute_systems(
 
 	add_stream_component_if_needed(ctx, sys_like_id, additional_view_components);
 
+	auto ignore_get_components = std::vector<ecsact_component_like_id>{};
+	auto notify_settings = ecsact::meta::system_notify_settings(sys_like_id);
+	for(auto const& [comp_id, notify_setting] : notify_settings) {
+		if(notify_setting == ECSACT_SYS_NOTIFY_ONREMOVE) {
+			ignore_get_components.push_back(comp_id);
+		}
+	}
+
 	ecsact::rt_entt_codegen::util::make_view(
 		ctx,
 		"view",
 		names.registry_var_name,
 		sys_details,
-		additional_view_components
+		additional_view_components,
+		{},
+		ignore_get_components
 	);
 
 	ctx.writef("{}", "using view_t = decltype(view);\n");

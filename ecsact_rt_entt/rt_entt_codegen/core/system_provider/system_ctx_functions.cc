@@ -199,6 +199,15 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 	if(get_components.size() == 0) {
 		return;
 	}
+
+	auto ignore_get_components = std::vector<ecsact_component_like_id>{};
+	auto notify_settings = ecsact::meta::system_notify_settings(sys_like_id);
+	for(auto const& [comp_id, notify_setting] : notify_settings) {
+		if(notify_setting == ECSACT_SYS_NOTIFY_ONREMOVE) {
+			ignore_get_components.push_back(comp_id);
+		}
+	}
+
 	auto system_name = decl_full_name(sys_like_id);
 	ctx.writef(
 		"{}{}{}{}",
@@ -221,14 +230,27 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 			type_name,
 			"::id) == component_id);\n"
 		);
-		ctx.writef(
-			"{}{}{}{}{}",
-			"*static_cast<::",
-			type_name,
-			"*>(out_component_data) = view->get<::",
-			type_name,
-			">(entity);"
-		);
+		if(
+			std::ranges::find(ignore_get_components, comp_id) !=
+			ignore_get_components.end()
+		) {
+			ctx.writef(
+				"*static_cast<::{}*>(out_component_data) = "
+				"registry->get<ecsact::entt::detail::beforeremove_storage<::{}>>("
+				"entity).value;\n",
+				type_name,
+				type_name
+			);
+		} else {
+			ctx.writef(
+				"{}{}{}{}{}",
+				"*static_cast<::",
+				type_name,
+				"*>(out_component_data) = view->get<::",
+				type_name,
+				">(entity);"
+			);
+		}
 		return;
 	}
 
@@ -247,14 +269,34 @@ auto ecsact::rt_entt_codegen::core::provider::context_get_impl(
 		);
 		for(const auto comp_id : details.readable_comps) {
 			auto type_name = cpp_identifier(decl_full_name(comp_id));
-			ctx.writef(
-				"{}{}{}{}{}",
-				"result[ecsact_id_cast<ecsact_component_like_id>(",
-				type_name,
-				"::id)] = &wrapper::dynamic::context_get<",
-				type_name,
-				">;\n"
-			);
+			if(
+				std::ranges::find(ignore_get_components, comp_id) !=
+				ignore_get_components.end()
+			) {
+				ctx.writef(
+					"result[ecsact_id_cast<ecsact_component_like_id>({}::id)] = "
+					"[](ecsact_system_execution_context* context, "
+					"ecsact_component_like_id, void* out_component_data, const void*, "
+					"{}_t& view) {{\n"
+					"\t*static_cast<{}*>(out_component_data) = "
+					"context->registry->get<ecsact::entt::detail::beforeremove_storage<{}"
+					">>(context->entity).value;\n"
+					"}};\n",
+					type_name,
+					view_type_name,
+					type_name,
+					type_name
+				);
+			} else {
+				ctx.writef(
+					"{}{}{}{}{}",
+					"result[ecsact_id_cast<ecsact_component_like_id>(",
+					type_name,
+					"::id)] = &wrapper::dynamic::context_get<",
+					type_name,
+					">;\n"
+				);
+			}
 		}
 
 		ctx.writef("{}", "return result;\n");
