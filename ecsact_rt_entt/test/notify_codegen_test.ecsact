@@ -1,5 +1,0 @@
-package notify_codegen_test;
-
-component NotifyCodegenComponent {
-	i32 val;
-}

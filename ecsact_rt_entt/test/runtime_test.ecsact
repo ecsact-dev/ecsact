@@ -1,7 +1,6 @@
 main package runtime_test;
 
 import imported.test_pkg;
-import notify_codegen_test;
 
 component ComponentA {
 	i32 a;

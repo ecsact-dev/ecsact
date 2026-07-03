@@ -14,17 +14,19 @@ auto ecsact_codegen_output_filenames(
 	int32_t           max_filename_length,
 	int32_t*          out_filenames_length
 ) -> void {
-	auto pkg_filename =
-		ecsact::meta::package_file_path(package_id).filename().string();
-	ecsact::set_codegen_plugin_output_filenames(
-		std::array{
-			pkg_filename + ".notify.ecsact",
-		},
-		out_filenames,
-		max_filenames,
-		max_filename_length,
-		out_filenames_length
-	);
+	if(ecsact::meta::main_package() == package_id) {
+		auto pkg_filename =
+			ecsact::meta::package_file_path(package_id).filename().string();
+		ecsact::set_codegen_plugin_output_filenames(
+			std::array{
+				pkg_filename + ".notify.ecsact",
+			},
+			out_filenames,
+			max_filenames,
+			max_filename_length,
+			out_filenames_length
+		);
+	}
 }
 
 static auto process_package(
@@ -92,7 +94,14 @@ auto ecsact_codegen_plugin(
 
 	ctx.writef("// GENERATED FILE - DO NOT EDIT\n\n");
 	ctx.writef("package ecsact.notify;\n\n");
-	ctx.writef("import {};\n\n", pkg_name);
+	ctx.writef("import {};\n", pkg_name);
+
+	auto deps = ecsact::meta::get_dependencies(package_id);
+	for(auto dep_pkg_id : deps) {
+		auto dep_pkg_name = ecsact::meta::package_name(dep_pkg_id);
+		ctx.writef("import {};\n", dep_pkg_name);
+	}
+	ctx.writef("\n");
 
 	auto processed_packages = std::set<ecsact_package_id>{};
 	process_package(ctx, package_id, processed_packages);

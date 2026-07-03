@@ -1,7 +1,6 @@
 #include <iostream>
 #include "runtime_test.ecsact.hh"
 #include "runtime_test.ecsact.systems.hh"
-#include "notify_codegen_test.ecsact.notify.ecsact.systems.hh"
 
 void runtime_test::SimpleSystem::impl(context& ctx) {
 	auto comp = ctx.get<ComponentA>();

@@ -9,6 +9,8 @@ cc_ecsact_codegen_plugin(
     copts = copts,
     no_validate_test = True,
     output_extension = "notify.ecsact",
+    output_only_from_main_package = True,
+    requires_main_package = True,
     deps = [
         "//ecsact_lang_cpp:support",
         "//ecsact_runtime:common",

@@ -3,6 +3,8 @@ EcsactCodegenPluginInfo = provider(
     fields = {
         "output_extension": "Plugin name. Also used as output file extension. This must match the extension specified by the plugin.",
         "outputs": "names of the ecsact files",
+        "requires_main_package": "",
+        "output_only_from_main_package": "",
         "plugin": "Path to plugin or name of builtin plugin",
         "data": "Files needed at runtime",
     },

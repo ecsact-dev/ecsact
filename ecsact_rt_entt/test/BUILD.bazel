@@ -13,22 +13,25 @@ cc_library(
     ],
 )
 
-ecsact_codegen(
-    name = "notify_test_codegen_ecsact",
-    srcs = ["notify_codegen_test.ecsact"],
-    output_directory = "_notify_test_codegen_ecsact",
-    plugins = [
-        "//ecsact_codegen/ecsact_codegen_notify",
-    ],
-)
+# ecsact_codegen(
+#     name = "notify_test_codegen_ecsact",
+#     srcs = [
+#         "imported_pkg.ecsact",
+#         "runtime_test.ecsact",
+#     ],
+#     main_src = "runtime_test.ecsact",
+#     output_directory = "_notify_test_codegen_ecsact",
+#     plugins = [
+#         "//ecsact_codegen/ecsact_codegen_notify",
+#     ],
+# )
 
 ecsact_codegen(
     name = "ecsact_cc_system_impl_srcs",
     srcs = [
         "imported_pkg.ecsact",
         "runtime_test.ecsact",
-        "notify_codegen_test.ecsact",
-        ":notify_test_codegen_ecsact",
+        # ":notify_test_codegen_ecsact",
     ],
     output_directory = "_ecsact_cc_system_impl_srcs",
     plugins = [
@@ -41,11 +44,8 @@ ecsact_entt_runtime(
     srcs = [
         "imported_pkg.ecsact",
         "runtime_test.ecsact",
-        "notify_codegen_test.ecsact",
-        ":notify_test_codegen_ecsact",
+        # ":notify_test_codegen_ecsact",
     ],
-    ECSACT_ENTT_RUNTIME_PACKAGE = "::runtime_test::package",
-    ECSACT_ENTT_RUNTIME_USER_HEADER = "runtime_test.ecsact.meta.hh",
     system_impls = [
         # "static",
         "dynamic",

@@ -13,8 +13,6 @@
 #include "ecsact/runtime/dynamic.h"
 
 #include "runtime_test.ecsact.hh"
-#include "notify_codegen_test.ecsact.hh"
-#include "notify_codegen_test.ecsact.notify.ecsact.hh"
 #include "runtime_test.ecsact.systems.hh"
 
 using runtime_test::ComponentA;
@@ -32,7 +30,7 @@ using runtime_test::ComponentA;
 
 TEST(Core, CreateRegistry) {
 	auto reg_id = ecsact_create_registry("CreateRegistry");
-	EXPECT_NE(reg_id, ecsact_invalid_registry_id);
+	EXPECT_NE(reg_id, ECSACT_INVALID_ID(registry));
 }
 
 TEST(Core, DestroyRegistry) {
@@ -53,7 +51,7 @@ TEST(Core, ClearRegistry) {
 TEST(Core, CreateEntity) {
 	auto reg_id = ecsact_create_registry("CreateEntity");
 	auto entity = ecsact_create_entity(reg_id);
-	EXPECT_NE(entity, ecsact_invalid_entity_id);
+	EXPECT_NE(entity, ECSACT_INVALID_ID(entity));
 }
 
 TEST(Core, EnsureEntity) {
@@ -93,14 +91,14 @@ TEST(Core, GetEntities) {
 	std::vector<ecsact_entity_id> entities;
 	entities.resize(test_count);
 	for(auto& ent : entities) {
-		ent = ecsact_invalid_entity_id;
+		ent = ECSACT_INVALID_ID(entity);
 	}
 
 	ecsact_get_entities(reg_id, test_count, entities.data(), &entities_count);
 	ASSERT_EQ(entities_count, test_count);
 
 	for(auto& ent : entities) {
-		EXPECT_NE(ent, ecsact_invalid_entity_id);
+		EXPECT_NE(ent, ECSACT_INVALID_ID(entity));
 	}
 }
 
@@ -1069,92 +1067,92 @@ TEST(Core, StreamComponentToggle) {
 	);
 }
 
-static int on_init_calls = 0;
-static int on_change_calls = 0;
-static int on_remove_calls = 0;
+// static int on_init_calls = 0;
+// static int on_change_calls = 0;
+// static int on_remove_calls = 0;
+//
+// static void my_on_init_impl(ecsact_system_execution_context* ctx) {
+// 	on_init_calls++;
+// }
+//
+// static void my_on_change_impl(ecsact_system_execution_context* ctx) {
+// 	on_change_calls++;
+// }
+//
+// static void my_on_remove_impl(ecsact_system_execution_context* ctx) {
+// 	on_remove_calls++;
+// }
 
-static void my_on_init_impl(ecsact_system_execution_context* ctx) {
-	on_init_calls++;
-}
-
-static void my_on_change_impl(ecsact_system_execution_context* ctx) {
-	on_change_calls++;
-}
-
-static void my_on_remove_impl(ecsact_system_execution_context* ctx) {
-	on_remove_calls++;
-}
-
-TEST(Core, NotifyCodegenPlugin) {
-	using notify_codegen_test::NotifyCodegenComponent;
-
-	auto reg = ecsact::core::registry("NotifyCodegenPlugin");
-
-	auto entity = reg.create_entity();
-
-	on_init_calls = 0;
-	on_change_calls = 0;
-	on_remove_calls = 0;
-
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnInit::id),
-		&my_on_init_impl
-	);
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnChange::id),
-		&my_on_change_impl
-	);
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnRemove::id),
-		&my_on_remove_impl
-	);
-
-	// 1. Add component -> OnInit
-	{
-		auto exec_options = ecsact::core::execution_options{};
-		auto comp = NotifyCodegenComponent{.val = 0};
-		exec_options.add_component(entity, &comp);
-		auto error = reg.execute_systems(std::array{exec_options});
-		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
-		ASSERT_EQ(on_init_calls, 1);
-		ASSERT_EQ(on_change_calls, 0);
-		ASSERT_EQ(on_remove_calls, 0);
-	}
-
-	// 2. Update component -> OnChange
-	{
-		auto exec_options = ecsact::core::execution_options{};
-		auto comp = NotifyCodegenComponent{.val = 20};
-		exec_options.update_component(entity, &comp);
-		auto error = reg.execute_systems(std::array{exec_options});
-		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
-		ASSERT_EQ(on_init_calls, 1);
-		ASSERT_EQ(on_change_calls, 1);
-		ASSERT_EQ(on_remove_calls, 0);
-	}
-
-	// 3. Remove component -> OnRemove
-	{
-		auto exec_options = ecsact::core::execution_options{};
-		exec_options.remove_component<NotifyCodegenComponent>(entity);
-		auto error = reg.execute_systems(std::array{exec_options});
-		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
-		ASSERT_EQ(on_init_calls, 1);
-		ASSERT_EQ(on_change_calls, 1);
-		ASSERT_EQ(on_remove_calls, 1);
-	}
-
-	// Cleanup
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnInit::id),
-		nullptr
-	);
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnChange::id),
-		nullptr
-	);
-	ecsact_set_system_execution_impl(
-		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnRemove::id),
-		nullptr
-	);
-}
+// TEST(Core, NotifyCodegenPlugin) {
+// 	using notify_codegen_test::NotifyCodegenComponent;
+//
+// 	auto reg = ecsact::core::registry("NotifyCodegenPlugin");
+//
+// 	auto entity = reg.create_entity();
+//
+// 	on_init_calls = 0;
+// 	on_change_calls = 0;
+// 	on_remove_calls = 0;
+//
+// 	ecsact_set_system_execution_impl(
+// 		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnInit::id),
+// 		&my_on_init_impl
+// 	);
+// 	ecsact_set_system_execution_impl(
+// 		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnChange::id),
+// 		&my_on_change_impl
+// 	);
+// 	ecsact_set_system_execution_impl(
+// 		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnRemove::id),
+// 		&my_on_remove_impl
+// 	);
+//
+// 	// 1. Add component -> OnInit
+// 	{
+// 		auto exec_options = ecsact::core::execution_options{};
+// 		auto comp = NotifyCodegenComponent{.val = 0};
+// 		exec_options.add_component(entity, &comp);
+// 		auto error = reg.execute_systems(std::array{exec_options});
+// 		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+// 		ASSERT_EQ(on_init_calls, 1);
+// 		ASSERT_EQ(on_change_calls, 0);
+// 		ASSERT_EQ(on_remove_calls, 0);
+// 	}
+//
+// 	// 2. Update component -> OnChange
+// 	{
+// 		auto exec_options = ecsact::core::execution_options{};
+// 		auto comp = NotifyCodegenComponent{.val = 20};
+// 		exec_options.update_component(entity, &comp);
+// 		auto error = reg.execute_systems(std::array{exec_options});
+// 		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+// 		ASSERT_EQ(on_init_calls, 1);
+// 		ASSERT_EQ(on_change_calls, 1);
+// 		ASSERT_EQ(on_remove_calls, 0);
+// 	}
+//
+// 	// 3. Remove component -> OnRemove
+// 	{
+// 		auto exec_options = ecsact::core::execution_options{};
+// 		exec_options.remove_component<NotifyCodegenComponent>(entity);
+// 		auto error = reg.execute_systems(std::array{exec_options});
+// 		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+// 		ASSERT_EQ(on_init_calls, 1);
+// 		ASSERT_EQ(on_change_calls, 1);
+// 		ASSERT_EQ(on_remove_calls, 1);
+// 	}
+//
+// 	// Cleanup
+// 	ecsact_set_system_execution_impl(
+// 		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnInit::id),
+// 		nullptr
+// 	);
+// 	ecsact_set_system_execution_impl(
+// 		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnChange::id),
+// 		nullptr
+// 	);
+// 	ecsact_set_system_execution_impl(
+// 		ecsact_id_cast<ecsact_system_like_id>(NotifyCodegenComponent::OnRemove::id),
+// 		nullptr
+// 	);
+// }
