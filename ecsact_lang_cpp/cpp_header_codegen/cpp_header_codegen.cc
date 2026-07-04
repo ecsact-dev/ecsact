@@ -1,6 +1,9 @@
+#include <algorithm>
+#include <map>
 #include <vector>
 #include <string>
 #include <cassert>
+#include <ranges>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen/plugin.h"
 #include "ecsact/codegen/plugin.hh"
@@ -115,29 +118,31 @@ static void write_system_impl_decl(
 static void write_system_struct(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_system_id                sys_id,
+	std::string                     decl_prefix,
 	std::string                     indentation
 ) {
 	using namespace std::string_literals;
 	using ecsact::cc_lang_support::anonymous_system_name;
 	using ecsact::meta::get_child_system_ids;
 
-	std::string sys_name = ecsact_meta_system_name(sys_id);
+	const auto sys_name = ecsact::meta::system_name(sys_id);
+
 	if(!sys_name.empty()) {
-		ctx.writef("{}struct {} {{\n", indentation, sys_name);
+		ctx.writef("{}struct {}{} {{\n", indentation, decl_prefix, sys_name);
 		write_constexpr_id(ctx, "ecsact_system_id", sys_id, indentation + "\t");
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
-			write_system_struct(ctx, child_system_id, indentation + "\t");
+			write_system_struct(ctx, child_system_id, "", indentation + "\t");
 		}
 		write_system_impl_decl(ctx, indentation + "\t");
 		ctx.writef("{}}};\n", indentation);
 	} else {
-		ctx.writef("{}struct {} {{\n", indentation, anonymous_system_name(sys_id));
+		ctx.writef("{}struct {}{} {{\n", indentation, decl_prefix, anonymous_system_name(sys_id));
 		write_constexpr_id(ctx, "ecsact_system_id", sys_id, indentation + "\t");
 		ctx.writef("{}\tstruct context;\n", indentation);
 		ctx.writef("{}}};\n", indentation);
 
 		for(auto child_system_id : get_child_system_ids(sys_id)) {
-			write_system_struct(ctx, child_system_id, indentation);
+			write_system_struct(ctx, child_system_id, "", indentation);
 		}
 	}
 }
@@ -185,26 +190,30 @@ void ecsact_codegen_plugin(
 	ctx.writef("#include \"ecsact/runtime/common.h\"\n");
 	ctx.writef("\n");
 
+	auto pkg_deps = ecsact::meta::get_dependencies(package_id);
+
 	const auto namespace_str =
 		cpp_identifier(ecsact_meta_package_name(ctx.package_id));
 
-	ctx.writef("// forward declarations for ecsact_codegen_notify\n");
-	ctx.writef("namespace ecsact::notify {{\n\n");
-	for(auto comp_id : get_component_ids(ctx.package_id)) {
-		const auto notify_sys_name_base = std::format(
-			"P{}C{}",
-			static_cast<int32_t>(package_id),
-			static_cast<int32_t>(comp_id)
-		);
-
-		ctx.writef(
-			"\tstruct {0}OnInit;\n"
-			"\tstruct {0}OnChange;\n"
-			"\tstruct {0}OnRemove;\n",
-			notify_sys_name_base
-		);
-	}
-	ctx.writef("}} // namespace ecsact::notify\n\n");
+	// if(std::ranges::contains(pkg_deps, ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
+	// 	ctx.writef("// forward declarations for ecsact.notify\n");
+	// 	ctx.writef("namespace ecsact::notify {{\n\n");
+	// 	for(auto comp_id : get_component_ids(ctx.package_id)) {
+	// 		const auto notify_sys_name_base = std::format(
+	// 			"P{}C{}",
+	// 			static_cast<int32_t>(package_id),
+	// 			static_cast<int32_t>(comp_id)
+	// 		);
+	//
+	// 		ctx.writef(
+	// 			"\tstruct {0}OnInit;\n"
+	// 			"\tstruct {0}OnChange;\n"
+	// 			"\tstruct {0}OnRemove;\n",
+	// 			notify_sys_name_base
+	// 		);
+	// 	}
+	// 	ctx.writef("}} // namespace ecsact::notify\n\n");
+	// }
 
 	ctx.writef("namespace {} {{\n\n", namespace_str);
 
@@ -220,9 +229,64 @@ void ecsact_codegen_plugin(
 		--ctx.indentation;
 	}
 
+	ctx.writef("\n}}// namespace {}\n\n", namespace_str);
+
+	auto fwd_decl_ids = std::vector<ecsact_decl_id>{};
+	for(auto id : get_component_ids(ctx.package_id)) {
+		fwd_decl_ids.emplace_back(ecsact_id_cast<ecsact_decl_id>(id));
+	}
+	for(auto id : get_transient_ids(ctx.package_id)) {
+		fwd_decl_ids.emplace_back(ecsact_id_cast<ecsact_decl_id>(id));
+	}
+	for(auto id : get_action_ids(ctx.package_id)) {
+		fwd_decl_ids.emplace_back(ecsact_id_cast<ecsact_decl_id>(id));
+	}
+	for(auto id : get_system_ids(ctx.package_id)) {
+		if(has_parent_system(id)) {
+			continue;
+		}
+
+		fwd_decl_ids.emplace_back(ecsact_id_cast<ecsact_decl_id>(id));
+	}
+
+	{
+		auto start_decl_namespace = [&](std::string decl_namespace) -> void {
+			if(!decl_namespace.empty()) {
+				ctx.writef("namespace {} {{\n\n", decl_namespace);
+			}
+		};
+
+		auto end_decl_namespace = [&](std::string decl_namespace) -> void {
+			if(!decl_namespace.empty()) {
+				ctx.writef("\n}}// namespace {}\n\n", decl_namespace);
+			}
+		};
+
+		auto last_decl_namespace = std::string{};
+
+		for(auto decl_id : fwd_decl_ids) {
+			auto full_name = ecsact::meta::decl_full_name(decl_id);
+			auto last_dot = full_name.find_last_of(".");
+			assert(last_dot != std::string::npos);
+
+			auto base_name = full_name.substr(last_dot + 1);
+			auto decl_namespace = cpp_identifier(full_name.substr(0, last_dot));
+
+			if(decl_namespace != last_decl_namespace) {
+				end_decl_namespace(last_decl_namespace);
+				start_decl_namespace(decl_namespace);
+				last_decl_namespace = decl_namespace;
+			}
+
+			ctx.writef("struct {}; // {}\n", base_name, full_name);
+		}
+
+		end_decl_namespace(last_decl_namespace);
+	}
+
 	for(auto comp_id : get_component_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
-		ctx.writef("struct {} {{\n", ecsact_meta_component_name(comp_id));
+		ctx.writef("struct {}::{} {{\n", namespace_str, ecsact_meta_component_name(comp_id));
 		ctx.writef("\tstatic constexpr bool transient = false;\n");
 		ctx.writef(
 			"\tstatic constexpr bool has_assoc_fields = {};\n",
@@ -230,18 +294,19 @@ void ecsact_codegen_plugin(
 		);
 		write_constexpr_id(ctx, "ecsact_component_id", comp_id, "\t");
 
-		const auto notify_sys_name_base = std::format(
-			"P{}C{}",
-			static_cast<int32_t>(package_id),
-			static_cast<int32_t>(comp_id)
-		);
-
-		ctx.writef(
-			"\tusing OnInit = ::ecsact::notify::{0}OnInit;\n"
-			"\tusing OnChange = ::ecsact::notify::{0}OnChange;\n"
-			"\tusing OnRemove = ::ecsact::notify::{0}OnRemove;\n",
-			notify_sys_name_base
-		);
+		if(std::ranges::contains(pkg_deps, ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
+			const auto notify_sys_name_base = std::format(
+				"P{}C{}",
+				static_cast<int32_t>(package_id),
+				static_cast<int32_t>(comp_id)
+			);
+			ctx.writef(
+				"\tusing OnInit = ::ecsact::notify::{0}OnInit;\n"
+				"\tusing OnChange = ::ecsact::notify::{0}OnChange;\n"
+				"\tusing OnRemove = ::ecsact::notify::{0}OnRemove;\n",
+				notify_sys_name_base
+			);
+		}
 
 		write_fields(ctx, compo_id, "\t"s);
 		ctx.writef("}};\n");
@@ -249,7 +314,7 @@ void ecsact_codegen_plugin(
 
 	for(auto comp_id : get_transient_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
-		ctx.writef("struct {} {{\n", ecsact_meta_transient_name(comp_id));
+		ctx.writef("struct {}::{} {{\n", namespace_str, ecsact_meta_transient_name(comp_id));
 		ctx.writef("\tstatic constexpr bool transient = true;\n");
 		ctx.writef(
 			"\tstatic constexpr bool has_assoc_fields = {};\n",
@@ -262,14 +327,14 @@ void ecsact_codegen_plugin(
 
 	for(auto action_id : get_action_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(action_id);
-		ctx.writef("struct {} {{\n", ecsact_meta_action_name(action_id));
+		ctx.writef("struct {}::{} {{\n", namespace_str, ecsact_meta_action_name(action_id));
 		ctx.writef(
 			"\tstatic constexpr bool has_assoc_fields = {};\n",
 			has_assoc_fields(action_id) ? "true" : "false"
 		);
 		write_constexpr_id(ctx, "ecsact_action_id", compo_id, "\t");
 		for(auto child_system_id : get_child_system_ids(action_id)) {
-			write_system_struct(ctx, child_system_id, "\t");
+			write_system_struct(ctx, child_system_id, "", "\t");
 		}
 		write_system_impl_decl(ctx, "\t");
 		write_fields(ctx, compo_id, "\t");
@@ -281,8 +346,11 @@ void ecsact_codegen_plugin(
 			continue;
 		}
 
-		write_system_struct(ctx, sys_id, "");
-	}
+		auto full_name = ecsact::meta::decl_full_name(sys_id);
+		auto last_dot = full_name.find_last_of(".");
+		assert(last_dot != std::string::npos);
+		auto sys_namespace = cpp_identifier(full_name.substr(0, last_dot));
 
-	ctx.writef("\n}}// namespace {}\n", namespace_str);
+		write_system_struct(ctx, sys_id, sys_namespace + "::", "");
+	}
 }

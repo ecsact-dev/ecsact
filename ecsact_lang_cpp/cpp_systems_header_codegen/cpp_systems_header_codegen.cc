@@ -386,14 +386,14 @@ static void write_context_get_specialize(
 	block(
 		ctx,
 		std::format(
-			"template<> auto get<{0}{1}>({2}) -> {0}",
+			"template<> auto get<::{0}{1}>({2}) -> ::{0}",
 			cpp_full_name,
 			assoc_field_types_only,
 			assoc_fields
 		),
 		[&] {
 			ctx.writef(
-				"return _ctx.get<{0}{1}>({2});",
+				"return _ctx.get<::{0}{1}>({2});",
 				cpp_full_name,
 				assoc_field_types_only,
 				assoc_field_names_only
