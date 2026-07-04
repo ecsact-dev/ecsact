@@ -1,5 +1,6 @@
 #include "ecsact/interpret/eval.h"
 
+#include <print>
 #include <set>
 #include <unordered_map>
 #include <string_view>
@@ -689,11 +690,11 @@ static ecsact_eval_error eval_unknown_statement(
 	return {};
 }
 
-static ecsact_eval_error eval_import_statement(
+static auto eval_import_statement(
 	ecsact_package_id                 package_id,
 	std::span<const ecsact_statement> context_stack,
 	const ecsact_statement&           statement
-) {
+) -> ecsact_eval_error {
 	auto& data = statement.data.import_statement;
 	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_NONE});
 	if(err.code != ECSACT_EVAL_OK) {

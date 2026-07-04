@@ -14,6 +14,7 @@
 
 #define ECSACT_INVALID_ID(ID_TYPE) ((ecsact_##ID_TYPE##_id)(-1))
 
+
 #ifdef __cplusplus
 #	define ECSACT_TYPED_ID(name)                                 \
 		enum class name : int32_t;                                  \
@@ -77,6 +78,14 @@ ECSACT_TYPED_ID(ecsact_decl_id);
 ECSACT_TYPED_ID(ecsact_composite_id);
 ECSACT_TYPED_ID(ecsact_system_like_id);
 ECSACT_TYPED_ID(ecsact_component_like_id);
+
+/**
+ * IDs in the range [1, ECSACT_BUILTIN_PACKAGE_MAX_ID] are reserved for
+ * well-known builtin packages. User-defined packages start after this range.
+ * ID 0 is not used.
+ */
+#define ECSACT_BUILTIN_PACKAGE_MAX_ID ((ecsact_package_id)(99))
+#define ECSACT_BUILTIN_PKG_NOTIFY_ID ((ecsact_package_id)(1))
 
 #ifdef __cplusplus
 template<typename, typename>

@@ -149,6 +149,10 @@ void ecsact_codegen_plugin(
 	ctx.writef("{}", "\n");
 	inc_package_header(ctx, package_id);
 	for(auto dep : ecsact::meta::get_dependencies(package_id)) {
+		if(dep <= ECSACT_BUILTIN_PACKAGE_MAX_ID) {
+			continue;
+		}
+
 		assert(package_id != dep);
 		inc_package_header(ctx, dep);
 	}
@@ -247,10 +251,8 @@ void ecsact_codegen_plugin(
 			});
 
 		ctx.writef(
-			"{}{}{}",
-			"result.reserve(",
-			std::ranges::distance(non_tag_component_ids),
-			");\n"
+			"result.reserve({});\n",
+			std::ranges::distance(non_tag_component_ids)
 		);
 
 		for(auto comp_id : non_tag_component_ids) {

@@ -2,6 +2,7 @@
 #include "ecsact/runtime/meta.h"
 
 #include <map>
+#include <print>
 #include <string>
 #include <atomic>
 #include <vector>
@@ -24,12 +25,12 @@ struct is_any : std::disjunction<std::is_same<T, Ts>...> {};
 template<typename T, typename... Ts>
 inline constexpr bool is_any_v = is_any<T, Ts...>::value;
 
-template<typename T>
-static std::atomic<int32_t> last_id_val = 0;
+static std::atomic<int32_t> last_id_val =
+	static_cast<int32_t>(ECSACT_BUILTIN_PACKAGE_MAX_ID) + 1;
 
 template<typename T>
 static T next_id() {
-	return static_cast<T>(++last_id_val<int32_t>);
+	return static_cast<T>(++last_id_val);
 }
 
 struct composite {
@@ -142,9 +143,21 @@ struct package_def {
 	std::vector<std::vector<ecsact_system_like_id>> execution_batches;
 };
 
-static std::atomic_int32_t                                   last_id = 0;
+// clang-format off
+static const auto builtin_package_defs = std::unordered_map<ecsact_package_id, package_def>{
+	{
+		ECSACT_BUILTIN_PKG_NOTIFY_ID,
+		package_def{
+			.name = "ecsact.notify",
+			.main = false,
+			.source_file_path = "<builtin package: ecsact.notify>",
+		},
+	},
+};
+//clang-format on
+
 static std::unordered_map<ecsact_decl_id, std::string>       full_names;
-static std::unordered_map<ecsact_package_id, package_def>    package_defs;
+static std::unordered_map<ecsact_package_id, package_def>    package_defs = builtin_package_defs;
 static std::unordered_map<ecsact_decl_id, ecsact_package_id> def_owner_map;
 static std::unordered_map<ecsact_component_id, comp_def>     comp_defs;
 static std::unordered_map<ecsact_transient_id, trans_def>    trans_defs;
@@ -155,9 +168,8 @@ static std::unordered_map<ecsact_cluster_id, cluster_def>    cluster_defs;
 static std::optional<ecsact_package_id>                      main_package_id;
 
 void ecsact_interpret_reset() {
-	last_id = 0;
 	full_names.clear();
-	package_defs.clear();
+	package_defs = builtin_package_defs;
 	def_owner_map.clear();
 	comp_defs.clear();
 	trans_defs.clear();
@@ -174,7 +186,7 @@ static ecsact_package_id owner_package_id(T id) {
 	ecsact_decl_id decl_id = ecsact_id_cast<ecsact_decl_id>(id);
 	auto           itr = def_owner_map.find(decl_id);
 	if(itr == def_owner_map.end()) {
-		return (ecsact_package_id)-1;
+		return ECSACT_INVALID_ID(package);
 	}
 	return itr->second;
 }
@@ -221,13 +233,14 @@ static composite& get_composite(ecsact_composite_id id) {
 	throw std::runtime_error("Invalid composite_id");
 }
 
-ecsact_package_id ecsact_create_package(
+auto ecsact_create_package(
 	bool        main_package,
 	const char* package_name,
 	int32_t     package_name_len
-) {
+) -> ecsact_package_id {
 	auto id = next_id<ecsact_package_id>();
 	auto name = std::string(package_name, package_name_len);
+
 	package_defs[id] = {
 		.name = name,
 		.main = main_package,
@@ -240,10 +253,10 @@ ecsact_package_id ecsact_create_package(
 	return id;
 }
 
-void ecsact_add_dependency(
+auto ecsact_add_dependency(
 	ecsact_package_id target,
 	ecsact_package_id dependency
-) {
+) -> void {
 	auto pkg_itr = package_defs.find(target);
 	if(pkg_itr != package_defs.end()) {
 		auto& deps = pkg_itr->second.dependencies;
@@ -292,11 +305,11 @@ int32_t ecsact_meta_count_packages() {
 	return static_cast<int32_t>(package_defs.size());
 }
 
-void ecsact_meta_get_package_ids(
+auto ecsact_meta_get_package_ids(
 	int32_t            max_package_count,
 	ecsact_package_id* out_package_ids,
 	int32_t*           out_package_count
-) {
+) -> void {
 	auto itr = package_defs.begin();
 	for(int i = 0; max_package_count > i; ++i, ++itr) {
 		if(itr == package_defs.end()) {
@@ -1826,7 +1839,7 @@ void ecsact_add_system_to_cluster(
 		ecsact_meta_get_parent_system_id(static_cast<ecsact_system_id>(system_id));
 
 	auto& execution_order = (int32_t)parent_sys_id == -1
-		? package_defs[owner_pkg_id].execution_order
+		? package_defs.at(owner_pkg_id).execution_order
 		: get_system_like(parent_sys_id).execution_order;
 
 	for(auto i = 0; execution_order.size() > i; ++i) {

@@ -224,20 +224,13 @@ inline auto is_builtin_package(std::string package_name) -> bool {
 	return package_name.starts_with("ecsact.") || package_name == "ecsact";
 }
 
-inline auto is_known_builtin_package(std::string package_name) -> bool {
-	using namespace std::string_view_literals;
-
-	const auto builtin_packages = std::array{
-		"ecsact.notify"sv,
-	};
-
-	for(auto& builtin_pkg_name : builtin_packages) {
-		if(package_name == builtin_pkg_name) {
-			return true;
-		}
+inline auto is_known_builtin_package(std::string package_name)
+	-> std::optional<ecsact_package_id> {
+	if(package_name == "ecsact.notify") {
+		return ECSACT_BUILTIN_PKG_NOTIFY_ID;
 	}
 
-	return false;
+	return std::nullopt;
 }
 
 template<typename InputStream>
@@ -430,7 +423,11 @@ void eval_imports(
 	std::vector<parse_eval_error>& out_errors
 ) {
 	for(auto& import_name : file_state.imports) {
-		ecsact_statement faux_import_statement{
+		if(is_builtin_package(import_name)) {
+			continue;
+		}
+
+		auto faux_import_statement = ecsact_statement{
 			.type = ECSACT_STATEMENT_IMPORT,
 			.data{.import_statement{
 				.import_package_name{
@@ -564,6 +561,9 @@ inline auto get_sorted_states(
 
 			bool imports_resolved = true;
 			for(auto import_name : state.imports) {
+				if(is_builtin_package(import_name)) {
+					continue;
+				}
 				if(!resolved_packages.contains(import_name)) {
 					imports_resolved = false;
 					break;

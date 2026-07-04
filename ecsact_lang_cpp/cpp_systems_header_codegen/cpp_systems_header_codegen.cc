@@ -767,6 +767,10 @@ void ecsact_codegen_plugin(
 	ctx.writef("#include \"{}\"\n", package_systems_h_path.filename().string());
 
 	for(auto dep_pkg_id : ecsact::meta::get_dependencies(package_id)) {
+		if(dep_pkg_id <= ECSACT_BUILTIN_PACKAGE_MAX_ID) {
+			continue;
+		}
+
 		fs::path dep_pkg_systems_hh_path =
 			ecsact_meta_package_file_path(dep_pkg_id);
 		dep_pkg_systems_hh_path.replace_extension(

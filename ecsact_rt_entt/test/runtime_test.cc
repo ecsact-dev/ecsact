@@ -931,7 +931,8 @@ TEST(Core, StreamComponent) {
 	exec_options.add_component(entity, &stream_component);
 
 	auto error = reg.execute_systems(std::array{exec_options});
-	int  prev_val = 0;
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	int prev_val = 0;
 
 	for(int i = 0; i < 100; i++) {
 		stream_component.val += 10;
@@ -952,13 +953,10 @@ TEST(Core, StreamComponentMultiThreadedOneEntity) {
 	auto exec_options = ecsact::core::execution_options{};
 
 	auto thread_pool = std::array<std::thread, 4>{};
-
 	auto stream_component = StreamTest{.val = 0};
 
 	exec_options.add_component(entity, &stream_component);
-
-	auto error = reg.execute_systems(std::array{exec_options});
-	int  prev_val = 0;
+	auto _ = reg.execute_systems(std::array{exec_options});
 
 	for(auto& thread : thread_pool) {
 		thread = std::thread([&, reg_id = reg.id(), entity] {
@@ -1011,7 +1009,8 @@ TEST(Core, StreamComponentToggle) {
 	exec_options.add_component(entity, &stream_comp_counter);
 
 	auto error = reg.execute_systems(std::array{exec_options});
-	int  prev_val = 10;
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
+	int prev_val = 10;
 
 	for(int i = 0; i < 5; i++) {
 		stream_component.val += 10;
@@ -1035,6 +1034,7 @@ TEST(Core, StreamComponentToggle) {
 	exec_options.clear();
 	exec_options.update_component(entity, &stream_comp_counter);
 	error = reg.execute_systems(std::array{exec_options});
+	ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
 
 	for(int i = 0; i < 5; i++) {
 		stream_component.val += 10;
