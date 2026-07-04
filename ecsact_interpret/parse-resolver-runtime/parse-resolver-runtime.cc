@@ -168,7 +168,7 @@ static ecsact_cluster_id notify_systems_cluster = ECSACT_INVALID_ID(cluster);
 static auto get_execution_order(const package_def& pkg_def) -> std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>> {
 	auto result = pkg_def.declared_execution_order;
 
-	if(notify_systems_cluster != ECSACT_INVALID_ID(cluster)) {
+	if(pkg_def.main && notify_systems_cluster != ECSACT_INVALID_ID(cluster)) {
 		result.emplace_back(notify_systems_cluster);
 	}
 
@@ -178,7 +178,7 @@ static auto get_execution_order(const package_def& pkg_def) -> std::vector<std::
 static auto get_all_system_ids(const package_def& pkg_def) -> std::vector<ecsact_system_id> {
 	auto result = pkg_def.declared_systems;
 
-	if(notify_systems_cluster != ECSACT_INVALID_ID(cluster)) {
+	if(pkg_def.main && notify_systems_cluster != ECSACT_INVALID_ID(cluster)) {
 		auto& notify_pkg_def = package_defs.at(ECSACT_BUILTIN_PKG_NOTIFY_ID);
 		result.insert(result.end(), notify_pkg_def.declared_systems.begin(), notify_pkg_def.declared_systems.end());
 	}
