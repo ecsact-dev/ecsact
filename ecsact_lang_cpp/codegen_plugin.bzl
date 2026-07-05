@@ -52,22 +52,16 @@ _generated_src = """
 #include "ecsact/codegen/plugin.h"
 
 const char* ecsact_codegen_plugin_name() {{
-    return "{output_extension}";
+    return "{plugin_name}";
 }}
 """
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
-    if ctx.attr.output_extension != None:
-        ctx.actions.write(
-            output = output_cc_src,
-            content = _generated_src.format(output_extension = ctx.attr.output_extension),
-        )
-    else:
-        ctx.actions.write(
-            output = output_cc_src,
-            content = _generated_src.format(output_extension = ctx.attr.name),
-        )
+    ctx.actions.write(
+        output = output_cc_src,
+        content = _generated_src.format(plugin_name = ctx.attr.plugin_name),
+    )
 
     return [
         DefaultInfo(files = depset([output_cc_src])),
@@ -76,7 +70,7 @@ def _cc_ecsact_codegen_plugin_src_impl(ctx):
 _cc_ecsact_codegen_plugin_src = rule(
     implementation = _cc_ecsact_codegen_plugin_src_impl,
     attrs = {
-        "output_extension": attr.string(mandatory = False),
+        "plugin_name": attr.string(mandatory = True),
     },
 )
 
@@ -132,15 +126,11 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         **kwargs
     )
 
-    if (output_extension != None):
-        _cc_ecsact_codegen_plugin_src(
-            name = "{}__src".format(name_hash),
-            output_extension = output_extension,
-        )
-    else:
-        _cc_ecsact_codegen_plugin_src(
-            name = "{}__src".format(name_hash),
-        )
+    plugin_name = output_extension if output_extension != None else name
+    _cc_ecsact_codegen_plugin_src(
+        name = "{}__src".format(name_hash),
+        plugin_name = plugin_name,
+    )
 
     _cc_ecsact_codegen_plugin(
         name = name,
