@@ -1169,9 +1169,9 @@ TEST(Core, EcsactNotifyBuiltin) {
 		exec_options.add_component(entity, &comp);
 		auto error = reg.execute_systems(std::array{exec_options});
 		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
-		ASSERT_EQ(ComponentAOnInit_ExecCount, 1);
-		ASSERT_EQ(ComponentAOnChange_ExecCount, 0);
-		ASSERT_EQ(ComponentAOnRemove_ExecCount, 0);
+		EXPECT_EQ(ComponentAOnInit_ExecCount, 1);
+		EXPECT_EQ(ComponentAOnChange_ExecCount, 0);
+		EXPECT_EQ(ComponentAOnRemove_ExecCount, 0);
 	}
 
 	{
@@ -1180,9 +1180,9 @@ TEST(Core, EcsactNotifyBuiltin) {
 		exec_options.update_component(entity, &comp);
 		auto error = reg.execute_systems(std::array{exec_options});
 		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
-		ASSERT_EQ(ComponentAOnInit_ExecCount, 1);
-		ASSERT_EQ(ComponentAOnChange_ExecCount, 1);
-		ASSERT_EQ(ComponentAOnRemove_ExecCount, 0);
+		EXPECT_EQ(ComponentAOnInit_ExecCount, 1);
+		EXPECT_EQ(ComponentAOnChange_ExecCount, 1);
+		EXPECT_EQ(ComponentAOnRemove_ExecCount, 0);
 	}
 
 	{
@@ -1190,9 +1190,9 @@ TEST(Core, EcsactNotifyBuiltin) {
 		exec_options.remove_component<ComponentA>(entity);
 		auto error = reg.execute_systems(std::array{exec_options});
 		ASSERT_EQ(error, ECSACT_EXEC_SYS_OK);
-		ASSERT_EQ(ComponentAOnInit_ExecCount, 1);
-		ASSERT_EQ(ComponentAOnChange_ExecCount, 1);
-		ASSERT_EQ(ComponentAOnRemove_ExecCount, 1);
+		EXPECT_EQ(ComponentAOnInit_ExecCount, 1);
+		EXPECT_EQ(ComponentAOnChange_ExecCount, 1);
+		EXPECT_EQ(ComponentAOnRemove_ExecCount, 1);
 	}
 
 	clear_system_execution_impl<ComponentA::OnInit>();
