@@ -22,4 +22,4 @@ auto clear_system_execution_impl() -> bool {
 }
 } // namespace ecsact::dynamic
 
-#endif ECSACT_RUNTIME_DYNAMIC_HH
+#endif // ECSACT_RUNTIME_DYNAMIC_HH
