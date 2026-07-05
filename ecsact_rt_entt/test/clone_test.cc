@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 
 #include "ecsact/runtime/core.hh"
+#include "ecsact/entt/registry_util.hh"
+#include "ecsact/entt/detail/internal_markers.hh"
 #include "runtime_test.ecsact.hh"
 
 TEST(Core, CloneRegistry) {
@@ -37,6 +39,66 @@ TEST(Core, CloneRegistry) {
 		auto cloned_b = cloned_reg.get_component<runtime_test::ComponentB>(entity);
 		ASSERT_EQ(original_b.b, cloned_b.b);
 	}
+}
+
+TEST(Core, CloneRegistryWithMarkers) {
+	auto reg = ecsact::core::registry{"Clone Test With Markers"};
+	auto entity = reg.create_entity();
+
+	auto& entt_reg = ecsact::entt::get_registry(reg.id());
+
+	entt_reg.emplace<ecsact::entt::detail::created_entity>(
+		static_cast<entt::entity>(entity),
+		ecsact_placeholder_entity_id{42}
+	);
+	entt_reg.emplace<ecsact::entt::detail::destroyed_entity>(
+		static_cast<entt::entity>(entity)
+	);
+	entt_reg.emplace<ecsact::entt::detail::pending_add<runtime_test::ComponentA>>(
+		static_cast<entt::entity>(entity),
+		runtime_test::ComponentA{100}
+	);
+	entt_reg.emplace<ecsact::entt::detail::pending_add<runtime_test::TriggerTag>>(
+		static_cast<entt::entity>(entity)
+	);
+	entt_reg.emplace<ecsact::entt::detail::pending_remove<runtime_test::ComponentA>>(
+		static_cast<entt::entity>(entity)
+	);
+
+	auto cloned_reg = reg.clone("Cloned Registry With Markers");
+	auto& cloned_entt_reg = ecsact::entt::get_registry(cloned_reg.id());
+
+	ASSERT_TRUE(cloned_entt_reg.all_of<ecsact::entt::detail::created_entity>(
+		static_cast<entt::entity>(entity)
+	));
+	ASSERT_EQ(
+		cloned_entt_reg.get<ecsact::entt::detail::created_entity>(
+			static_cast<entt::entity>(entity)
+		).placeholder_entity_id,
+		ecsact_placeholder_entity_id{42}
+	);
+
+	ASSERT_TRUE(cloned_entt_reg.all_of<ecsact::entt::detail::destroyed_entity>(
+		static_cast<entt::entity>(entity)
+	));
+
+	ASSERT_TRUE((cloned_entt_reg.all_of<ecsact::entt::detail::pending_add<runtime_test::ComponentA>>(
+		static_cast<entt::entity>(entity)
+	)));
+	ASSERT_EQ(
+		cloned_entt_reg.get<ecsact::entt::detail::pending_add<runtime_test::ComponentA>>(
+			static_cast<entt::entity>(entity)
+		).value.a,
+		100
+	);
+
+	ASSERT_TRUE((cloned_entt_reg.all_of<ecsact::entt::detail::pending_add<runtime_test::TriggerTag>>(
+		static_cast<entt::entity>(entity)
+	)));
+
+	ASSERT_TRUE((cloned_entt_reg.all_of<ecsact::entt::detail::pending_remove<runtime_test::ComponentA>>(
+		static_cast<entt::entity>(entity)
+	)));
 }
 
 #define SETUP_NOTIFY_SYSTEM(ComponentName, Event)                       \
