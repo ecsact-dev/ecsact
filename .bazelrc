@@ -34,4 +34,10 @@ common --//ecsact_cli:use_sdk_version
 build:windows --workspace_status_command=bazel/tools/wsc.cmd
 build:linux --workspace_status_command=bazel/tools/wsc.sh
 
+common --no@tracy//:enable
+
+build:profile --copt=-DTRACY_ENABLE
+build:profile --strip=never
+common:profile --@tracy//:enable
+
 try-import %workspace%/user.bazelrc

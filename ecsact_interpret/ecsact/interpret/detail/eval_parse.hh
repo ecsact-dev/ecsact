@@ -5,7 +5,6 @@
 #include <span>
 #include <unordered_set>
 #include <cassert>
-#include <iostream> //  TODO(ZAUCY): Remove this
 #include <magic_enum/magic_enum.hpp>
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/runtime/meta.hh"
@@ -16,6 +15,7 @@
 #include "./stack_util.hh"
 #include "./string_util.hh"
 #include "./read_util.hh"
+#include "./builtin_util.hh"
 
 template<>
 struct magic_enum::customize::enum_range<ecsact_eval_error_code> {
@@ -218,19 +218,6 @@ auto to_parse_eval_error(
 		.character = reader.current_character,
 		.error_message = error_message,
 	};
-}
-
-inline auto is_builtin_package(std::string package_name) -> bool {
-	return package_name.starts_with("ecsact.") || package_name == "ecsact";
-}
-
-inline auto is_known_builtin_package(std::string package_name)
-	-> std::optional<ecsact_package_id> {
-	if(package_name == "ecsact.notify") {
-		return ECSACT_BUILTIN_PKG_NOTIFY_ID;
-	}
-
-	return std::nullopt;
 }
 
 template<typename InputStream>

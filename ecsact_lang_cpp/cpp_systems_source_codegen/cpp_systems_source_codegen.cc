@@ -47,5 +47,9 @@ void ecsact_codegen_plugin(
 		ctx.writef("\t{}::context ctx{{cctx}};\n", cpp_full_name);
 		ctx.writef("\t{}::impl(ctx);\n", cpp_full_name);
 		ctx.writef("}}\n");
+
+		ctx.writef("ecsact_system_execution_impl {}::get_c_impl() {{\n", cpp_full_name);
+		ctx.writef("\treturn &{};\n", c_identifier(full_name));
+		ctx.writef("}}\n");
 	}
 }

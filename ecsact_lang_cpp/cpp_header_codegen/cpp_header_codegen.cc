@@ -113,6 +113,7 @@ static void write_system_impl_decl(
 ) {
 	ctx.writef("{}struct context;\n", indentation);
 	ctx.writef("{}static void impl(context&);\n", indentation);
+	ctx.writef("{}static ecsact_system_execution_impl get_c_impl();\n", indentation);
 }
 
 static void write_system_struct(
@@ -286,6 +287,7 @@ void ecsact_codegen_plugin(
 
 	for(auto comp_id : get_component_ids(ctx.package_id)) {
 		auto compo_id = ecsact_id_cast<ecsact_composite_id>(comp_id);
+		auto field_count = ecsact_meta_count_fields(compo_id);
 		ctx.writef("struct {}::{} {{\n", namespace_str, ecsact_meta_component_name(comp_id));
 		ctx.writef("\tstatic constexpr bool transient = false;\n");
 		ctx.writef(
@@ -300,12 +302,12 @@ void ecsact_codegen_plugin(
 				static_cast<int32_t>(package_id),
 				static_cast<int32_t>(comp_id)
 			);
-			ctx.writef(
-				"\tusing OnInit = ::ecsact::notify::{0}OnInit;\n"
-				"\tusing OnChange = ::ecsact::notify::{0}OnChange;\n"
-				"\tusing OnRemove = ::ecsact::notify::{0}OnRemove;\n",
-				notify_sys_name_base
-			);
+
+			ctx.writef("\tusing OnInit = ::ecsact::notify::{0}OnInit;\n", notify_sys_name_base);
+			if(field_count > 0) {
+				ctx.writef("\tusing OnChange = ::ecsact::notify::{0}OnChange;\n", notify_sys_name_base);
+			}
+			ctx.writef("\tusing OnRemove = ::ecsact::notify::{0}OnRemove;\n", notify_sys_name_base);
 		}
 
 		write_fields(ctx, compo_id, "\t"s);

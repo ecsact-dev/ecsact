@@ -11,6 +11,7 @@
 #include <optional>
 #include <span>
 #include <variant>
+#include "ecsact/interpret/detail/builtin_util.hh"
 #include "ecsact/parse/status.h"
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/runtime/meta.hh"
@@ -711,10 +712,16 @@ static auto eval_import_statement(
 		static_cast<size_t>(data.import_package_name.length),
 	};
 
+	if(auto builtin_pkg_id = ecsact::detail::is_known_builtin_package(import_name)) {
+		ecsact_add_dependency(package_id, *builtin_pkg_id);
+		return {};
+	}
+
 	for(auto dep_pkg_id : ecsact::meta::get_package_ids()) {
 		if(dep_pkg_id == package_id) {
 			continue;
 		}
+
 		if(ecsact::meta::package_name(dep_pkg_id) == import_name) {
 			ecsact_add_dependency(package_id, dep_pkg_id);
 			return {};

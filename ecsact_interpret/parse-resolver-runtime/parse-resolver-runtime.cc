@@ -140,7 +140,12 @@ struct package_def {
 	std::vector<std::vector<ecsact_system_like_id>> execution_batches;
 };
 
-// clang-format off
+struct builtin_notify_systems_info {
+	ecsact_system_id oninit_sys_id = ECSACT_INVALID_ID(system);
+	ecsact_system_id onchange_sys_id = ECSACT_INVALID_ID(system);
+	ecsact_system_id onremove_sys_id = ECSACT_INVALID_ID(system);
+};
+
 static const auto builtin_package_defs = std::unordered_map<ecsact_package_id, package_def>{
 	{
 		ECSACT_BUILTIN_PKG_NOTIFY_ID,
@@ -151,19 +156,19 @@ static const auto builtin_package_defs = std::unordered_map<ecsact_package_id, p
 		},
 	},
 };
-//clang-format on
 
-static std::unordered_map<ecsact_decl_id, std::string>       full_names;
-static std::unordered_map<ecsact_package_id, package_def>    package_defs = builtin_package_defs;
-static std::unordered_map<ecsact_decl_id, ecsact_package_id> def_owner_map;
-static std::unordered_map<ecsact_component_id, comp_def>     comp_defs;
-static std::unordered_map<ecsact_transient_id, trans_def>    trans_defs;
-static std::unordered_map<ecsact_system_id, system_def>      sys_defs;
-static std::unordered_map<ecsact_action_id, action_def>      act_defs;
-static std::unordered_map<ecsact_enum_id, enum_def>          enum_defs;
-static std::unordered_map<ecsact_cluster_id, cluster_def>    cluster_defs;
-static std::optional<ecsact_package_id>                      main_package_id;
-static ecsact_cluster_id notify_systems_cluster = ECSACT_INVALID_ID(cluster);
+static std::unordered_map<ecsact_decl_id, std::string>                      full_names;
+static std::unordered_map<ecsact_package_id, package_def>                   package_defs;
+static std::unordered_map<ecsact_decl_id, ecsact_package_id>                def_owner_map;
+static std::unordered_map<ecsact_component_id, comp_def>                    comp_defs;
+static std::unordered_map<ecsact_component_id, builtin_notify_systems_info> comp_notify_systems_info;
+static std::unordered_map<ecsact_transient_id, trans_def>                   trans_defs;
+static std::unordered_map<ecsact_system_id, system_def>                     sys_defs;
+static std::unordered_map<ecsact_action_id, action_def>                     act_defs;
+static std::unordered_map<ecsact_enum_id, enum_def>                         enum_defs;
+static std::unordered_map<ecsact_cluster_id, cluster_def>                   cluster_defs;
+static std::optional<ecsact_package_id>                                     main_package_id;
+static ecsact_cluster_id                                                    notify_systems_cluster = ECSACT_INVALID_ID(cluster);
 
 static auto get_execution_order(const package_def& pkg_def) -> std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>> {
 	auto result = pkg_def.declared_execution_order;
@@ -188,7 +193,7 @@ static auto get_all_system_ids(const package_def& pkg_def) -> std::vector<ecsact
 
 void ecsact_interpret_reset() {
 	full_names.clear();
-	package_defs = builtin_package_defs;
+	package_defs.clear();
 	def_owner_map.clear();
 	comp_defs.clear();
 	trans_defs.clear();
@@ -273,8 +278,99 @@ auto ecsact_create_package(
 	return id;
 }
 
+static auto ecsact_destroy_system_internal(ecsact_system_like_id sys_like_id) -> void {
+	auto decl_id = ecsact_id_cast<ecsact_decl_id>(sys_like_id);
+	auto owner = owner_package_id(sys_like_id);
+
+	if(owner != ECSACT_INVALID_ID(package)) {
+		auto& pkg = get_package_def(owner);
+
+		pkg.declared_systems.erase(
+			std::remove(pkg.declared_systems.begin(), pkg.declared_systems.end(), static_cast<ecsact_system_id>(sys_like_id)),
+			pkg.declared_systems.end()
+		);
+
+		pkg.actions.erase(
+			std::remove(pkg.actions.begin(), pkg.actions.end(), static_cast<ecsact_action_id>(sys_like_id)),
+			pkg.actions.end()
+		);
+
+		for(auto itr = pkg.declared_execution_order.begin(); itr != pkg.declared_execution_order.end(); ++itr) {
+			const auto& entry = *itr;
+			if(auto* entry_id = std::get_if<ecsact_system_like_id>(&entry)) {
+				if(*entry_id == sys_like_id) {
+					pkg.declared_execution_order.erase(itr);
+					break;
+				}
+			}
+		}
+
+		// clearing forces execution batches to be re-calculated
+		pkg.execution_batches.clear();
+	}
+
+	sys_defs.erase(static_cast<ecsact_system_id>(sys_like_id));
+	act_defs.erase(static_cast<ecsact_action_id>(sys_like_id));
+	def_owner_map.erase(decl_id);
+	full_names.erase(decl_id);
+}
+
+static auto ensure_notify_builtin_systems_capabilities(
+	ecsact_package_id   owner,
+	ecsact_component_id comp_id
+) -> void {
+	auto field_count = ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(comp_id));
+
+	auto& notify_sys_info = comp_notify_systems_info.at(comp_id);
+
+	if(field_count == 0) {
+		ecsact_unset_system_capability(
+			ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.oninit_sys_id),
+			ecsact_id_cast<ecsact_component_like_id>(comp_id)
+		);
+		if(notify_sys_info.onchange_sys_id != ECSACT_INVALID_ID(system)) {
+			ecsact_destroy_system_internal(ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.onchange_sys_id));
+			notify_sys_info.onchange_sys_id = ECSACT_INVALID_ID(system);
+		}
+		ecsact_unset_system_capability(
+			ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.onremove_sys_id),
+			ecsact_id_cast<ecsact_component_like_id>(comp_id)
+		);
+	} else {
+		ecsact_set_system_capability(
+			ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.oninit_sys_id),
+			ecsact_id_cast<ecsact_component_like_id>(comp_id),
+			ECSACT_SYS_CAP_READONLY
+		);
+		if(notify_sys_info.onchange_sys_id == ECSACT_INVALID_ID(system)) {
+			const auto sys_name_base = std::format(
+				"P{}C{}",
+				static_cast<int32_t>(owner),
+				static_cast<int32_t>(comp_id)
+			);
+			const auto onchange_sys_name = std::format("{}OnChange", sys_name_base);
+			notify_sys_info.onchange_sys_id = ecsact_create_system(ECSACT_BUILTIN_PKG_NOTIFY_ID, onchange_sys_name.data(), onchange_sys_name.size());
+			ecsact_set_system_notify_component_setting(
+				ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.onchange_sys_id),
+				ecsact_id_cast<ecsact_component_like_id>(comp_id),
+				ECSACT_SYS_NOTIFY_ONCHANGE
+			);
+			ecsact_set_system_capability(
+				ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.onchange_sys_id),
+				ecsact_id_cast<ecsact_component_like_id>(comp_id),
+				ECSACT_SYS_CAP_READONLY
+			);
+		}
+		ecsact_set_system_capability(
+			ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.onremove_sys_id),
+			ecsact_id_cast<ecsact_component_like_id>(comp_id),
+			ECSACT_SYS_CAP_READONLY
+		);
+	}
+}
+
 static auto create_notify_builtin_systems(
-	ecsact_package_id owner,
+	ecsact_package_id   owner,
 	ecsact_component_id comp_id
 ) -> void {
 	const auto sys_name_base = std::format(
@@ -283,41 +379,32 @@ static auto create_notify_builtin_systems(
 		static_cast<int32_t>(comp_id)
 	);
 
+	auto& notify_sys_info = comp_notify_systems_info[comp_id];
+	notify_sys_info.onchange_sys_id = ECSACT_INVALID_ID(system);
+
 	const auto oninit_sys_name = std::format("{}OnInit", sys_name_base);
-	auto notify_oninit_sys_id = ecsact_create_system(ECSACT_BUILTIN_PKG_NOTIFY_ID, oninit_sys_name.data(), oninit_sys_name.size());
-	ecsact_set_system_capability(
-		ecsact_id_cast<ecsact_system_like_id>(notify_oninit_sys_id),
-		ecsact_id_cast<ecsact_component_like_id>(comp_id),
-		ECSACT_SYS_CAP_READONLY);
+	notify_sys_info.oninit_sys_id = ecsact_create_system(ECSACT_BUILTIN_PKG_NOTIFY_ID, oninit_sys_name.data(), oninit_sys_name.size());
 	ecsact_set_system_notify_component_setting(
-		ecsact_id_cast<ecsact_system_like_id>(notify_oninit_sys_id),
+		ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.oninit_sys_id),
 		ecsact_id_cast<ecsact_component_like_id>(comp_id),
 		ECSACT_SYS_NOTIFY_ONINIT
 	);
 
-	const auto onchange_sys_name = std::format("{}OnChange", sys_name_base);
-	auto notify_onchange_sys_id = ecsact_create_system(ECSACT_BUILTIN_PKG_NOTIFY_ID, onchange_sys_name.data(), onchange_sys_name.size());
-	ecsact_set_system_capability(
-		ecsact_id_cast<ecsact_system_like_id>(notify_onchange_sys_id),
-		ecsact_id_cast<ecsact_component_like_id>(comp_id),
-		ECSACT_SYS_CAP_READONLY);
-	ecsact_set_system_notify_component_setting(
-		ecsact_id_cast<ecsact_system_like_id>(notify_oninit_sys_id),
-		ecsact_id_cast<ecsact_component_like_id>(comp_id),
-		ECSACT_SYS_NOTIFY_ONCHANGE
-	);
-
 	const auto onremove_sys_name = std::format("{}OnRemove", sys_name_base);
-	auto notify_onremove_sys_id = ecsact_create_system(ECSACT_BUILTIN_PKG_NOTIFY_ID, onremove_sys_name.data(), onremove_sys_name.size());
-	ecsact_set_system_capability(
-		ecsact_id_cast<ecsact_system_like_id>(notify_onremove_sys_id),
-		ecsact_id_cast<ecsact_component_like_id>(comp_id),
-		ECSACT_SYS_CAP_READONLY);
+	notify_sys_info.onremove_sys_id = ecsact_create_system(ECSACT_BUILTIN_PKG_NOTIFY_ID, onremove_sys_name.data(), onremove_sys_name.size());
 	ecsact_set_system_notify_component_setting(
-		ecsact_id_cast<ecsact_system_like_id>(notify_oninit_sys_id),
+		ecsact_id_cast<ecsact_system_like_id>(notify_sys_info.onremove_sys_id),
 		ecsact_id_cast<ecsact_component_like_id>(comp_id),
 		ECSACT_SYS_NOTIFY_ONREMOVE
 	);
+}
+
+static auto destroy_notify_builtin_systems(
+	ecsact_package_id   owner,
+	ecsact_component_id comp_id
+) -> void {
+	[[maybe_unused]] auto& notify_sys_info = comp_notify_systems_info.at(comp_id);
+	// TODO: cleanup notify builtin systems
 }
 
 auto ecsact_add_dependency(
@@ -332,7 +419,20 @@ auto ecsact_add_dependency(
 	auto& deps = pkg_itr->second.dependencies;
 	auto  itr = std::find(deps.begin(), deps.end(), dependency);
 	if(itr != deps.end()) {
-		return;
+		if(dependency > ECSACT_BUILTIN_PACKAGE_MAX_ID) {
+			return;
+		}
+
+		if(!builtin_package_defs.contains(dependency)) {
+			return;
+		}
+
+		if(!package_defs.contains(ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
+			package_defs.insert({
+				ECSACT_BUILTIN_PKG_NOTIFY_ID,
+				builtin_package_defs.at(ECSACT_BUILTIN_PKG_NOTIFY_ID),
+			});
+		}
 	}
 
 	deps.push_back(dependency);
@@ -352,12 +452,13 @@ auto ecsact_remove_dependency(
 	ecsact_package_id dependency
 ) -> void {
 	auto& deps = get_package_def(target).dependencies;
-	auto removed_dep_itr = deps.erase(std::remove(deps.begin(), deps.end(), dependency), deps.end());
+	auto  removed_dep_itr = deps.erase(std::remove(deps.begin(), deps.end(), dependency), deps.end());
 	if(removed_dep_itr == deps.end()) {
 		return;
 	}
 
 	if(dependency == ECSACT_BUILTIN_PKG_NOTIFY_ID) {
+		// TODO: remove builtin pkg notify package from package_defs if no one has it as a dependency
 	}
 }
 
@@ -539,7 +640,7 @@ void ecsact_meta_get_system_ids(
 	int32_t*          out_system_count
 ) {
 	auto& pkg_def = get_package_def(package_id);
-	auto systems = get_all_system_ids(pkg_def);
+	auto  systems = get_all_system_ids(pkg_def);
 
 	auto itr = systems.begin();
 	for(int32_t i = 0; max_system_count > i && itr != systems.end(); ++i) {
@@ -863,6 +964,16 @@ ecsact_field_id ecsact_add_field(
 	auto& field = def.fields[id];
 	field.name = std::string(field_name, field_name_len);
 	field.type = field_type;
+
+	auto  owner_pkg_id = owner_package_id(composite_id);
+	auto& pkg = get_package_def(owner_pkg_id);
+	if(std::ranges::contains(pkg.dependencies, ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
+		auto comp_itr = comp_defs.find(static_cast<ecsact_component_id>(composite_id));
+		if(comp_itr != comp_defs.end()) {
+			ensure_notify_builtin_systems_capabilities(owner_pkg_id, comp_itr->first);
+		}
+	}
+
 	return id;
 }
 
@@ -872,13 +983,28 @@ void ecsact_remove_field(
 ) {
 	auto& def = get_composite(composite_id);
 	def.fields.erase(field_id);
+
+	auto  owner_pkg_id = owner_package_id(composite_id);
+	auto& pkg = get_package_def(owner_pkg_id);
+	if(std::ranges::contains(pkg.dependencies, ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
+		auto comp_itr = comp_defs.find(static_cast<ecsact_component_id>(composite_id));
+		if(comp_itr != comp_defs.end()) {
+			ensure_notify_builtin_systems_capabilities(owner_pkg_id, comp_itr->first);
+		}
+	}
 }
 
 void ecsact_destroy_component(ecsact_component_id component_id) {
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(component_id);
 	auto owner = owner_package_id(component_id);
+
 	if((int32_t)owner != -1) {
 		auto& pkg = get_package_def(owner);
+
+		if(std::ranges::contains(pkg.dependencies, ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
+			destroy_notify_builtin_systems(owner, component_id);
+		}
+
 		pkg.components.erase(
 			std::remove(pkg.components.begin(), pkg.components.end(), component_id),
 			pkg.components.end()
@@ -887,6 +1013,19 @@ void ecsact_destroy_component(ecsact_component_id component_id) {
 	comp_defs.erase(component_id);
 	def_owner_map.erase(decl_id);
 	full_names.erase(decl_id);
+}
+
+auto ecsact_destroy_system(ecsact_system_like_id sys_like_id) -> void {
+	auto owner = owner_package_id(sys_like_id);
+
+	if(owner != ECSACT_INVALID_ID(package)) {
+		if(owner == ECSACT_BUILTIN_PKG_NOTIFY_ID) {
+			// TODO: report this as an error - users cannot destroy builtin packages
+			return;
+		}
+	}
+
+	ecsact_destroy_system_internal(sys_like_id);
 }
 
 void ecsact_destroy_transient(ecsact_transient_id transient_id) {
@@ -1186,7 +1325,7 @@ static bool collect_all_caps(
 
 static auto calculate_execution_batches(
 	const std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>& execution_order,
-	std::vector<std::vector<ecsact_system_like_id>>& out_batches
+	std::vector<std::vector<ecsact_system_like_id>>&                           out_batches
 ) -> ecsact_execution_batches_error {
 	out_batches.clear();
 
@@ -1276,10 +1415,8 @@ static auto calculate_execution_batches(
 		};
 
 	auto check_conflict = [&]( //
-													ecsact_system_like_id system_id,
-													const std::unordered_map<
-														ecsact_component_like_id,
-														ecsact_system_capability>& all_caps
+													ecsact_system_like_id                                                         system_id,
+													const std::unordered_map<ecsact_component_like_id, ecsact_system_capability>& all_caps
 												) -> ecsact_execution_batches_error {
 		for(auto const& [comp_id, cap] : all_caps) {
 			ecsact_system_like_id conflicting_sys_id =
@@ -1290,7 +1427,7 @@ static auto calculate_execution_batches(
 				if(batch_readers.contains(comp_id) || batch_writers.contains(comp_id)) {
 					for(auto other_sys_id : current_batch) {
 						std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
-								 other_caps;
+							other_caps;
 						collect_all_caps(other_sys_id, other_caps);
 						if(other_caps.contains(comp_id)) {
 							auto other_cap = other_caps.at(comp_id);
@@ -1306,7 +1443,7 @@ static auto calculate_execution_batches(
 				if(batch_writers.contains(comp_id)) {
 					for(auto other_sys_id : current_batch) {
 						std::unordered_map<ecsact_component_like_id, ecsact_system_capability>
-								 other_caps;
+							other_caps;
 						collect_all_caps(other_sys_id, other_caps);
 						if(other_caps.contains(comp_id)) {
 							auto other_cap = other_caps.at(comp_id);
@@ -1412,13 +1549,13 @@ static auto calculate_execution_batches(
 
 int32_t ecsact_meta_count_execution_batches(ecsact_package_id package_id) {
 	auto& pkg = get_package_def(package_id);
-	auto pkg_exec_order = get_execution_order(pkg);
+	auto  pkg_exec_order = get_execution_order(pkg);
 	if(pkg.execution_batches.empty()) {
 		std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
 			all_execution_order;
 		for(auto dep_id : pkg.dependencies) {
 			auto& dep_pkg = get_package_def(dep_id);
-			auto dep_pkg_exec_order = get_execution_order(dep_pkg);
+			auto  dep_pkg_exec_order = get_execution_order(dep_pkg);
 			for(auto& entry : dep_pkg_exec_order) {
 				all_execution_order.push_back(entry);
 			}
@@ -1442,13 +1579,13 @@ void ecsact_meta_get_execution_batch(
 	int32_t*               out_systems_count
 ) {
 	auto& pkg = get_package_def(package_id);
-	auto pkg_exec_order = get_execution_order(pkg);
+	auto  pkg_exec_order = get_execution_order(pkg);
 	if(pkg.execution_batches.empty()) {
 		std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
 			all_execution_order;
 		for(auto dep_id : pkg.dependencies) {
 			auto& dep_pkg = get_package_def(dep_id);
-			auto dep_pkg_exec_order = get_execution_order(dep_pkg);
+			auto  dep_pkg_exec_order = get_execution_order(dep_pkg);
 			for(auto& entry : dep_pkg_exec_order) {
 				all_execution_order.push_back(entry);
 			}
@@ -1527,7 +1664,7 @@ ecsact_execution_batches_error ecsact_check_execution_batches(
 	}
 
 	auto& pkg = pkg_itr->second;
-	auto pkg_exec_order = get_execution_order(pkg);
+	auto  pkg_exec_order = get_execution_order(pkg);
 	if(pkg.execution_batches.empty()) {
 		std::vector<std::variant<ecsact_system_like_id, ecsact_cluster_id>>
 			all_execution_order;
@@ -1553,7 +1690,7 @@ ecsact_execution_batches_error ecsact_check_execution_batches(
 		}
 
 		std::vector<std::vector<ecsact_system_like_id>> batches;
-		auto err = calculate_execution_batches(all_execution_order, batches);
+		auto                                            err = calculate_execution_batches(all_execution_order, batches);
 		if(static_cast<int32_t>(err.system_id) == -1) {
 			pkg.execution_batches = std::move(batches);
 		}
@@ -1580,7 +1717,7 @@ ecsact_execution_batches_error ecsact_check_system_execution_batches(
 	}
 
 	std::vector<std::vector<ecsact_system_like_id>> batches;
-	auto err = calculate_execution_batches(sys_def.execution_order, batches);
+	auto                                            err = calculate_execution_batches(sys_def.execution_order, batches);
 	if(static_cast<int32_t>(err.system_id) == -1) {
 		sys_def.execution_batches = std::move(batches);
 	}
