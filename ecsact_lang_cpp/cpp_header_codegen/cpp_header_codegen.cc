@@ -196,26 +196,6 @@ void ecsact_codegen_plugin(
 	const auto namespace_str =
 		cpp_identifier(ecsact_meta_package_name(ctx.package_id));
 
-	// if(std::ranges::contains(pkg_deps, ECSACT_BUILTIN_PKG_NOTIFY_ID)) {
-	// 	ctx.writef("// forward declarations for ecsact.notify\n");
-	// 	ctx.writef("namespace ecsact::notify {{\n\n");
-	// 	for(auto comp_id : get_component_ids(ctx.package_id)) {
-	// 		const auto notify_sys_name_base = std::format(
-	// 			"P{}C{}",
-	// 			static_cast<int32_t>(package_id),
-	// 			static_cast<int32_t>(comp_id)
-	// 		);
-	//
-	// 		ctx.writef(
-	// 			"\tstruct {0}OnInit;\n"
-	// 			"\tstruct {0}OnChange;\n"
-	// 			"\tstruct {0}OnRemove;\n",
-	// 			notify_sys_name_base
-	// 		);
-	// 	}
-	// 	ctx.writef("}} // namespace ecsact::notify\n\n");
-	// }
-
 	ctx.writef("namespace {} {{\n\n", namespace_str);
 
 	for(auto enum_id : get_enum_ids(ctx.package_id)) {

@@ -99,7 +99,6 @@ bazel_dep(name = "lexy", version = "2022.05.1")
 bazel_dep(name = "entt", version = "3.12.2")
 bazel_dep(name = "rules_wasmer", version = "0.1.2")
 bazel_dep(name = "llvm", version = "0.8.9")
-bazel_dep(name = "boost.stacktrace", version = "1.90.0.bcr.1")
 
 wasmer = use_extension("@rules_wasmer//wasmer:extensions.bzl", "wasmer")
 use_repo(wasmer, "wasmer")

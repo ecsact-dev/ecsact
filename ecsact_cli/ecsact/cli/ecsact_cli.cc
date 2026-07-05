@@ -4,8 +4,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <exception>
-#define BOOST_STACKTRACE_USE_WINDBG
-#include <boost/stacktrace.hpp>
 #include "ecsact_cli/ecsact/cli/bazel_stamp_header.hh"
 #include "ecsact/cli/commands/codegen.hh"
 #include "ecsact/cli/commands/command.hh"
@@ -71,14 +69,7 @@ void print_usage() {
 						<< USAGE;
 }
 
-void terminate_handler() {
-	std::cerr << "Terminate called:\n"
-						<< boost::stacktrace::stacktrace() << '\n';
-	std::abort();
-}
-
 int main(int argc, const char* argv[]) {
-	std::set_terminate(terminate_handler);
 	using ecsact::cli::detail::command_fn_t;
 
 	const std::unordered_map<std::string, command_fn_t> commands{

@@ -33,7 +33,7 @@ cc_binary(
         "bazel_stamp_header.hh",
         "ecsact_cli.cc",
     ],
-    copts = copts + ["-gcodeview", "-g"],
+    copts = copts,
     data = [
         "@tracy//:tracy_srcs",
     ],
@@ -41,18 +41,13 @@ cc_binary(
         "//ecsact_cli:use_sdk_version_enabled": ["ECSACT_CLI_USE_SDK_VERSION"],
         "//ecsact_cli:use_sdk_version_disabled": [],
     }),
-    stamp = 1,
     features = ["-strip_debug_symbols"],
-    linkopts = select({
-        "@platforms//os:windows": ["-ldbgeng", "-lole32", "-Wl,--pdb="],
-        "//conditions:default": [],
-    }),
+    stamp = 1,
     visibility = ["//visibility:public"],
     deps = [
         # "//ecsact_cli/ecsact/cli/commands:benchmark",
         "//ecsact_cli/ecsact/cli/commands:codegen",
         "//ecsact_cli/ecsact/cli/commands:command",
         "//ecsact_cli/ecsact/cli/commands:config",
-        "@boost.stacktrace//:boost.stacktrace",
     ],
 )
