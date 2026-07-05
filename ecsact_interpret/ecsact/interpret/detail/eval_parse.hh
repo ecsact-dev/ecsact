@@ -5,7 +5,6 @@
 #include <span>
 #include <unordered_set>
 #include <cassert>
-#include <iostream> //  TODO(ZAUCY): Remove this
 #include <magic_enum/magic_enum.hpp>
 #include "ecsact/runtime/dynamic.h"
 #include "ecsact/runtime/meta.hh"
@@ -16,6 +15,7 @@
 #include "./stack_util.hh"
 #include "./string_util.hh"
 #include "./read_util.hh"
+#include "./builtin_util.hh"
 
 template<>
 struct magic_enum::customize::enum_range<ecsact_eval_error_code> {
@@ -184,11 +184,11 @@ parse_eval_error to_parse_eval_error(
 }
 
 template<typename InputStream>
-parse_eval_error to_parse_eval_error(
+auto to_parse_eval_error(
 	int32_t                              source_index,
 	const statement_reader<InputStream>& reader,
 	ecsact_eval_error                    eval_err
-) {
+) -> parse_eval_error {
 	std::string relevant_content(
 		eval_err.relevant_content.data,
 		eval_err.relevant_content.length
@@ -221,10 +221,10 @@ parse_eval_error to_parse_eval_error(
 }
 
 template<typename InputStream>
-void parse_package_statements(
+auto parse_package_statements(
 	std::vector<eval_parse_state<InputStream>>& file_states,
 	std::vector<parse_eval_error>&              out_errors
-) {
+) -> void {
 	auto source_index = 0;
 	for(auto& state : file_states) {
 		while(state.reader.can_read_next()) {
@@ -250,8 +250,7 @@ void parse_package_statements(
 						.line = state.reader.current_line,
 						.character = state.reader.current_character,
 						.error_message = "Must have package statement as first statement "
-														 "in "
-														 "file.",
+														 "in file.",
 					}
 				);
 			} else {
@@ -260,6 +259,20 @@ void parse_package_statements(
 					statement.data.package_statement.package_name.data,
 					statement.data.package_statement.package_name.length
 				);
+
+				if(is_builtin_package(state.package_name)) {
+					out_errors.push_back(
+						parse_eval_error{
+							.eval_error = ECSACT_EVAL_ERR_EXPECTED_PACKAGE_STATEMENT,
+							.source_index = source_index,
+							.line = state.reader.current_line,
+							.character = state.reader.current_character,
+							.error_message = "Package names may NOT start with `ecsact.` or "
+															 "be `ecsact`. These are reserved for builtin "
+															 "packages.",
+						}
+					);
+				}
 			}
 
 			state.reader.pump_status_code();
@@ -312,10 +325,10 @@ void parse_imports(
 }
 
 template<typename InputStream>
-void check_unknown_imports(
+auto check_unknown_imports(
 	std::vector<eval_parse_state<InputStream>>& file_states,
 	std::vector<parse_eval_error>&              out_errors
-) {
+) -> void {
 	auto source_index = 0;
 	for(auto& state : file_states) {
 		for(auto& import_name : state.imports) {
@@ -331,7 +344,17 @@ void check_unknown_imports(
 				}
 			}
 
-			if(!found_import) {
+			if(is_builtin_package(import_name)) {
+				if(!is_known_builtin_package(import_name)) {
+					out_errors.push_back({
+						.source_index = source_index,
+						.line = state.reader.current_line,
+						.character = state.reader.current_character,
+						.error_message =
+							"Unknown builtin package import '" + import_name + "'",
+					});
+				}
+			} else if(!found_import) {
 				out_errors.push_back({
 					.source_index = source_index,
 					.line = state.reader.current_line,
@@ -346,18 +369,23 @@ void check_unknown_imports(
 }
 
 template<typename InputStream>
-void check_cyclic_imports(
+auto check_cyclic_imports(
 	std::vector<eval_parse_state<InputStream>>& file_states,
 	std::vector<parse_eval_error>&              out_errors
-) {
+) -> void {
 }
 
 template<typename InputStream>
-void eval_package_statements(
+auto eval_package_statements(
 	std::vector<eval_parse_state<InputStream>>& file_states,
 	std::vector<parse_eval_error>&              out_errors
-) {
+) -> void {
 	for(auto& state : file_states) {
+		// Skip files with no package statement (e.g. empty or comment-only).
+		if(state.package_name.empty()) {
+			continue;
+		}
+
 		ecsact_package_statement faux_statement{
 			.main = state.main_package,
 			.package_name{
@@ -382,7 +410,11 @@ void eval_imports(
 	std::vector<parse_eval_error>& out_errors
 ) {
 	for(auto& import_name : file_state.imports) {
-		ecsact_statement faux_import_statement{
+		if(is_builtin_package(import_name)) {
+			continue;
+		}
+
+		auto faux_import_statement = ecsact_statement{
 			.type = ECSACT_STATEMENT_IMPORT,
 			.data{.import_statement{
 				.import_package_name{
@@ -424,11 +456,11 @@ void skip_until_current_block_end(statement_reader<InputStream>& reader) {
 }
 
 template<typename InputStream>
-void parse_eval_declarations(
+auto parse_eval_declarations(
 	int32_t                        source_index,
 	eval_parse_state<InputStream>& file_state,
 	std::vector<parse_eval_error>& out_errors
-) {
+) -> void {
 	while(file_state.reader.can_read_next()) {
 		file_state.reader.read_next();
 
@@ -490,19 +522,35 @@ inline auto get_sorted_states(
 ) -> std::vector<std::reference_wrapper<eval_parse_state<InputStream>>> {
 	auto result =
 		std::vector<std::reference_wrapper<eval_parse_state<InputStream>>>{};
-	result.reserve(file_states.size());
+
+	// Count states that have a package (skip empty/comment-only files).
+	auto package_count = std::size_t{0};
+	for(auto& state : file_states) {
+		if(!state.package_name.empty()) {
+			package_count += 1;
+		}
+	}
+	result.reserve(package_count);
 
 	auto resolved_packages = std::unordered_set<std::string>{};
-	resolved_packages.reserve(file_states.size());
+	resolved_packages.reserve(package_count);
 
-	while(resolved_packages.size() != file_states.size()) {
+	while(resolved_packages.size() != package_count) {
+		auto prev_size = resolved_packages.size();
 		for(auto& state : file_states) {
+			if(state.package_name.empty()) {
+				continue;
+			}
+
 			if(resolved_packages.contains(state.package_name)) {
 				continue;
 			}
 
 			bool imports_resolved = true;
 			for(auto import_name : state.imports) {
+				if(is_builtin_package(import_name)) {
+					continue;
+				}
 				if(!resolved_packages.contains(import_name)) {
 					imports_resolved = false;
 					break;
@@ -515,9 +563,14 @@ inline auto get_sorted_states(
 				break;
 			}
 		}
+
+		// no change - assuming empty package
+		if(resolved_packages.size() == prev_size) {
+			break;
+		}
 	}
 
-	assert(result.capacity() == result.size());
+	assert(result.size() == package_count);
 	return result;
 }
 

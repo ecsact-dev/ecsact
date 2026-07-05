@@ -37,16 +37,6 @@ auto print_check_error_template_specializations( //
 	const ecsact_entt_details& details
 ) -> void;
 
-auto print_trigger_ecsact_events_minimal( //
-	codegen_plugin_context&    ctx,
-	const ecsact_entt_details& details
-) -> void;
-
-auto print_trigger_ecsact_events_all( //
-	codegen_plugin_context&    ctx,
-	const ecsact_entt_details& details
-) -> void;
-
 auto print_cleanup_ecsact_component_events( //
 	codegen_plugin_context&    ctx,
 	const ecsact_entt_details& details

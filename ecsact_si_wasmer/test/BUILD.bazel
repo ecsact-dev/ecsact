@@ -88,8 +88,6 @@ _WASI_TESTS = [
 ecsact_entt_runtime(
     name = "wasi_test_runtime",
     srcs = ["wasi_test.ecsact"],
-    ECSACT_ENTT_RUNTIME_PACKAGE = "::wasi_test::package",
-    ECSACT_ENTT_RUNTIME_USER_HEADER = "wasi_test.ecsact.meta.hh",
     system_impls = ["dynamic"],
     tags = ["no_refresh_compile_commands"],
 )

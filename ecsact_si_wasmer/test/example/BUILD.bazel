@@ -8,8 +8,6 @@ package(default_visibility = ["//:__subpackages__"])
 ecsact_entt_runtime(
     name = "runtime",
     srcs = ["example.ecsact"],
-    ECSACT_ENTT_RUNTIME_PACKAGE = "::example::package",
-    ECSACT_ENTT_RUNTIME_USER_HEADER = "example.ecsact.meta.hh",
     system_impls = ["dynamic"],
     tags = ["no_refresh_compile_commands"],
 )

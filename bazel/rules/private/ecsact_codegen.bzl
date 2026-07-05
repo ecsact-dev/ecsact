@@ -14,17 +14,32 @@ def _ecsact_codegen(ctx):
     args.add_all(ctx.files.srcs)
 
     plugin_data = []
+    main_src = None
+    if ctx.attr.main_src:
+        main_src = ctx.file.main_src
 
     for plugin in ctx.attr.plugins:
         plugin_info = plugin[EcsactCodegenPluginInfo]
+        requires_main_package = plugin_info.requires_main_package or plugin_info.output_only_from_main_package
+
+        if requires_main_package and not main_src:
+            fail("plugin {} requires main_src to be set".format(plugin))
+
         args.add("--plugin", plugin_info.plugin)
         plugin_data.extend(plugin_info.data)
         if len(plugin_info.outputs) == 0:
-            for src in ctx.files.srcs:
-                out_basename = src.basename + "." + plugin_info.output_extension
+            if plugin_info.output_only_from_main_package:
+                out_basename = main_src.basename + "." + plugin_info.output_extension
                 out_file = ctx.attr.output_directory + "/" + out_basename
                 outputs.append(ctx.actions.declare_file(out_file))
+            else:
+                for src in ctx.files.srcs:
+                    out_basename = src.basename + "." + plugin_info.output_extension
+                    out_file = ctx.attr.output_directory + "/" + out_basename
+                    outputs.append(ctx.actions.declare_file(out_file))
         else:
+            if plugin_info.output_only_from_main_package and len(plugin_info.outputs) > 1:
+                fail("plugin {} requires main_src - outputs cannot be more than 1 file".format(plugin))
             for output in plugin_info.outputs:
                 out_file = ctx.attr.output_directory + "/" + output
                 outputs.append(ctx.actions.declare_file(out_file))
@@ -50,9 +65,14 @@ ecsact_codegen = rule(
     implementation = _ecsact_codegen,
     doc = "Ecsact codegen rule. Executes `ecsact codegen` with specified plugins.",
     attrs = {
+        "main_src": attr.label(
+            allow_single_file = True,
+            mandatory = False,
+            doc = "main .ecsact source file",
+        ),
         "srcs": attr.label_list(
             allow_files = True,
-            mandatory = True,
+            mandatory = False,
             doc = ".ecsact source files",
         ),
         "output_directory": attr.string(

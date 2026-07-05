@@ -51,6 +51,7 @@ auto ecsact::rt_entt_codegen::system_util::is_trivial_system(
 
 	bool has_non_tag_adds = false;
 	bool has_read_write = false;
+	bool has_only_readonly = true;
 	for(auto&& [comp_id, sys_cap] : sys_capabilities) {
 		if((ECSACT_SYS_CAP_ADDS & sys_cap) == ECSACT_SYS_CAP_ADDS) {
 			auto field_count =
@@ -60,20 +61,23 @@ auto ecsact::rt_entt_codegen::system_util::is_trivial_system(
 			}
 		}
 
+		if(!((ECSACT_SYS_CAP_ADDS & sys_cap) == ECSACT_SYS_CAP_READONLY)) {
+			has_only_readonly = false;
+		}
+
 		for(auto non_trivial_cap : non_trivial_capabilities) {
 			if((non_trivial_cap & sys_cap) == sys_cap) {
 				has_read_write = true;
 			}
 		}
 	}
-	if(has_non_tag_adds || has_read_write) {
+	if(has_non_tag_adds || has_read_write || has_only_readonly) {
 		return false;
 	}
 	return true;
 }
 
-auto ecsact::rt_entt_codegen::system_util::get_unique_view_name()
-	-> std::string {
+auto ecsact::rt_entt_codegen::system_util::get_unique_view_name() -> std::string {
 	static int counter = 0;
 	return "view" + std::to_string(counter++);
 }

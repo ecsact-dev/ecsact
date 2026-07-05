@@ -78,6 +78,14 @@ ECSACT_TYPED_ID(ecsact_composite_id);
 ECSACT_TYPED_ID(ecsact_system_like_id);
 ECSACT_TYPED_ID(ecsact_component_like_id);
 
+/**
+ * IDs in the range [1, ECSACT_BUILTIN_PACKAGE_MAX_ID] are reserved for
+ * well-known builtin packages. User-defined packages start after this range.
+ * ID 0 is not used.
+ */
+#define ECSACT_BUILTIN_PACKAGE_MAX_ID ((ecsact_package_id)(99))
+#define ECSACT_BUILTIN_PKG_NOTIFY_ID ((ecsact_package_id)(1))
+
 #ifdef __cplusplus
 template<typename, typename>
 constexpr bool ecsact_id_invalid_cast_v = false;
@@ -646,54 +654,6 @@ typedef struct ecsact_execution_options {
 
 } ecsact_execution_options;
 
-typedef enum {
-	/**
-	 * Initialized component - Newly added component during execution.
-	 *
-	 * `component_data` does not necessarily reflect the component_data when the
-	 * component was original added due to the component potentially being
-	 * modified during system execution or (in the case of multi-execution calls)
-	 * modification across executions.
-	 */
-	ECSACT_EVENT_INIT_COMPONENT = 0,
-
-	/**
-	 * Update component - Component has been modified during execution.
-	 *
-	 * This event never occurs for components without any fields (tag components).
-	 *
-	 * If a component is modified during execution
-	 */
-	ECSACT_EVENT_UPDATE_COMPONENT = 1,
-
-	/**
-	 * Remove component - Component has been removed during execution.
-	 *
-	 * If a component is removed and then re-added during single or
-	 * multi-execution calls this event will not occur. The event only occurs
-	 * when at the end of the execution call the component is removed.
-	 */
-	ECSACT_EVENT_REMOVE_COMPONENT = 2,
-
-	/**
-	 * Create entity - Entity has been created during execution.
-	 *
-	 * Happens on entity creation and before any `INIT_COMPONENT`
-	 * events. It will also be triggered by any generated entities. Returns the
-	 * entity ID associated with the created entity
-	 */
-	ECSACT_EVENT_CREATE_ENTITY = 3,
-
-	/**
-	 * Destroy entity - Entity has been destroyed during execution.
-	 *
-	 * Invoked when an entity is destroyed. Any components associated with the
-	 * entity will also be destroyed. Returns the entity ID associated with the
-	 * destroyed entity
-	 */
-	ECSACT_EVENT_DESTROY_ENTITY = 4,
-} ecsact_event;
-
 typedef enum ecsact_component_type {
 	/**
 	 * The component has no unique type
@@ -719,99 +679,5 @@ typedef enum ecsact_component_type {
 	 */
 	ECSACT_COMPONENT_TYPE_TRANSIENT = 3
 } ecsact_component_stream;
-
-/**
- * Component event callback
- */
-typedef void (*ecsact_component_event_callback)( //
-	ecsact_event        event,
-	ecsact_entity_id    entity_id,
-	ecsact_component_id component_id,
-	const void*         component_data,
-	void*               callback_user_data
-);
-
-/**
- * Entity event callback
- * @param event always ECSACT_EVENT_CREATE_ENTITY or ECSACT_EVENT_DESTROY_ENTITY
- * @param entity_id the entity that was created or destroyed
- * @param placeholder_entity_id the placeholder entity ID originally given in
- *        execution options or one of the constant placeholder entity IDs.
- * @param  * @param callback_user_data void pointer originally given at
- * execution / flush
- */
-typedef void (*ecsact_entity_event_callback)( //
-	ecsact_event                 event,
-	ecsact_entity_id             entity_id,
-	ecsact_placeholder_entity_id placeholder_entity_id,
-	void*                        callback_user_data
-);
-
-/**
- * Holds event handler callbacks and their user data
- */
-typedef struct ecsact_execution_events_collector {
-	/**
-	 * Invoked after system executions are finished for every component that is
-	 * new. The component_data is the last value given for the component, not the
-	 * first. Invocation happens in the calling thread. `event` will always be
-	 * `ECSACT_EVENT_INIT_COMPONENT`
-	 */
-	ecsact_component_event_callback init_callback;
-
-	/**
-	 * `callback_user_data` passed to `init_callback`
-	 */
-	void* init_callback_user_data;
-
-	/**
-	 * Invoked after system executions are finished for every changed component.
-	 * Invocation happens in the calling thread. `event` will always be
-	 * `ECSACT_EVENT_UPDATE_COMPONENT`
-	 */
-	ecsact_component_event_callback update_callback;
-
-	/**
-	 * `callback_user_data` passed to `update_callback`
-	 */
-	void* update_callback_user_data;
-
-	/**
-	 * Invoked after system executions are finished for every removed component.
-	 * Invocation happens in the calling thread. `event` will always be
-	 * `ECSACT_EVENT_REMOVE_COMPONENT`.
-	 */
-	ecsact_component_event_callback remove_callback;
-
-	/**
-	 * `callback_user_data` passed to `remove_callback`
-	 */
-	void* remove_callback_user_data;
-
-	/**
-	 * Invoked after system executions are finished for every created entity.
-	 * Invocation happens in the calling thread. `event` will will always be
-	 * `ECSACT_EVENT_CREATE_ENTITY`.
-	 */
-	ecsact_entity_event_callback entity_created_callback;
-
-	/**
-	 * `callback_user_data` passed to `entity_created_callback`
-	 */
-	void* entity_created_callback_user_data;
-
-	/**
-	 * Invoked after system executions are finished for every removed component.
-	 * Invocation happens in the calling thread. `event` will will always be
-	 * `ECSACT_EVENT_DESTROY_COMPONENT`.
-	 */
-	ecsact_entity_event_callback entity_destroyed_callback;
-
-	/**
-	 * `callback_user_data` passed to `entity_destroyed_callback`
-	 */
-	void* entity_destroyed_callback_user_data;
-
-} ecsact_execution_events_collector;
 
 #endif // ECSACT_RUNTIME_COMMON_H

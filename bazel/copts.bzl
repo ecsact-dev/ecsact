@@ -7,6 +7,7 @@ copts = selects.with_or({
     ],
     ("@rules_cc//cc/compiler:clang"): [
         "-std=c++26",
+        "-fno-stack-protector",
     ],
     ("@rules_cc//cc/compiler:msvc-cl", "@rules_cc//cc/compiler:clang-cl"): [
         "/std:c++latest",
@@ -19,6 +20,7 @@ linkopts = selects.with_or({
     ("@rules_cc//cc/compiler:emscripten"): [
     ],
     ("@rules_cc//cc/compiler:clang"): [
+        "-fno-stack-protector",
     ],
     ("@rules_cc//cc/compiler:msvc-cl", "@rules_cc//cc/compiler:clang-cl"): [
     ],

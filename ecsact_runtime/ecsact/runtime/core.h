@@ -257,16 +257,12 @@ ECSACT_CORE_API_FN(void, ecsact_remove_component)
  * @param execution_count how many times the systems list should execute
  * @param execution_options_list (optional) Sequential list of execution
  * options. If set (not NULL), list length is determined by `execution_count`.
- * @param events_collector (optional) Pointer to events collector. If set,
- *        events will be recorded and the callbacks on the collector will be
- *        invoked. Invocations occur on the calling thread.
  */
 ECSACT_CORE_API_FN(ecsact_execute_systems_error, ecsact_execute_systems)
 ( //
-	ecsact_registry_id                       registry_id,
-	int                                      execution_count,
-	const ecsact_execution_options*          execution_options_list,
-	const ecsact_execution_events_collector* events_collector);
+	ecsact_registry_id              registry_id,
+	int                             execution_count,
+	const ecsact_execution_options* execution_options_list);
 
 /**
  * Gets the current execution status of an entity.

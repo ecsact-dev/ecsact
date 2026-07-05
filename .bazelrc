@@ -14,6 +14,16 @@ build --action_env=WASMER_DIR
 # needed until https://github.com/emscripten-core/emsdk/pull/1333 or similar is merged
 build --noincompatible_strict_action_env
 
+# force color diagnostics on windows
+build --copt=-fcolor-diagnostics
+build --copt=-fansi-escape-codes
+build --host_copt=-fcolor-diagnostics
+build --host_copt=-fansi-escape-codes
+
+# Silence compiler warnings from external dependencies
+build --per_file_copt=.*external/.*@-w
+build --host_per_file_copt=.*external/.*@-w
+
 common:ci --announce_rc
 common:ci --verbose_failures
 common:ci --keep_going
@@ -23,5 +33,11 @@ common --//ecsact_cli:use_sdk_version
 
 build:windows --workspace_status_command=bazel/tools/wsc.cmd
 build:linux --workspace_status_command=bazel/tools/wsc.sh
+
+common --no@tracy//:enable
+
+build:profile --copt=-DTRACY_ENABLE
+build:profile --strip=never
+common:profile --@tracy//:enable
 
 try-import %workspace%/user.bazelrc

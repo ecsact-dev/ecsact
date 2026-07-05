@@ -69,7 +69,7 @@ struct destroyed_entity {};
 template<typename S>
 struct system_sorted {
 	std::uint64_t hash = 0;
-	friend auto operator<=>(const system_sorted&, const system_sorted&) = default;
+	friend auto   operator<=>(const system_sorted&, const system_sorted&) = default;
 };
 
 template<typename S>

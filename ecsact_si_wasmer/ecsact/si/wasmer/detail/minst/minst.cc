@@ -115,9 +115,9 @@ auto minst_trap::message() const -> std::string {
 }
 
 auto minst::create( //
-	wasm_engine_t*       engine,
+	wasm_engine_t*             engine,
 	std::span<const std::byte> wasm_data,
-	import_resolver_t    import_resolver
+	import_resolver_t          import_resolver
 ) -> std::variant<minst, minst_error> {
 	auto self = minst{};
 

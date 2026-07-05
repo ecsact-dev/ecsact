@@ -163,6 +163,8 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 			}
 		}
 
+		auto total_filenames_count = 0;
+
 		for(auto package_id : package_ids) {
 			auto package_file_path =
 				fs::path{ecsact_meta_package_file_path(package_id)};
@@ -186,16 +188,17 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 				auto filenames_count = int32_t{};
 				plugin_outputs_fn(package_id, nullptr, 0, 0, &filenames_count);
 				if(filenames_count <= 0) {
-					has_plugin_error = true;
-					ecsact::cli::report_error(
+					ecsact::cli::report_warning(
 						"Plugin '{}' ({}) ecsact_codegen_output_filenames returned {} "
-						"filenames. Expected 1 or more.",
+						"filenames. Skipping",
 						plugin_name,
 						plugin.location().filename().string(),
 						filenames_count
 					);
 					continue;
 				}
+
+				total_filenames_count += filenames_count;
 
 				auto filenames = std::array<char*, 16>{};
 				auto filenames_ =
@@ -223,6 +226,7 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 						package_file_path.extension().string() + "." + plugin_name
 					)
 				);
+				total_filenames_count += 1;
 			}
 
 			if(options.outdir) {
@@ -307,6 +311,18 @@ auto ecsact::cli::codegen(codegen_options options) -> int {
 				file_write_streams.clear();
 			}
 		}
+
+		if(total_filenames_count <= 0) {
+			has_plugin_error = true;
+			ecsact::cli::report_error(
+				"Plugin '{}' ({}) total ecsact_codegen_output_filenames returned {} "
+				"filenames. Expected at least 1 file to be produced.",
+				plugin_name,
+				plugin.location().filename().string(),
+				total_filenames_count
+			);
+		}
+
 		plugin.unload();
 	}
 	if(has_plugin_error) {

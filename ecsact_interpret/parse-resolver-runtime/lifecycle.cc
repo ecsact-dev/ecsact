@@ -9,8 +9,8 @@ using ecsact::interpret::details::destroyable_id_t;
 using ecsact::interpret::details::event_ref_id;
 
 struct lifecycle_callback_info {
-	event_ref_id                          last_event_ref_id = {};
-	std::unordered_map<event_ref_id, int> callback_id;
+	event_ref_id                                            last_event_ref_id = {};
+	std::unordered_map<event_ref_id, int>                   callback_id;
 	std::unordered_map<event_ref_id, std::function<void()>> callbacks;
 
 	auto gen_next_id() -> event_ref_id {

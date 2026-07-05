@@ -14,7 +14,7 @@ using ecsact::codegen::plugin_validate_result;
 
 plugin_validate_result ecsact::codegen::plugin_validate(fs::path plugin_path) {
 	const auto platform_plugin_suffix = dll::shared_library::suffix().string();
-	plugin_validate_result result;
+	auto       result = plugin_validate_result{};
 
 	if(auto ext = plugin_path.extension(); !ext.empty()) {
 		if(ext != platform_plugin_suffix) {

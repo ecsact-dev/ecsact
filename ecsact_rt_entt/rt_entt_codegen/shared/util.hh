@@ -280,8 +280,9 @@ auto make_view( //
 	auto&&                                                     view_var_name,
 	auto&&                                                     registry_var_name,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	std::vector<std::string> additional_components = {},
-	std::vector<std::string> additional_exclude_components = {}
+	std::vector<std::string>                                   additional_components = {},
+	std::vector<std::string>                                   additional_exclude_components = {},
+	std::vector<ecsact_component_like_id>                      ignore_get_components = {}
 ) -> void {
 	using namespace std::string_literals;
 	using ecsact::rt_entt_codegen::util::comma_delim;
@@ -297,16 +298,27 @@ auto make_view( //
 		".view<"
 	);
 
-	ctx.writef(
-		"{}",
-		comma_delim(
-			details.get_comps | transform(decl_cpp_ident<ecsact_component_like_id>)
-		)
-	);
+	bool is_first = true;
+	auto write_param = [&](const std::string& param) {
+		if(!is_first) {
+			ctx.writef("{}", ", ");
+		}
+		ctx.writef("{}", param);
+		is_first = false;
+	};
+
+	for(auto comp_id : details.get_comps) {
+		if(
+			std::ranges::find(ignore_get_components, comp_id) !=
+			ignore_get_components.end()
+		) {
+			continue;
+		}
+		write_param(decl_cpp_ident<ecsact_component_like_id>(comp_id));
+	}
 
 	for(auto comp_id : details.writable_comps) {
 		auto comp_name = decl_cpp_ident(comp_id);
-
 		additional_components.push_back(
 			std::format(
 				"ecsact::entt::detail::exec_beforechange_storage<{}>",
@@ -315,9 +327,8 @@ auto make_view( //
 		);
 	}
 
-	if(!additional_components.empty()) {
-		ctx.writef("{}", ", ");
-		ctx.writef("{}", comma_delim(additional_components));
+	for(const auto& comp : additional_components) {
+		write_param(comp);
 	}
 
 	ctx.writef("{}", ">(");

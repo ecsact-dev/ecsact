@@ -30,6 +30,8 @@ def _cc_ecsact_codegen_plugin_impl(ctx):
         EcsactCodegenPluginInfo(
             output_extension = ctx.attr.output_extension,
             outputs = ctx.attr.outputs,
+            requires_main_package = ctx.attr.requires_main_package,
+            output_only_from_main_package = ctx.attr.output_only_from_main_package,
             plugin = plugin,
             data = [plugin],
         ),
@@ -39,6 +41,8 @@ _cc_ecsact_codegen_plugin = rule(
     implementation = _cc_ecsact_codegen_plugin_impl,
     attrs = {
         "cc_binary": attr.label(mandatory = True),
+        "requires_main_package": attr.bool(),
+        "output_only_from_main_package": attr.bool(),
         "output_extension": attr.string(mandatory = False),
         "outputs": attr.string_list(mandatory = False),
     },
@@ -48,22 +52,16 @@ _generated_src = """
 #include "ecsact/codegen/plugin.h"
 
 const char* ecsact_codegen_plugin_name() {{
-    return "{output_extension}";
+    return "{plugin_name}";
 }}
 """
 
 def _cc_ecsact_codegen_plugin_src_impl(ctx):
     output_cc_src = ctx.actions.declare_file("{}.plugin_name.cc".format(ctx.attr.name))
-    if ctx.attr.output_extension != None:
-        ctx.actions.write(
-            output = output_cc_src,
-            content = _generated_src.format(output_extension = ctx.attr.output_extension),
-        )
-    else:
-        ctx.actions.write(
-            output = output_cc_src,
-            content = _generated_src.format(output_extension = ctx.attr.name),
-        )
+    ctx.actions.write(
+        output = output_cc_src,
+        content = _generated_src.format(plugin_name = ctx.attr.plugin_name),
+    )
 
     return [
         DefaultInfo(files = depset([output_cc_src])),
@@ -72,11 +70,11 @@ def _cc_ecsact_codegen_plugin_src_impl(ctx):
 _cc_ecsact_codegen_plugin_src = rule(
     implementation = _cc_ecsact_codegen_plugin_src_impl,
     attrs = {
-        "output_extension": attr.string(mandatory = False),
+        "plugin_name": attr.string(mandatory = True),
     },
 )
 
-def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no_validate_test = False, output_extension = None, outputs = [], **kwargs):
+def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no_validate_test = False, output_extension = None, requires_main_package = False, output_only_from_main_package = False, outputs = [], **kwargs):
     """Create ecsact codegen plugin with C++
 
     NOTE: ecsact_codegen_plugin_name() is automatically generated for you based
@@ -128,15 +126,11 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
         **kwargs
     )
 
-    if (output_extension != None):
-        _cc_ecsact_codegen_plugin_src(
-            name = "{}__src".format(name_hash),
-            output_extension = output_extension,
-        )
-    else:
-        _cc_ecsact_codegen_plugin_src(
-            name = "{}__src".format(name_hash),
-        )
+    plugin_name = output_extension if output_extension != None else name
+    _cc_ecsact_codegen_plugin_src(
+        name = "{}__src".format(name_hash),
+        plugin_name = plugin_name,
+    )
 
     _cc_ecsact_codegen_plugin(
         name = name,
@@ -144,6 +138,8 @@ def cc_ecsact_codegen_plugin(name = None, srcs = [], deps = [], defines = [], no
             "@platforms//os:windows": ":{}__bin.dll".format(name_hash),
             "//conditions:default": ":{}__bin.so".format(name_hash),
         }),
+        requires_main_package = requires_main_package,
+        output_only_from_main_package = output_only_from_main_package,
         output_extension = output_extension,
         outputs = outputs,
     )

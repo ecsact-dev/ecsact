@@ -159,7 +159,7 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_field_id> get_field_ids(
 	CompositeID id
 ) {
 	std::vector<ecsact_field_id> field_ids;
-	auto compo_id = ecsact_id_cast<ecsact_composite_id>(id);
+	auto                         compo_id = ecsact_id_cast<ecsact_composite_id>(id);
 	field_ids.resize(ecsact_meta_count_fields(compo_id));
 	ecsact_meta_get_field_ids(
 		compo_id,
@@ -176,7 +176,7 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_field_id> get_field_ids(
 	int32_t     max_size
 ) {
 	std::vector<ecsact_field_id> field_ids;
-	auto compo_id = ecsact_id_cast<ecsact_composite_id>(id);
+	auto                         compo_id = ecsact_id_cast<ecsact_composite_id>(id);
 	field_ids.resize(max_size);
 	ecsact_meta_get_field_ids(compo_id, max_size, field_ids.data(), &max_size);
 	field_ids.resize(max_size);
@@ -363,9 +363,9 @@ template<typename SystemLikeID>
 ECSACT_ALWAYS_INLINE std::vector<ecsact_system_id> get_child_system_ids(
 	SystemLikeID id
 ) {
-	auto system_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	auto                          system_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
 	std::vector<ecsact_system_id> result;
-	auto batch_count = ecsact_meta_count_system_execution_batches(system_like_id);
+	auto                          batch_count = ecsact_meta_count_system_execution_batches(system_like_id);
 	for(int32_t i = 0; batch_count > i; ++i) {
 		int32_t systems_count = 0;
 		ecsact_meta_get_system_execution_batch(
@@ -406,7 +406,7 @@ ECSACT_ALWAYS_INLINE std::vector<ecsact_system_like_id> get_top_level_systems(
 	ecsact_package_id package_id
 ) {
 	std::vector<ecsact_system_like_id> result;
-	auto batch_count = ecsact_meta_count_execution_batches(package_id);
+	auto                               batch_count = ecsact_meta_count_execution_batches(package_id);
 	for(int32_t i = 0; batch_count > i; ++i) {
 		int32_t systems_count = 0;
 		ecsact_meta_get_execution_batch(package_id, i, 0, nullptr, &systems_count);
@@ -450,8 +450,8 @@ ECSACT_ALWAYS_INLINE auto system_capabilities(SystemLikeID id) {
 	using result_t =
 		std::unordered_map<ecsact_component_like_id, ecsact_system_capability>;
 
-	const auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
-	auto       count = ecsact_meta_system_capabilities_count(sys_like_id);
+	const auto                            sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	auto                                  count = ecsact_meta_system_capabilities_count(sys_like_id);
 	std::vector<ecsact_component_like_id> components;
 	std::vector<ecsact_system_capability> capabilities;
 	components.resize(count);
@@ -480,8 +480,8 @@ ECSACT_ALWAYS_INLINE auto system_capabilities_list(SystemLikeID id) {
 	using result_t =
 		std::vector<std::pair<ecsact_component_like_id, ecsact_system_capability>>;
 
-	const auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
-	auto       count = ecsact_meta_system_capabilities_count(sys_like_id);
+	const auto                            sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	auto                                  count = ecsact_meta_system_capabilities_count(sys_like_id);
 	std::vector<ecsact_component_like_id> components;
 	std::vector<ecsact_system_capability> capabilities;
 	components.resize(count);
@@ -507,7 +507,7 @@ ECSACT_ALWAYS_INLINE auto system_capabilities_list(SystemLikeID id) {
 
 template<typename SystemLikeID>
 ECSACT_ALWAYS_INLINE auto get_system_generates_ids(SystemLikeID id) {
-	auto sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
+	auto                                    sys_like_id = ecsact_id_cast<ecsact_system_like_id>(id);
 	std::vector<ecsact_system_generates_id> result;
 	result.resize(ecsact_meta_count_system_generates_ids(sys_like_id));
 	ecsact_meta_system_generates_ids(

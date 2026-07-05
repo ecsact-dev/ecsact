@@ -8,6 +8,7 @@ exports_files([
     "ecsact/runtime/core.h",
     "ecsact/runtime/definitions.h",
     "ecsact/runtime/dynamic.h",
+    "ecsact/runtime/dynamic.hh",
     "ecsact/runtime/meta.h",
     "ecsact/runtime/serialize.h",
     "ecsact/runtime/serialize.hh",
@@ -73,7 +74,10 @@ cc_library(
 
 cc_library(
     name = "dynamic",
-    hdrs = ["ecsact/runtime/dynamic.h"],
+    hdrs = [
+        "ecsact/runtime/dynamic.h",
+        "ecsact/runtime/dynamic.hh",
+    ],
     copts = copts,
     strip_include_prefix = "/ecsact_runtime",
     deps = [

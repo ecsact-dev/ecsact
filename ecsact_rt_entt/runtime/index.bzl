@@ -5,7 +5,7 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel:copts.bzl", "copts")
 load("//bazel/rules:defs.bzl", "ecsact_codegen")
 
-def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = [], ECSACT_ENTT_RUNTIME_USER_HEADER = None, ECSACT_ENTT_RUNTIME_PACKAGE = None, **kwargs):
+def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = [], **kwargs):
     """
     """
 
@@ -46,8 +46,6 @@ def ecsact_entt_runtime(name, srcs = [], deps = [], system_impls = [], tags = []
     )
 
     _cc_local_defines = [
-        "ECSACT_ENTT_RUNTIME_USER_HEADER=\\\"{}\\\"".format(ECSACT_ENTT_RUNTIME_USER_HEADER),
-        "ECSACT_ENTT_RUNTIME_PACKAGE={}".format(ECSACT_ENTT_RUNTIME_PACKAGE),
     ]
 
     allowed_system_impls = [

@@ -149,6 +149,10 @@ void ecsact_codegen_plugin(
 	ctx.writef("{}", "\n");
 	inc_package_header(ctx, package_id);
 	for(auto dep : ecsact::meta::get_dependencies(package_id)) {
+		if(dep <= ECSACT_BUILTIN_PACKAGE_MAX_ID) {
+			continue;
+		}
+
 		assert(package_id != dep);
 		inc_package_header(ctx, dep);
 	}
@@ -247,10 +251,8 @@ void ecsact_codegen_plugin(
 			});
 
 		ctx.writef(
-			"{}{}{}",
-			"result.reserve(",
-			std::ranges::distance(non_tag_component_ids),
-			");\n"
+			"result.reserve({});\n",
+			std::ranges::distance(non_tag_component_ids)
 		);
 
 		for(auto comp_id : non_tag_component_ids) {
@@ -392,8 +394,6 @@ void ecsact_codegen_plugin(
 		core::print_copy_components(ctx, details);
 		core::print_hash_registry(ctx, details);
 		core::print_apply_streaming_data(ctx, details);
-		core::print_trigger_ecsact_events_minimal(ctx, details);
-		core::print_trigger_ecsact_events_all(ctx, details);
 		core::print_cleanup_ecsact_component_events(ctx, details);
 		core::print_execution_options(ctx, details);
 		core::print_cleanup_system_notifies(ctx, details);

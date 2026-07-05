@@ -119,7 +119,8 @@ auto provider::notify::print_system_notify_views(
 				registry_name,
 				system_details,
 				std::vector{pending_remove_str},
-				std::vector{run_system_comp}
+				std::vector{run_system_comp},
+				std::vector{comp_id}
 			);
 
 			block(ctx, std::format("for(auto entity: {})", view_name), [&]() {

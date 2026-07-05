@@ -48,14 +48,6 @@ static void word_wrap(std::string& str, int max_length) {
 	}
 }
 
-static void insert_prefix(std::string& str, std::string_view prefix) {
-	for(auto itr = str.begin(); itr != str.end(); ++itr) {
-		if(*itr == '\n' && itr != str.begin()) {
-			itr = str.insert(std::next(itr), prefix.begin(), prefix.end());
-		}
-	}
-}
-
 static auto write_static_assert_codegen_error(
 	ecsact::codegen_plugin_context& ctx,
 	std::string_view                err_title,
@@ -374,6 +366,12 @@ static void write_context_get_specialize(
 ) {
 	using ecsact::cc_lang_support::cpp_identifier;
 
+	auto field_count =
+		ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(comp_id));
+	if(field_count == 0) {
+		return;
+	}
+
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
@@ -388,14 +386,14 @@ static void write_context_get_specialize(
 	block(
 		ctx,
 		std::format(
-			"template<> auto get<{0}{1}>({2}) -> {0}",
+			"template<> auto get<::{0}{1}>({2}) -> ::{0}",
 			cpp_full_name,
 			assoc_field_types_only,
 			assoc_fields
 		),
 		[&] {
 			ctx.writef(
-				"return _ctx.get<{0}{1}>({2});",
+				"return _ctx.get<::{0}{1}>({2});",
 				cpp_full_name,
 				assoc_field_types_only,
 				assoc_field_names_only
@@ -440,6 +438,12 @@ static auto write_context_update_specialize(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_component_like_id        comp_id
 ) -> void {
+	auto field_count =
+		ecsact_meta_count_fields(ecsact_id_cast<ecsact_composite_id>(comp_id));
+	if(field_count == 0) {
+		return;
+	}
+
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(comp_id);
 	auto full_name = ecsact_meta_decl_full_name(decl_id);
 	auto cpp_full_name = cpp_identifier(full_name);
@@ -763,6 +767,10 @@ void ecsact_codegen_plugin(
 	ctx.writef("#include \"{}\"\n", package_systems_h_path.filename().string());
 
 	for(auto dep_pkg_id : ecsact::meta::get_dependencies(package_id)) {
+		if(dep_pkg_id <= ECSACT_BUILTIN_PACKAGE_MAX_ID) {
+			continue;
+		}
+
 		fs::path dep_pkg_systems_hh_path =
 			ecsact_meta_package_file_path(dep_pkg_id);
 		dep_pkg_systems_hh_path.replace_extension(
@@ -770,8 +778,12 @@ void ecsact_codegen_plugin(
 		);
 
 		if(dep_pkg_systems_hh_path.has_parent_path()) {
-			dep_pkg_systems_hh_path =
-				fs::relative(dep_pkg_systems_hh_path, package_hh_path.parent_path());
+			auto rel = fs::relative(dep_pkg_systems_hh_path, package_hh_path.parent_path());
+			if(rel.string().substr(0, 2) == "..") {
+				dep_pkg_systems_hh_path = dep_pkg_systems_hh_path.filename();
+			} else {
+				dep_pkg_systems_hh_path = rel;
+			}
 		} else {
 			dep_pkg_systems_hh_path = dep_pkg_systems_hh_path.filename();
 		}

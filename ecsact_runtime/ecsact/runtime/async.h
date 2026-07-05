@@ -210,15 +210,14 @@ ECSACT_ASYNC_API_FN(
 	const ecsact_execution_options options);
 
 /**
- * Invokes the various callbacks in `execution_events` and `async_events` that
+ * Invokes the various callbacks in `async_events` that
  * have been pending. If either a system or async error occurs it's treated
  * as a call to ecscact_async_disconnect
  */
 ECSACT_ASYNC_API_FN(void, ecsact_async_flush_events)
 ( //
-	ecsact_async_session_id                  session_id,
-	const ecsact_execution_events_collector* execution_events,
-	const ecsact_async_events_collector*     async_events);
+	ecsact_async_session_id              session_id,
+	const ecsact_async_events_collector* async_events);
 
 /**
  * @param option_data implementation defined options used to start the async

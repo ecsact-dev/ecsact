@@ -31,8 +31,6 @@ ecsact_entt_runtime(
         "imported_pkg.ecsact",
         "runtime_test.ecsact",
     ],
-    ECSACT_ENTT_RUNTIME_PACKAGE = "::runtime_test::package",
-    ECSACT_ENTT_RUNTIME_USER_HEADER = "runtime_test.ecsact.meta.hh",
     system_impls = [
         # "static",
         "dynamic",

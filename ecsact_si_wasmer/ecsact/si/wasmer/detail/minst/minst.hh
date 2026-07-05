@@ -81,9 +81,9 @@ public:
 		std::function<minst_import_resolve_t(const minst_import)>;
 
 	static auto create( //
-		wasm_engine_t*       engine,
+		wasm_engine_t*             engine,
 		std::span<const std::byte> wasm_data,
-		import_resolver_t    import_resolver
+		import_resolver_t          import_resolver
 	) -> std::variant<minst, minst_error>;
 
 	minst(minst&& other);

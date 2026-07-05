@@ -10,7 +10,6 @@
 #include "entt/entt.hpp"
 #include "ecsact/entt/registry_util.hh"
 #include "ecsact/entt/error_check.hh"
-#include "ecsact/entt/detail/execution_events_collector.hh"
 #include "ecsact/entt/detail/globals.hh"
 
 #ifdef TRACY_ENABLE
@@ -235,8 +234,8 @@ inline auto update_component_exec_options( //
 	}
 
 	const auto& in_component = *static_cast<const C*>(component_data);
-	auto& beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
-	auto& current_component = reg.template get<C>(entity);
+	auto&       beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
+	auto&       current_component = reg.template get<C>(entity);
 
 	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;
@@ -312,169 +311,6 @@ auto remove_component_exec_options(
 	}
 
 	ecsact::entt::detail::remove_system_markers_if_needed<C>(reg, entity);
-}
-
-inline auto _trigger_create_entity_events(
-	ecsact_registry_id                                registry_id,
-	ecsact::entt::detail::execution_events_collector& events_collector
-) -> void {
-#ifdef TRACY_ENABLE
-	ZoneScoped;
-#endif
-	using ecsact::entt::detail::created_entity;
-
-	auto& reg = ecsact::entt::get_registry(registry_id);
-
-	if(events_collector.has_entity_created_callback()) {
-		::entt::basic_view created_view{
-			reg.template storage<created_entity>(),
-		};
-
-		for(ecsact::entt::entity_id entity : created_view) {
-			events_collector.invoke_entity_created_callback(
-				entity,
-				created_view.template get<created_entity>(entity).placeholder_entity_id
-			);
-		}
-	}
-
-	reg.clear<created_entity>();
-}
-
-inline auto _trigger_destroy_entity_events(
-	ecsact_registry_id                                registry_id,
-	ecsact::entt::detail::execution_events_collector& events_collector
-) -> void {
-#ifdef TRACY_ENABLE
-	ZoneScoped;
-#endif
-	using ecsact::entt::detail::destroyed_entity;
-
-	auto& reg = ecsact::entt::get_registry(registry_id);
-
-	if(events_collector.has_entity_destroyed_callback()) {
-		::entt::basic_view destroy_view{
-			reg.template storage<destroyed_entity>(),
-		};
-
-		for(ecsact::entt::entity_id entity : destroy_view) {
-			events_collector.invoke_entity_destroyed_callback(entity);
-		}
-	}
-
-	reg.clear<destroyed_entity>();
-}
-
-template<typename C>
-auto _trigger_init_component_event(
-	ecsact_registry_id                                registry_id,
-	ecsact::entt::detail::execution_events_collector& events_collector
-) -> void {
-#ifdef TRACY_ENABLE
-	ZoneScoped;
-#endif
-	auto& reg = ecsact::entt::get_registry(registry_id);
-
-	if(!events_collector.has_init_callback()) {
-		return;
-	}
-
-	if constexpr(C::transient) {
-		return;
-	}
-
-	::entt::basic_view added_view{
-		reg.template storage<C>(),
-		reg.template storage<component_added<C>>(),
-	};
-
-	for(ecsact::entt::entity_id entity : added_view) {
-		if constexpr(std::is_empty_v<C>) {
-			events_collector.invoke_init_callback<C>(entity);
-		} else {
-			events_collector.invoke_init_callback<C>(
-				entity,
-				added_view.template get<C>(entity)
-			);
-		}
-	}
-}
-
-template<typename C>
-auto _trigger_update_component_event(
-	ecsact_registry_id                                registry_id,
-	ecsact::entt::detail::execution_events_collector& events_collector
-) -> void {
-#ifdef TRACY_ENABLE
-	ZoneScoped;
-#endif
-	using ecsact::entt::detail::beforeremove_storage;
-	using ecsact::entt::detail::exec_beforechange_storage;
-
-	//
-
-	if(!events_collector.has_update_callback()) {
-		return;
-	}
-
-	auto& reg = ecsact::entt::get_registry(registry_id);
-	if constexpr(!C::transient && !std::is_empty_v<C>) {
-		auto comp_view = reg.view<C, exec_beforechange_storage<C>>( //
-			::entt::exclude<beforeremove_storage<C>>
-		);
-
-		for(ecsact::entt::entity_id entity : comp_view) {
-			auto& before =
-				comp_view.template get<exec_beforechange_storage<C>>(entity);
-			auto& current = comp_view.template get<C>(entity);
-
-			if(before.has_update_occurred && before.value != current) {
-				events_collector.invoke_update_callback<C>(entity, current);
-			}
-			before.has_update_occurred = false;
-		}
-	}
-}
-
-template<typename C>
-auto _trigger_remove_component_event(
-	ecsact_registry_id                                registry_id,
-	ecsact::entt::detail::execution_events_collector& events_collector
-) -> void {
-#ifdef TRACY_ENABLE
-	ZoneScoped;
-#endif
-	auto& reg = ecsact::entt::get_registry(registry_id);
-
-	if(!events_collector.has_remove_callback()) {
-		return;
-	}
-
-	if constexpr(C::transient) {
-		return;
-	}
-
-	if constexpr(std::is_empty_v<C>) {
-		::entt::basic_view removed_view{
-			reg.template storage<component_removed<C>>(),
-		};
-		for(ecsact::entt::entity_id entity : removed_view) {
-			events_collector.invoke_remove_callback<C>(entity);
-		}
-	} else {
-		::entt::basic_view removed_view{
-			reg.template storage<detail::beforeremove_storage<C>>(),
-			reg.template storage<component_removed<C>>(),
-		};
-		for(ecsact::entt::entity_id entity : removed_view) {
-			events_collector.invoke_remove_callback<C>(
-				entity,
-				removed_view.template get<detail::beforeremove_storage<C>>(entity).value
-			);
-		}
-
-		reg.template clear<detail::beforeremove_storage<C>>();
-	}
 }
 
 auto check_action_error_t(

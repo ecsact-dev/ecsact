@@ -53,7 +53,6 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 			.parameter("ecsact_registry_id", "registry_id")
 			.parameter("int", "execution_count")
 			.parameter("const ecsact_execution_options*", "execution_options_list")
-			.parameter("const ecsact_execution_events_collector*", "evc")
 			.return_type("ecsact_execute_systems_error");
 
 	ctx.writef(
@@ -104,29 +103,6 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 
 	ctx.indentation -= 1;
 	ctx.writef("{}", "\n}\n\n");
-
-	block(ctx, "if(evc != nullptr)", [&] {
-		ctx.writef(
-			"{}",
-			"auto events_collector = "
-			"ecsact::entt::detail::execution_events_collector{};\n"
-		);
-		ctx.writef("{}", "events_collector.target = evc;\n\n");
-
-		block(ctx, "if(execution_options_list == nullptr)", [&] {
-			ctx.writef(
-				"{}",
-				"trigger_component_events_minimal(registry_id, events_collector);\n\n"
-			);
-		});
-
-		block(ctx, "else", [&] {
-			ctx.writef(
-				"{}",
-				"trigger_component_events_all(registry_id, events_collector);\n\n"
-			);
-		});
-	});
 
 	ctx.writef("{}", "cleanup_component_events(registry_id);\n");
 

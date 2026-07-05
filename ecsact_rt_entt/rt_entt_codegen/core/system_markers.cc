@@ -124,9 +124,14 @@ auto ecsact::rt_entt_codegen::core::print_add_sys_beforestorage_fn(
 							break;
 						}
 						already_printed_.insert(comp_id);
-						ctx.writef(//
-							"reg.emplace<exec_itr_beforechange_storage<{}>>(entity);\n",
-							comp_name);
+						ctx.writef(
+							"if(!reg.all_of<exec_itr_beforechange_storage<{}>>(entity)) {{\n"
+							"\treg.emplace<exec_itr_beforechange_storage<{}>>(entity, reg.get<{}>(entity));\n"
+							"}}\n",
+							comp_name,
+							comp_name,
+							comp_name
+						);
 						break;
 					}
 				}

@@ -345,6 +345,8 @@ ECSACT_DYNAMIC_API_FN(void, ecsact_destroy_transient)
 ( //
 	ecsact_transient_id component_id);
 
+ECSACT_DYNAMIC_API_FN(void, ecsact_destroy_system)(ecsact_system_like_id sys_like_id);
+
 ECSACT_DYNAMIC_API_FN(ecsact_enum_id, ecsact_create_enum)
 ( //
 	ecsact_package_id owner,
@@ -583,6 +585,7 @@ ECSACT_DYNAMIC_API_FN(void, ecsact_interpret_reset)();
 		fn(ecsact_remove_field, __VA_ARGS__);                           \
 		fn(ecsact_destroy_component, __VA_ARGS__);                      \
 		fn(ecsact_destroy_transient, __VA_ARGS__);                      \
+		fn(ecsact_destroy_system, __VA_ARGS__);                         \
 		fn(ecsact_create_enum, __VA_ARGS__);                            \
 		fn(ecsact_destroy_enum, __VA_ARGS__);                           \
 		fn(ecsact_add_enum_value, __VA_ARGS__);                         \
