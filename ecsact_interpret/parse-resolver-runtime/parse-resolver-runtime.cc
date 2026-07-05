@@ -171,6 +171,23 @@ static std::unordered_map<ecsact_enum_id, enum_def>                         enum
 static std::unordered_map<ecsact_cluster_id, cluster_def>                   cluster_defs;
 static std::optional<ecsact_package_id>                                     main_package_id;
 
+static void add_to_notify_clusters(ecsact_system_like_id sys_like_id) {
+	for(auto& [pkg_id, pkg] : package_defs) {
+		if(pkg.notify_systems_cluster != ECSACT_INVALID_ID(cluster)) {
+			cluster_defs[pkg.notify_systems_cluster].systems.push_back(sys_like_id);
+		}
+	}
+}
+
+static void remove_from_notify_clusters(ecsact_system_like_id sys_like_id) {
+	for(auto& [pkg_id, pkg] : package_defs) {
+		if(pkg.notify_systems_cluster != ECSACT_INVALID_ID(cluster)) {
+			auto& systems = cluster_defs[pkg.notify_systems_cluster].systems;
+			systems.erase(std::remove(systems.begin(), systems.end(), sys_like_id), systems.end());
+		}
+	}
+}
+
 static auto ecsact_create_system_internal(
 	ecsact_package_id owner,
 	const char*       system_name,
@@ -289,6 +306,10 @@ auto ecsact_create_package(
 static auto ecsact_destroy_system_internal(ecsact_system_like_id sys_like_id) -> void {
 	auto decl_id = ecsact_id_cast<ecsact_decl_id>(sys_like_id);
 	auto owner = owner_package_id(sys_like_id);
+
+	if(owner == ECSACT_BUILTIN_PKG_NOTIFY_ID) {
+		remove_from_notify_clusters(sys_like_id);
+	}
 
 	if(owner != ECSACT_INVALID_ID(package)) {
 		auto& pkg = get_package_def(owner);
@@ -448,6 +469,11 @@ auto ecsact_add_dependency(
 			auto& cluster_def = cluster_defs[pkg.notify_systems_cluster];
 			cluster_def.name = "EcsactNotifyCluster";
 			set_package_owner(ecsact_id_cast<ecsact_decl_id>(pkg.notify_systems_cluster), ECSACT_BUILTIN_PKG_NOTIFY_ID);
+
+			auto& notify_pkg_def = package_defs.at(ECSACT_BUILTIN_PKG_NOTIFY_ID);
+			for(auto sys_id : notify_pkg_def.declared_systems) {
+				cluster_def.systems.push_back(ecsact_id_cast<ecsact_system_like_id>(sys_id));
+			}
 		}
 	}
 }
@@ -572,7 +598,11 @@ static auto ecsact_create_system_internal(
 	const auto decl_id = ecsact_id_cast<ecsact_decl_id>(sys_id);
 	const auto sys_like_id = static_cast<ecsact_system_like_id>(sys_id);
 	pkg_def.declared_systems.push_back(sys_id);
-	pkg_def.declared_execution_order.push_back(sys_like_id);
+	if(owner != ECSACT_BUILTIN_PKG_NOTIFY_ID) {
+		pkg_def.declared_execution_order.push_back(sys_like_id);
+	} else {
+		add_to_notify_clusters(sys_like_id);
+	}
 	set_package_owner(decl_id, owner);
 	auto& def = sys_defs[sys_id];
 	def.name = std::string(system_name, system_name_len);
