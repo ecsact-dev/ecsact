@@ -20,9 +20,9 @@ auto ecsact::rt_entt_codegen::core::print_copy_components(
 			.return_type("void");
 
 	auto copy_tag_or_component = [&](
-		std::string_view cpp_type_name,
-		bool             is_tag
-	) {
+																 std::string_view cpp_type_name,
+																 bool             is_tag
+															 ) {
 		if(is_tag) {
 			block(
 				ctx,

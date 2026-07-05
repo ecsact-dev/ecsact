@@ -65,7 +65,7 @@ TEST(Core, CloneRegistryWithMarkers) {
 		static_cast<entt::entity>(entity)
 	);
 
-	auto cloned_reg = reg.clone("Cloned Registry With Markers");
+	auto  cloned_reg = reg.clone("Cloned Registry With Markers");
 	auto& cloned_entt_reg = ecsact::entt::get_registry(cloned_reg.id());
 
 	ASSERT_TRUE(cloned_entt_reg.all_of<ecsact::entt::detail::created_entity>(
@@ -73,8 +73,9 @@ TEST(Core, CloneRegistryWithMarkers) {
 	));
 	ASSERT_EQ(
 		cloned_entt_reg.get<ecsact::entt::detail::created_entity>(
-			static_cast<entt::entity>(entity)
-		).placeholder_entity_id,
+										 static_cast<entt::entity>(entity)
+		)
+			.placeholder_entity_id,
 		ecsact_placeholder_entity_id{42}
 	);
 
@@ -87,8 +88,9 @@ TEST(Core, CloneRegistryWithMarkers) {
 	)));
 	ASSERT_EQ(
 		cloned_entt_reg.get<ecsact::entt::detail::pending_add<runtime_test::ComponentA>>(
-			static_cast<entt::entity>(entity)
-		).value.a,
+										 static_cast<entt::entity>(entity)
+		)
+			.value.a,
 		100
 	);
 
