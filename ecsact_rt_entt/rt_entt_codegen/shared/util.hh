@@ -280,9 +280,9 @@ auto make_view( //
 	auto&&                                                     view_var_name,
 	auto&&                                                     registry_var_name,
 	const ecsact::rt_entt_codegen::ecsact_entt_system_details& details,
-	std::vector<std::string> additional_components = {},
-	std::vector<std::string> additional_exclude_components = {},
-	std::vector<ecsact_component_like_id> ignore_get_components = {}
+	std::vector<std::string>                                   additional_components = {},
+	std::vector<std::string>                                   additional_exclude_components = {},
+	std::vector<ecsact_component_like_id>                      ignore_get_components = {}
 ) -> void {
 	using namespace std::string_literals;
 	using ecsact::rt_entt_codegen::util::comma_delim;

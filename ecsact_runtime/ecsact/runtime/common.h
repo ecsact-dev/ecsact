@@ -14,7 +14,6 @@
 
 #define ECSACT_INVALID_ID(ID_TYPE) ((ecsact_##ID_TYPE##_id)(-1))
 
-
 #ifdef __cplusplus
 #	define ECSACT_TYPED_ID(name)                                 \
 		enum class name : int32_t;                                  \

@@ -234,8 +234,8 @@ inline auto update_component_exec_options( //
 	}
 
 	const auto& in_component = *static_cast<const C*>(component_data);
-	auto& beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
-	auto& current_component = reg.template get<C>(entity);
+	auto&       beforechange = reg.template get<exec_beforechange_storage<C>>(entity);
+	auto&       current_component = reg.template get<C>(entity);
 
 	if(!beforechange.has_update_occurred) {
 		beforechange.value = current_component;

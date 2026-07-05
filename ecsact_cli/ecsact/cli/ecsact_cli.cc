@@ -67,11 +67,13 @@ std::string colorize_logo() {
 }
 
 void print_usage() {
-	std::cerr << colorize_logo() << "\n" << USAGE;
+	std::cerr << colorize_logo() << "\n"
+						<< USAGE;
 }
 
 void terminate_handler() {
-	std::cerr << "Terminate called:\n" << boost::stacktrace::stacktrace() << '\n';
+	std::cerr << "Terminate called:\n"
+						<< boost::stacktrace::stacktrace() << '\n';
 	std::abort();
 }
 

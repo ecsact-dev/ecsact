@@ -1010,7 +1010,7 @@ public:
 					for(auto package_id : packages) {
 						bool found = false;
 						if(type == ECSACT_STATEMENT_COMPONENT) {
-							int32_t count = ecsact_meta_count_components(package_id);
+							int32_t                          count = ecsact_meta_count_components(package_id);
 							std::vector<ecsact_component_id> ids(count);
 							ecsact_meta_get_component_ids(
 								package_id,
@@ -1025,7 +1025,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_TRANSIENT) {
-							int32_t count = ecsact_meta_count_transients(package_id);
+							int32_t                          count = ecsact_meta_count_transients(package_id);
 							std::vector<ecsact_transient_id> ids(count);
 							ecsact_meta_get_transient_ids(
 								package_id,
@@ -1040,7 +1040,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_SYSTEM) {
-							int32_t count = ecsact_meta_count_systems(package_id);
+							int32_t                       count = ecsact_meta_count_systems(package_id);
 							std::vector<ecsact_system_id> ids(count);
 							ecsact_meta_get_system_ids(package_id, count, ids.data(), &count);
 							for(auto sys_id : ids) {
@@ -1050,7 +1050,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_ACTION) {
-							int32_t count = ecsact_meta_count_actions(package_id);
+							int32_t                       count = ecsact_meta_count_actions(package_id);
 							std::vector<ecsact_action_id> ids(count);
 							ecsact_meta_get_action_ids(package_id, count, ids.data(), &count);
 							for(auto act_id : ids) {
@@ -1060,7 +1060,7 @@ public:
 								}
 							}
 						} else if(type == ECSACT_STATEMENT_ENUM) {
-							int32_t count = ecsact_meta_count_enums(package_id);
+							int32_t                     count = ecsact_meta_count_enums(package_id);
 							std::vector<ecsact_enum_id> ids(count);
 							ecsact_meta_get_enum_ids(package_id, count, ids.data(), &count);
 							for(auto enum_id : ids) {
@@ -1247,7 +1247,7 @@ public:
 					}
 
 					// Also check nested system execution batches
-					int32_t sys_count = ecsact_meta_count_systems(package_id);
+					int32_t                       sys_count = ecsact_meta_count_systems(package_id);
 					std::vector<ecsact_system_id> sys_ids(sys_count);
 					ecsact_meta_get_system_ids(
 						package_id,
