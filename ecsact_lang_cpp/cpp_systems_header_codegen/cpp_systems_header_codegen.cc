@@ -778,8 +778,7 @@ void ecsact_codegen_plugin(
 		);
 
 		if(dep_pkg_systems_hh_path.has_parent_path()) {
-			auto rel =
-				fs::relative(dep_pkg_systems_hh_path, package_hh_path.parent_path());
+			auto rel = fs::relative(dep_pkg_systems_hh_path, package_hh_path.parent_path());
 			if(rel.string().substr(0, 2) == "..") {
 				dep_pkg_systems_hh_path = dep_pkg_systems_hh_path.filename();
 			} else {

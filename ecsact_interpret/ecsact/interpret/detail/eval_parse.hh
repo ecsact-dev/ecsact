@@ -564,8 +564,7 @@ inline auto get_sorted_states(
 			}
 		}
 
-		// No progress was made — likely duplicate package names or
-		// unresolvable circular imports. Break to avoid infinite loop.
+		// no change - assuming empty package
 		if(resolved_packages.size() == prev_size) {
 			break;
 		}

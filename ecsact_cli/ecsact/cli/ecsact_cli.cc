@@ -3,7 +3,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <exception>
 #include "ecsact_cli/ecsact/cli/bazel_stamp_header.hh"
 #include "ecsact/cli/commands/codegen.hh"
 #include "ecsact/cli/commands/command.hh"
@@ -65,8 +64,7 @@ std::string colorize_logo() {
 }
 
 void print_usage() {
-	std::cerr << colorize_logo() << "\n"
-						<< USAGE;
+	std::print(stderr, "{}\n{}", colorize_logo(), USAGE);
 }
 
 int main(int argc, const char* argv[]) {

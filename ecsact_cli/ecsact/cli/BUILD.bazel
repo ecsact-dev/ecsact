@@ -41,7 +41,6 @@ cc_binary(
         "//ecsact_cli:use_sdk_version_enabled": ["ECSACT_CLI_USE_SDK_VERSION"],
         "//ecsact_cli:use_sdk_version_disabled": [],
     }),
-    features = ["-strip_debug_symbols"],
     stamp = 1,
     visibility = ["//visibility:public"],
     deps = [

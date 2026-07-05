@@ -89,8 +89,7 @@ static void check_batches(
 	}
 }
 
-auto ecsact::eval_files(std::vector<fs::path> files)
-	-> std::vector<parse_eval_error> {
+auto ecsact::eval_files(std::vector<fs::path> files) -> std::vector<parse_eval_error> {
 	using ecsact::detail::check_cyclic_imports;
 	using ecsact::detail::check_set;
 	using ecsact::detail::check_unknown_imports;
