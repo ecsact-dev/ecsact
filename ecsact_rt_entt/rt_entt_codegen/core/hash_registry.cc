@@ -105,7 +105,6 @@ auto ecsact::rt_entt_codegen::core::print_hash_registry(
 					ctx.writef("\tif(entity_translator) {{\n");
 					ctx.writef("\t\ttranslated_entity = entity_translator(entity);\n");
 					ctx.writef("\t}}\n");
-					// ctx.writef("\tstd::println(\"[HASH DEBUG] Entity {{}} has tag {{}}\", static_cast<int>(translated_entity), \"{0}\");\n", cpp_comp_name);
 					ctx.writef("}}\n");
 				}
 			);
@@ -122,9 +121,6 @@ auto ecsact::rt_entt_codegen::core::print_hash_registry(
 				ctx.writef("\t\ttranslated_entity = entity_translator(entity);\n");
 				ctx.writef("\t}}\n");
 				ctx.writef("\tXXH3_64bits_update(state, &translated_entity, sizeof(translated_entity));\n");
-				// ctx.writef("\tstd::print(\"[HASH DEBUG] Entity {{}} has {{}} (size {{}}): \", static_cast<int>(translated_entity), \"{0}\", sizeof({0}));\n", cpp_comp_name);
-				// ctx.writef("\tfor(int j=0; j<sizeof({0}); ++j) {{ std::print(\"{{:02x}} \", reinterpret_cast<const uint8_t*>(comp)[j]); }}\n", cpp_comp_name);
-				// ctx.writef("\tstd::println(\"\");\n");
 				auto field_ids = ecsact::meta::get_field_ids(comp_id);
 				for(auto field_id : field_ids) {
 					auto field_name = ecsact::meta::field_name(comp_id, field_id);
@@ -156,7 +152,6 @@ auto ecsact::rt_entt_codegen::core::print_hash_registry(
 	}
 
 	ctx.writef("auto result = XXH3_64bits_digest(state);\n");
-	// ctx.writef("std::println(\"[HASH DEBUG] Final registry hash: {{}}\", result);\n");
 	ctx.writef("XXH3_freeState(state);\n");
 	ctx.writef("return result;\n");
 }
