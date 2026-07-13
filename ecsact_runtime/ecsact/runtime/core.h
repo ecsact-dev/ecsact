@@ -76,11 +76,11 @@ typedef ecsact_entity_id (*ecsact_entity_map_fn)(
  * implementation defined, but must represent both user state and internal
  * state.
  */
-ECSACT_CORE_API_FN(uint64_t, ecsact_hash_registry)
-( //
+ECSACT_CORE_API_FN(uint64_t, ecsact_hash_registry)(
 	ecsact_registry_id   registry,
 	ecsact_entity_map_fn entity_map,
-	void*                user_data);
+	void*                user_data
+);
 
 /**
  * Destroy all entities
