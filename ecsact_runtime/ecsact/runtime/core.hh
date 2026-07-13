@@ -245,8 +245,11 @@ public:
 		ecsact_copy_registry(_id, dest.id());
 	}
 
-	ECSACT_ALWAYS_INLINE auto hash() const -> uint64_t {
-		return ecsact_hash_registry(_id);
+	ECSACT_ALWAYS_INLINE auto hash(
+		ecsact_entity_map_fn entity_map = nullptr,
+		void*                user_data = nullptr
+	) const -> uint64_t {
+		return ecsact_hash_registry(_id, entity_map, user_data);
 	}
 
 	template<typename Component, typename... AssocFields>

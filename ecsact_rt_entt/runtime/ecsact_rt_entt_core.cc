@@ -54,8 +54,22 @@ void ecsact_copy_registry(
 	ecsact::entt::copy_components(src_reg, dst_reg);
 }
 
-auto ecsact_hash_registry(ecsact_registry_id reg_id) -> uint64_t {
+auto ecsact_hash_registry(
+	ecsact_registry_id   reg_id,
+	ecsact_entity_map_fn entity_map,
+	void*                user_data
+) -> uint64_t {
 	auto& reg = ecsact::entt::get_registry(reg_id);
+	if(entity_map) {
+		return ecsact::entt::hash_registry(
+			reg,
+			[entity_map, user_data](::entt::entity local_ent) {
+				auto local_id = static_cast<ecsact_entity_id>(local_ent);
+				auto external_id = entity_map(local_id, user_data);
+				return static_cast<::entt::entity>(external_id);
+			}
+		);
+	}
 	return ecsact::entt::hash_registry(reg);
 }
 

@@ -41,7 +41,10 @@ auto ecsact::entt::copy_components(const ::entt::registry&, ::entt::registry&)
 	-> void {
 }
 
-auto ecsact::entt::hash_registry(const ::entt::registry&) -> std::uint64_t {
+auto ecsact::entt::hash_registry(
+	const ::entt::registry&,
+	std::function<::entt::entity(::entt::entity)>
+) -> std::uint64_t {
 	return {};
 }
 

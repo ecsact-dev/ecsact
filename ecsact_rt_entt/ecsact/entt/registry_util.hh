@@ -41,7 +41,12 @@ auto copy_components( //
 	::entt::registry&       dst
 ) -> void;
 
-auto hash_registry(const ::entt::registry& reg) -> std::uint64_t;
+#include <functional>
+
+auto hash_registry(
+	const ::entt::registry&                       reg,
+	std::function<::entt::entity(::entt::entity)> entity_translator = {}
+) -> std::uint64_t;
 
 } // namespace ecsact::entt
 

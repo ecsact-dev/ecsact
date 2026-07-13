@@ -145,6 +145,8 @@ void ecsact_codegen_plugin(
 	inc_header(ctx, "ecsact/entt/detail/id_map.hh");
 	inc_header(ctx, "xxhash.h");
 	ctx.writef("{}", "#include <execution>\n");
+	ctx.writef("{}", "#include <vector>\n");
+	ctx.writef("{}", "#include <algorithm>\n");
 
 	ctx.writef("{}", "\n");
 	inc_package_header(ctx, package_id);
