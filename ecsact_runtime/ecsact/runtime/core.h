@@ -66,6 +66,11 @@ ECSACT_CORE_API_FN(void, ecsact_copy_registry)(
 	ecsact_registry_id dest_registry
 );
 
+typedef ecsact_entity_id (*ecsact_entity_map_fn)(
+	ecsact_entity_id entity,
+	void*            user_data
+);
+
 /**
  * Creates a hash of current state of the registry. The algorithm is
  * implementation defined, but must represent both user state and internal
@@ -73,7 +78,9 @@ ECSACT_CORE_API_FN(void, ecsact_copy_registry)(
  */
 ECSACT_CORE_API_FN(uint64_t, ecsact_hash_registry)
 ( //
-	ecsact_registry_id registry);
+	ecsact_registry_id   registry,
+	ecsact_entity_map_fn entity_map,
+	void*                user_data);
 
 /**
  * Destroy all entities
