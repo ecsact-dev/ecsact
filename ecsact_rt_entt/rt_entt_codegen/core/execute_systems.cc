@@ -8,6 +8,7 @@
 
 constexpr auto METHOD_BODY_TOP = R"(
 auto& registry = ecsact::entt::get_registry(registry_id);
+registry.ctx().insert_or_assign(execution_metadata_wrapper{execution_metadata});
 auto actions_map = ecsact::entt::actions_map{};
 )";
 
@@ -53,6 +54,7 @@ auto ecsact::rt_entt_codegen::core::print_execute_systems( //
 			.parameter("ecsact_registry_id", "registry_id")
 			.parameter("int", "execution_count")
 			.parameter("const ecsact_execution_options*", "execution_options_list")
+			.parameter("const void*", "execution_metadata")
 			.return_type("ecsact_execute_systems_error");
 
 	ctx.writef(

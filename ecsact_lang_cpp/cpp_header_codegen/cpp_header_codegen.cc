@@ -198,6 +198,23 @@ void ecsact_codegen_plugin(
 
 	ctx.writef("namespace {} {{\n\n", namespace_str);
 
+	if(ecsact_meta_has_metadata(ctx.package_id)) {
+		ctx.writef("struct execution_metadata {{\n");
+		int32_t                      field_count = ecsact_meta_count_metadata_fields(ctx.package_id);
+		std::vector<ecsact_field_id> fields(field_count);
+		ecsact_meta_get_metadata_field_ids(ctx.package_id, field_count, fields.data(), nullptr);
+		for(auto field_id : fields) {
+			auto field_type = ecsact_meta_metadata_field_type(ctx.package_id, field_id);
+			auto field_name = ecsact_meta_metadata_field_name(ctx.package_id, field_id);
+			ctx.writef(
+				"\t{} {};\n",
+				cpp_field_type_name(field_type),
+				field_name
+			);
+		}
+		ctx.writef("}};\n\n");
+	}
+
 	for(auto enum_id : get_enum_ids(ctx.package_id)) {
 		ctx.writef("enum class {} {{", ecsact_meta_enum_name(enum_id));
 		++ctx.indentation;

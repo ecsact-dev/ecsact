@@ -1,0 +1,5 @@
+metadata {
+	i32 invalid_field;
+}
+
+package metadata_invalid;

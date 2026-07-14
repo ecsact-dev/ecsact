@@ -11,6 +11,7 @@
 #define ECSACT_PARSE_KW_SYSTEM "system"
 #define ECSACT_PARSE_KW_ACTION "action"
 #define ECSACT_PARSE_KW_ENUM "enum"
+#define ECSACT_PARSE_KW_METADATA "metadata"
 
 #define ECSACT_PARSE_KW_READONLY "readonly"
 #define ECSACT_PARSE_KW_READWRITE "readwrite"
@@ -35,6 +36,7 @@
 #define ECSACT_PARSE_KW_F64 "f64"
 #define ECSACT_PARSE_KW_BOOL "bool"
 #define ECSACT_PARSE_KW_ENTITY "entity"
+#define ECSACT_PARSE_KW_OPAQUE "opaque"
 
 #ifdef __cplusplus
 #	include <string>
@@ -70,6 +72,8 @@ constexpr auto builtin_type_to_keyword_string(ecsact_builtin_type type)
 			return ECSACT_PARSE_KW_F64;
 		case ECSACT_ENTITY_TYPE:
 			return ECSACT_PARSE_KW_ENTITY;
+		case ECSACT_OPAQUE:
+			return ECSACT_PARSE_KW_OPAQUE;
 	}
 
 	return "unknown";
@@ -84,6 +88,7 @@ constexpr auto top_level_keywords = std::array{
 	std::string_view{ECSACT_PARSE_KW_SYSTEM},
 	std::string_view{ECSACT_PARSE_KW_ACTION},
 	std::string_view{ECSACT_PARSE_KW_ENUM},
+	std::string_view{ECSACT_PARSE_KW_METADATA},
 };
 
 constexpr auto cap_keywords = std::array{
@@ -116,6 +121,7 @@ constexpr auto type_keywords = std::array{
 	std::string_view{ECSACT_PARSE_KW_F32},
 	std::string_view{ECSACT_PARSE_KW_F64},
 	std::string_view{ECSACT_PARSE_KW_ENTITY},
+	std::string_view{ECSACT_PARSE_KW_OPAQUE},
 };
 
 } // namespace ecsact::parse

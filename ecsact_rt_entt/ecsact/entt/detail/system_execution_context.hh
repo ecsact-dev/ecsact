@@ -13,11 +13,16 @@
 #include "ecsact/entt/entity.hh"
 #include "ecsact/entt/detail/registry.hh"
 
+struct execution_metadata_wrapper {
+	const void* ptr = nullptr;
+};
+
 struct ecsact_system_execution_context {
 	ecsact_system_like_id     id;
 	ecsact::entt::entity_id   entity;
 	ecsact::entt::registry_t* registry = nullptr;
 	const void*               action_data = nullptr;
+	const void*               execution_metadata = nullptr;
 
 	// pass in the context to this class that's a pointer
 	// context(ptr) = parent_ctx(ptr)

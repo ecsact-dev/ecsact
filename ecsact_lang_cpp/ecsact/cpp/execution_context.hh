@@ -221,6 +221,10 @@ struct execution_context {
 	ECSACT_ALWAYS_INLINE auto entity() const -> ecsact_entity_id {
 		return ecsact_system_execution_context_entity(_ctx);
 	}
+
+	ECSACT_ALWAYS_INLINE auto metadata() const -> const void* {
+		return ecsact_system_execution_context_metadata(_ctx);
+	}
 };
 
 } // namespace ecsact

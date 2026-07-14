@@ -179,14 +179,24 @@ private:
 };
 
 [[nodiscard]] ECSACT_ALWAYS_INLINE auto start() -> ecsact_async_session_id {
-	return ecsact_async_start(nullptr, 0);
+	return ecsact_async_start(nullptr, 0, nullptr);
 }
 
 [[nodiscard]] ECSACT_ALWAYS_INLINE auto start( //
 	const void* data,
-	int32_t     size
+	int32_t     size,
+	const void* execution_metadata = nullptr
 ) -> ecsact_async_session_id {
-	return ecsact_async_start(data, size);
+	return ecsact_async_start(data, size, execution_metadata);
+}
+
+template<typename T>
+[[nodiscard]] auto start(
+	const void* data,
+	int32_t     size,
+	const T&    execution_metadata
+) -> ecsact_async_session_id {
+	return ecsact_async_start(data, size, &execution_metadata);
 }
 
 ECSACT_ALWAYS_INLINE auto stop(ecsact_async_session_id id) -> void {

@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 
 	for(int i = 0; 10 > i; ++i) {
 		std::cout << "\n==== EXECUTION (" << i << ") ====\n";
-		ecsact_execute_systems(test_registry.id(), 1, nullptr);
+		ecsact_execute_systems(test_registry.id(), 1, nullptr, nullptr);
 		ecsact_si_wasm_consume_logs(forward_logs_consumer, nullptr);
 	}
 

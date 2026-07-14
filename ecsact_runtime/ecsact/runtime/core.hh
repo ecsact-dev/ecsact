@@ -410,8 +410,11 @@ public:
 	/**
 	 * Execute systems @p execution_count times.
 	 */
-	auto execute_systems(int32_t execution_count = 1) -> void {
-		ecsact_execute_systems(_id, execution_count, nullptr);
+	auto execute_systems(
+		int32_t     execution_count = 1,
+		const void* execution_metadata = nullptr
+	) -> void {
+		ecsact_execute_systems(_id, execution_count, nullptr, execution_metadata);
 	}
 
 	/**
@@ -420,7 +423,8 @@ public:
 	 */
 	template<typename ExecutionOptionsRange>
 	[[nodiscard]] auto execute_systems( //
-		ExecutionOptionsRange&& execution_options
+		ExecutionOptionsRange&& execution_options,
+		const void*             execution_metadata = nullptr
 	) -> ecsact_execute_systems_error {
 		auto        execution_count = std::size(execution_options);
 		const auto* execution_options_list_data = std::data(execution_options);
@@ -434,7 +438,8 @@ public:
 			return ecsact_execute_systems(
 				_id,
 				static_cast<int32_t>(execution_count),
-				execution_options_list_data
+				execution_options_list_data,
+				execution_metadata
 			);
 		} else {
 			auto execution_options_vec = std::vector<ecsact_execution_options>{};
@@ -445,7 +450,8 @@ public:
 			return ecsact_execute_systems(
 				_id,
 				static_cast<int32_t>(execution_count),
-				execution_options_vec.data()
+				execution_options_vec.data(),
+				execution_metadata
 			);
 		}
 	}

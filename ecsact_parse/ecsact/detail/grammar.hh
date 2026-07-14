@@ -417,6 +417,26 @@ struct cluster_statement {
 	);
 };
 
+struct metadata_statement {
+	static constexpr auto name() {
+		return "metadata statement";
+	}
+
+	struct metadata_keyword : lexy::transparent_production {
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_METADATA);
+		static constexpr auto value = lexy::noop;
+	};
+
+	static constexpr auto rule = lexy::dsl::p<metadata_keyword>;
+
+	static constexpr auto value = lexy::callback<ecsact_statement>([]() {
+		return ecsact_statement{
+			.type = ECSACT_STATEMENT_METADATA,
+			.data{.metadata_statement{}},
+		};
+	});
+};
+
 struct action_statement {
 	static constexpr auto name() {
 		return "action statement";
@@ -593,13 +613,18 @@ struct field_statement {
 		static constexpr auto value = lexy::constant(ECSACT_ENTITY_TYPE);
 	};
 
+	struct opaque_keyword : lexy::transparent_production {
+		static constexpr auto rule = LEXY_LIT(ECSACT_PARSE_KW_OPAQUE);
+		static constexpr auto value = lexy::constant(ECSACT_OPAQUE);
+	};
+
 	static constexpr auto type_keyword =
 		(lexy::dsl::p<i8_keyword> | lexy::dsl::p<u8_keyword> |
 		 lexy::dsl::p<i16_keyword> | lexy::dsl::p<u16_keyword> |
 		 lexy::dsl::p<i32_keyword> | lexy::dsl::p<u32_keyword> |
 		 lexy::dsl::p<f32_keyword> | lexy::dsl::p<i64_keyword> |
 		 lexy::dsl::p<u64_keyword> | lexy::dsl::p<f64_keyword> |
-		 lexy::dsl::p<entity_keyword>);
+		 lexy::dsl::p<entity_keyword> | lexy::dsl::p<opaque_keyword>);
 
 	static constexpr auto rule = type_keyword >>
 		lexy::dsl::opt(lexy::dsl::p<array_length>) >> lexy::dsl::p<field_name>;
@@ -1025,7 +1050,8 @@ using top_level_statement = statement<
 	transient_statement,
 	system_statement,
 	action_statement,
-	enum_statement>;
+	enum_statement,
+	metadata_statement>;
 
 constexpr char unknown_statement_name[] = "unknown statement";
 constexpr char unknown_statement_expected_message[] = "unknown statement";
@@ -1207,5 +1233,13 @@ using system_notify_component_level_statement = statement<
 	system_notify_component_level_statement_name,
 	system_notify_component_level_statement_expected_message,
 	none_statement>;
+
+constexpr char metadata_level_statement_name[] = "metadata level statement";
+constexpr char metadata_level_statement_expected_message[] =
+	"expected metadata level statement";
+using metadata_level_statement = statement<
+	metadata_level_statement_name,
+	metadata_level_statement_expected_message,
+	field_statement>;
 
 } // namespace ecsact::parse::detail::grammar

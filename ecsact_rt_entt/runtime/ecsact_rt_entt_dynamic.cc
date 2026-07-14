@@ -58,6 +58,13 @@ ecsact_system_like_id ecsact_system_execution_context_id(
 	return context->id;
 }
 
+const void* ecsact_system_execution_context_metadata(
+	ecsact_system_execution_context* context
+) {
+	assert(context != nullptr);
+	return context->execution_metadata;
+}
+
 ecsact_system_execution_context* ecsact_system_execution_context_other(
 	ecsact_system_execution_context* context,
 	ecsact_system_assoc_id           assoc_id

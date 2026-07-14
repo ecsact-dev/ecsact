@@ -127,6 +127,9 @@ struct package_def {
 	bool        main;
 	std::string source_file_path;
 
+	composite metadata;
+	bool      has_metadata = false;
+
 	std::vector<ecsact_package_id>   dependencies;
 	std::vector<ecsact_system_id>    declared_systems;
 	std::vector<ecsact_action_id>    actions;
@@ -967,6 +970,7 @@ static int32_t builtin_type_size(ecsact_builtin_type type) {
 		case ECSACT_I64:
 		case ECSACT_U64:
 		case ECSACT_F64:
+		case ECSACT_OPAQUE:
 			return 8;
 	}
 	return 0;
@@ -2165,4 +2169,91 @@ ecsact_component_type ecsact_meta_component_type(
 		return ECSACT_COMPONENT_TYPE_NONE;
 	}
 	return comp_defs.at(comp_id).comp_type;
+}
+
+ecsact_field_id ecsact_add_metadata_field(
+	ecsact_package_id package_id,
+	ecsact_field_type field_type,
+	const char*       field_name,
+	int32_t           field_name_len
+) {
+	auto& pkg = package_defs.at(package_id);
+	pkg.has_metadata = true;
+	auto  id = pkg.metadata.next_field_id();
+	auto& field = pkg.metadata.fields[id];
+	field.name = std::string(field_name, field_name_len);
+	field.type = field_type;
+	return id;
+}
+
+bool ecsact_meta_has_metadata(ecsact_package_id package_id) {
+	if(!package_defs.contains(package_id)) {
+		return false;
+	}
+	return package_defs.at(package_id).has_metadata;
+}
+
+int32_t ecsact_meta_count_metadata_fields(ecsact_package_id package_id) {
+	if(!package_defs.contains(package_id)) {
+		return 0;
+	}
+	return static_cast<int32_t>(package_defs.at(package_id).metadata.fields.size());
+}
+
+void ecsact_meta_get_metadata_field_ids(
+	ecsact_package_id package_id,
+	int32_t           max_field_count,
+	ecsact_field_id*  out_field_ids,
+	int32_t*          out_field_ids_count
+) {
+	if(!package_defs.contains(package_id)) {
+		if(out_field_ids_count) {
+			*out_field_ids_count = 0;
+		}
+		return;
+	}
+	auto&   fields = package_defs.at(package_id).metadata.fields;
+	int32_t count = 0;
+	for(auto const& [id, field] : fields) {
+		if(count >= max_field_count) {
+			break;
+		}
+		out_field_ids[count++] = id;
+	}
+	if(out_field_ids_count) {
+		*out_field_ids_count = count;
+	}
+}
+
+const char* ecsact_meta_metadata_field_name(
+	ecsact_package_id package_id,
+	ecsact_field_id   field_id
+) {
+	return package_defs.at(package_id).metadata.fields.at(field_id).name.c_str();
+}
+
+ecsact_field_type ecsact_meta_metadata_field_type(
+	ecsact_package_id package_id,
+	ecsact_field_id   field_id
+) {
+	return package_defs.at(package_id).metadata.fields.at(field_id).type;
+}
+
+int32_t ecsact_meta_metadata_field_offset(
+	ecsact_package_id package_id,
+	ecsact_field_id   field_id
+) {
+	auto&   metadata = package_defs.at(package_id).metadata;
+	int32_t offset = 0;
+	for(auto const& [id, field] : metadata.fields) {
+		if(id == field_id) {
+			return offset;
+		}
+		offset += field_type_size(field.type);
+	}
+	return -1;
+}
+
+void ecsact_create_metadata(ecsact_package_id package_id) {
+	package_defs.at(package_id).has_metadata = true;
 }

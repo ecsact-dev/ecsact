@@ -584,7 +584,7 @@ TEST(Core, StaticSystemImpl) {
 		nullptr
 	);
 
-	ecsact_execute_systems(reg_id, 1, nullptr);
+	ecsact_execute_systems(reg_id, 1, nullptr, nullptr);
 
 	comp_get = static_cast<const runtime_test::ComponentA*>(
 		ecsact_get_component(reg_id, entity, comp_id, nullptr)

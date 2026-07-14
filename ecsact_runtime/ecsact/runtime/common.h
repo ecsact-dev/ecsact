@@ -298,6 +298,11 @@ typedef enum {
 	 * One or more of the action entity fields constraints were not satisfied.
 	 */
 	ECSACT_EXEC_SYS_ERR_ACTION_ENTITY_CONSTRAINT_BROKEN = 2,
+
+	/**
+	 * The execution metadata block passed is invalid.
+	 */
+	ECSACT_EXEC_SYS_ERR_INVALID_METADATA = 3,
 } ecsact_execute_systems_error;
 
 typedef enum {

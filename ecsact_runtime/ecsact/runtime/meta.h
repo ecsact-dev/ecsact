@@ -511,6 +511,36 @@ ECSACT_META_API_FN(void, ecsact_meta_get_cluster_systems)
 	ecsact_system_like_id* out_systems,
 	int32_t*               out_systems_count);
 
+ECSACT_META_API_FN(bool, ecsact_meta_has_metadata)
+( //
+	ecsact_package_id package_id);
+
+ECSACT_META_API_FN(int32_t, ecsact_meta_count_metadata_fields)
+( //
+	ecsact_package_id package_id);
+
+ECSACT_META_API_FN(void, ecsact_meta_get_metadata_field_ids)
+( //
+	ecsact_package_id package_id,
+	int32_t           max_field_count,
+	ecsact_field_id*  out_field_ids,
+	int32_t*          out_field_ids_count);
+
+ECSACT_META_API_FN(const char*, ecsact_meta_metadata_field_name)
+( //
+	ecsact_package_id package_id,
+	ecsact_field_id   field_id);
+
+ECSACT_META_API_FN(ecsact_field_type, ecsact_meta_metadata_field_type)
+( //
+	ecsact_package_id package_id,
+	ecsact_field_id   field_id);
+
+ECSACT_META_API_FN(int32_t, ecsact_meta_metadata_field_offset)
+( //
+	ecsact_package_id package_id,
+	ecsact_field_id   field_id);
+
 // # BEGIN FOR_EACH_ECSACT_META_API_FN
 #ifdef ECSACT_MSVC_TRADITIONAL
 #	define FOR_EACH_ECSACT_META_API_FN(fn, ...) ECSACT_MSVC_TRADITIONAL_ERROR()
@@ -585,7 +615,13 @@ ECSACT_META_API_FN(void, ecsact_meta_get_cluster_systems)
 		fn(ecsact_meta_is_action, __VA_ARGS__);                             \
 		fn(ecsact_meta_cluster_name, __VA_ARGS__);                          \
 		fn(ecsact_meta_count_cluster_systems, __VA_ARGS__);                 \
-		fn(ecsact_meta_get_cluster_systems, __VA_ARGS__)
+		fn(ecsact_meta_get_cluster_systems, __VA_ARGS__);                   \
+		fn(ecsact_meta_has_metadata, __VA_ARGS__);                          \
+		fn(ecsact_meta_count_metadata_fields, __VA_ARGS__);                 \
+		fn(ecsact_meta_get_metadata_field_ids, __VA_ARGS__);                \
+		fn(ecsact_meta_metadata_field_name, __VA_ARGS__);                   \
+		fn(ecsact_meta_metadata_field_type, __VA_ARGS__);                   \
+		fn(ecsact_meta_metadata_field_offset, __VA_ARGS__)
 #endif
 
 #endif // ECSACT_RUNTIME_META_H
