@@ -10,7 +10,6 @@ TEST(Parse, MetadataDummy) {
 	SUCCEED();
 }
 
-#if 0
 TEST(Parse, MetadataStatement) {
 	auto                statement_str = "metadata;"s;
 	ecsact_statement    statement;
@@ -59,4 +58,3 @@ TEST(Parse, OpaqueFieldStatement) {
 		)
 	);
 }
-#endif
