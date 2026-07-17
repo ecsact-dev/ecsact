@@ -1103,6 +1103,7 @@ static ecsact_eval_error eval_builtin_type_field_statement(
 			ECSACT_STATEMENT_COMPONENT,
 			ECSACT_STATEMENT_TRANSIENT,
 			ECSACT_STATEMENT_ACTION,
+			ECSACT_STATEMENT_METADATA,
 		}
 	);
 	if(err.code != ECSACT_EVAL_OK) {
@@ -1114,6 +1115,35 @@ static ecsact_eval_error eval_builtin_type_field_statement(
 		return *err;
 	}
 
+	std::string field_name(data.field_name.data, data.field_name.length);
+
+	if(context->type == ECSACT_STATEMENT_METADATA) {
+		int32_t                      count = ecsact_meta_count_metadata_fields(package_id);
+		std::vector<ecsact_field_id> fields(count);
+		ecsact_meta_get_metadata_field_ids(package_id, count, fields.data(), nullptr);
+		for(auto fid : fields) {
+			if(field_name == ecsact_meta_metadata_field_name(package_id, fid)) {
+				return ecsact_eval_error{
+					.code = ECSACT_EVAL_ERR_FIELD_NAME_ALREADY_EXISTS,
+					.relevant_content = data.field_name,
+				};
+			}
+		}
+
+		ecsact_add_metadata_field(
+			package_id,
+			ecsact_field_type{
+				.kind = ECSACT_TYPE_KIND_BUILTIN,
+				.type{.builtin = data.field_type},
+				.length = data.length,
+			},
+			data.field_name.data,
+			data.field_name.length
+		);
+
+		return {};
+	}
+
 	auto compo_id = find_by_statement<ecsact_composite_id>(package_id, *context);
 	if(!compo_id) {
 		return ecsact_eval_error{
@@ -1121,8 +1151,6 @@ static ecsact_eval_error eval_builtin_type_field_statement(
 			.relevant_content = {},
 		};
 	}
-
-	std::string field_name(data.field_name.data, data.field_name.length);
 
 	for(auto field_id : ecsact::meta::get_field_ids(*compo_id)) {
 		std::string other_field_name = ecsact_meta_field_name(*compo_id, field_id);
@@ -2056,6 +2084,33 @@ static ecsact_eval_error eval_cluster_statement(
 	return {ECSACT_EVAL_OK};
 }
 
+static ecsact_eval_error eval_metadata_statement(
+	ecsact_package_id                 package_id,
+	std::span<const ecsact_statement> context_stack,
+	const ecsact_statement&           statement
+) {
+	auto [context, err] = expect_context(context_stack, {ECSACT_STATEMENT_NONE});
+	if(err.code != ECSACT_EVAL_OK) {
+		return err;
+	}
+
+	if(ecsact_meta_has_metadata(package_id)) {
+		return ecsact_eval_error{
+			.code = ECSACT_EVAL_ERR_MULTIPLE_METADATA_BLOCKS,
+		};
+	}
+
+	if(package_id != ecsact_meta_main_package()) {
+		return ecsact_eval_error{
+			.code = ECSACT_EVAL_ERR_METADATA_NOT_IN_MAIN_PACKAGE,
+		};
+	}
+
+	ecsact_create_metadata(package_id);
+
+	return {};
+}
+
 ecsact_eval_error ecsact_eval_statement(
 	ecsact_package_id package_id,
 	int32_t           statement_stack_size,
@@ -2165,6 +2220,12 @@ ecsact_eval_error ecsact_eval_statement(
 				);
 			case ECSACT_STATEMENT_CLUSTER:
 				return eval_cluster_statement(
+					package_id,
+					context_statements,
+					statement
+				);
+			case ECSACT_STATEMENT_METADATA:
+				return eval_metadata_statement(
 					package_id,
 					context_statements,
 					statement

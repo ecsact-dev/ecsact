@@ -59,6 +59,11 @@ typedef enum {
 	ECSACT_ASYNC_ERR_NOT_CONNECTED,
 
 	/**
+	 * Invalid execution metadata passed to async start session API
+	 */
+	ECSACT_ASYNC_ERR_INVALID_METADATA,
+
+	/**
 	 * Internal error has occurred
 	 */
 	ECSACT_ASYNC_ERR_INTERNAL = 99,
@@ -232,18 +237,19 @@ ECSACT_ASYNC_API_FN(void, ecsact_async_flush_events)
  * @returns an ID that represents the session that all other async functions
  * take in
  */
-ECSACT_ASYNC_API_FN(ecsact_async_session_id, ecsact_async_start)
-( //
+ECSACT_ASYNC_API_FN(ecsact_async_session_id, ecsact_async_start)(
 	const void* option_data,
-	int32_t     option_data_size);
+	int32_t     option_data_size,
+	const void* execution_metadata
+);
 
 /**
  * Begins stopping the session. May happen in background.
  * @param session_id the session that should stop
  */
-ECSACT_ASYNC_API_FN(void, ecsact_async_stop)
-( //
-	ecsact_async_session_id session_id);
+ECSACT_ASYNC_API_FN(void, ecsact_async_stop)(
+	ecsact_async_session_id session_id
+);
 
 /**
  * Begins stopping all active sessions. May happen in background.

@@ -1,0 +1,6 @@
+package metadata_test;
+
+metadata {
+	i32 delta_time;
+	opaque service;
+}

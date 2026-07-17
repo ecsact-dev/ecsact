@@ -94,6 +94,12 @@ typedef enum ecsact_eval_error_code {
 	/// System cannot be part of the explicit cluster it is in
 	ECSACT_EVAL_ERR_INVALID_CLUSTER_SYSTEM,
 
+	/// Only one metadata block is allowed per package.
+	ECSACT_EVAL_ERR_MULTIPLE_METADATA_BLOCKS,
+
+	/// Metadata block is only allowed in the main package.
+	ECSACT_EVAL_ERR_METADATA_NOT_IN_MAIN_PACKAGE,
+
 	/// Internal error. Should not happen and is an indiciation of a bug.
 	ECSACT_EVAL_ERR_INTERNAL = 999,
 

@@ -622,6 +622,17 @@ static auto write_context_body_common(
 ) -> void {
 	ctx.writef("[[no_unique_address]] ::ecsact::execution_context _ctx;\n\n");
 
+	if(ecsact_meta_has_metadata(ctx.package_id)) {
+		auto pkg_name = cpp_identifier(ecsact::meta::package_name(ctx.package_id));
+		ctx.writef(
+			"inline auto metadata() const -> const ::{}::execution_metadata& {{\n"
+			"\treturn *static_cast<const ::{}::execution_metadata*>(_ctx.metadata());\n"
+			"}}\n\n",
+			pkg_name,
+			pkg_name
+		);
+	}
+
 	if(!details.get_components.empty()) {
 		write_context_get_decl(ctx, ctx_name, details.get_components);
 	}

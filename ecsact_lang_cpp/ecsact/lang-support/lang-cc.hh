@@ -75,6 +75,8 @@ constexpr auto cpp_type_str(ecsact_builtin_type type) {
 			return "double";
 		case ECSACT_ENTITY_TYPE:
 			return "::ecsact_entity_id";
+		case ECSACT_OPAQUE:
+			return "void*";
 	}
 
 	return "/* unhandled cpp_type_str */";

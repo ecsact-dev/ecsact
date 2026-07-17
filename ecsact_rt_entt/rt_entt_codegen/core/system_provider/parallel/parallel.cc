@@ -63,6 +63,14 @@ auto provider::parallel::pre_exec_system_impl_context_init(
 		names.parent_context_var_name,
 		";\n"
 	);
+	if(!names.parent_context_var_name.empty()) {
+		ctx.writef(
+			"context.execution_metadata = {0} ? {0}->execution_metadata : (registry.ctx().find<execution_metadata_wrapper>() ? registry.ctx().find<execution_metadata_wrapper>()->ptr : nullptr);\n",
+			names.parent_context_var_name
+		);
+	} else {
+		ctx.writef("context.execution_metadata = execution_metadata;\n");
+	}
 	ctx.writef("{}", "context.view = &view;\n\n");
 	ctx.writef("{}", "context.entity = entity;\n");
 }

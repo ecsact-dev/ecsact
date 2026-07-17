@@ -215,11 +215,32 @@ ECSACT_DYNAMIC_API_FN(ecsact_system_like_id, ecsact_system_execution_context_id)
 ( //
 	struct ecsact_system_execution_context* context);
 
+/**
+ * Accesses the execution metadata block from within a system execution context.
+ */
+ECSACT_DYNAMIC_API_FN(
+	const void*,
+	ecsact_system_execution_context_metadata
+)
+( //
+	struct ecsact_system_execution_context* context);
+
 ECSACT_DYNAMIC_API_FN(ecsact_package_id, ecsact_create_package)
 ( //
 	bool        main_package,
 	const char* package_name,
 	int32_t     package_name_len);
+
+ECSACT_DYNAMIC_API_FN(ecsact_field_id, ecsact_add_metadata_field)
+( //
+	ecsact_package_id package_id,
+	ecsact_field_type field_type,
+	const char*       field_name,
+	int32_t           field_name_len);
+
+ECSACT_DYNAMIC_API_FN(void, ecsact_create_metadata)
+( //
+	ecsact_package_id package_id);
 
 ECSACT_DYNAMIC_API_FN(void, ecsact_set_package_source_file_path)
 ( //
@@ -567,11 +588,14 @@ ECSACT_DYNAMIC_API_FN(void, ecsact_interpret_reset)();
 		fn(ecsact_system_execution_context_other, __VA_ARGS__);         \
 		fn(ecsact_system_execution_context_entity, __VA_ARGS__);        \
 		fn(ecsact_system_execution_context_id, __VA_ARGS__);            \
+		fn(ecsact_system_execution_context_metadata, __VA_ARGS__);      \
 		fn(ecsact_create_package, __VA_ARGS__);                         \
 		fn(ecsact_set_package_source_file_path, __VA_ARGS__);           \
 		fn(ecsact_add_dependency, __VA_ARGS__);                         \
 		fn(ecsact_remove_dependency, __VA_ARGS__);                      \
 		fn(ecsact_destroy_package, __VA_ARGS__);                        \
+		fn(ecsact_add_metadata_field, __VA_ARGS__);                     \
+		fn(ecsact_create_metadata, __VA_ARGS__);                        \
 		fn(ecsact_create_system, __VA_ARGS__);                          \
 		fn(ecsact_set_system_lazy_iteration_rate, __VA_ARGS__);         \
 		fn(ecsact_add_child_system, __VA_ARGS__);                       \

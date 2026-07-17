@@ -57,6 +57,8 @@ static auto context_grammar(ecsact_statement_type context_type, Fn&& fn) {
 			return fn(grammar::system_notify_component_level_statement{});
 		case ECSACT_STATEMENT_CLUSTER:
 			return fn(grammar::cluster_level_statement{});
+		case ECSACT_STATEMENT_METADATA:
+			return fn(grammar::metadata_level_statement{});
 	}
 
 	assert(false && "unhandled context grammar");

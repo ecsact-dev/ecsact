@@ -30,6 +30,7 @@ typedef enum {
 	ECSACT_STATEMENT_SYSTEM_NOTIFY,
 	ECSACT_STATEMENT_SYSTEM_NOTIFY_COMPONENT,
 	ECSACT_STATEMENT_CLUSTER,
+	ECSACT_STATEMENT_METADATA,
 } ecsact_statement_type;
 
 typedef struct {
@@ -141,6 +142,9 @@ typedef struct {
 	ecsact_statement_sv cluster_name;
 } ecsact_cluster_statement;
 
+typedef struct {
+} ecsact_metadata_statement;
+
 typedef union {
 	ecsact_package_statement                 package_statement;
 	ecsact_import_statement                  import_statement;
@@ -158,6 +162,7 @@ typedef union {
 	ecsact_system_notify_statement           system_notify_statement;
 	ecsact_system_notify_component_statement system_notify_component_statement;
 	ecsact_cluster_statement                 cluster_statement;
+	ecsact_metadata_statement                metadata_statement;
 } ecsact_statement_data;
 
 typedef struct ecsact_statement {
@@ -229,6 +234,8 @@ inline const char* ecsact_parse_statement_type_name_pretty(
 			return "system notify component";
 		case ECSACT_STATEMENT_CLUSTER:
 			return "cluster";
+		case ECSACT_STATEMENT_METADATA:
+			return "metadata";
 	}
 
 	return "unknown statement";
